@@ -1,0 +1,12 @@
+Video links:
+https://www.youtube.com/watch?v=elNmNDoHhqY
+
+How to create local db
+Open cmd and rum following command:
+
+sqllocaldb create "nameOfdb"
+folowing is my localdb
+LocalDB instance "tornadoStudio" created with version 13.1.4001.0.
+
+moving database from one derive to another 
+https://www.youtube.com/watch?v=oC3n2xRqmNY
