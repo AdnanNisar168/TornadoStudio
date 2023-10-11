@@ -5,10 +5,22 @@
   </button>
   <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
     <div class="navbar-nav">
+      <a routerLink="/dashboard" class="btn btn-default"><i class="fa fa-plus"></i> DashBoard</a>
       <a class="nav-item nav-link active" href="#">Home <span class="sr-only">(current)</span></a>
       <a class="nav-item nav-link" href="#">Features</a>
       <a class="nav-item nav-link" href="#">Pricing</a>
       <a class="nav-item nav-link disabled" href="#">Disabled</a>
+       <!-- Your login form -->
+    <form action="/action_page.php" class="form-inline">
+      <input type="text" class="form-control mr-2" placeholder="Username" name="username">
+      <input type="password" class="form-control mr-2" placeholder="Password" name="psw">
+      <button type="submit" class="btn btn-primary">Login</button>
+    </form>
     </div>
   </div>
-</nav>
+</nav>    
+<div class="container">
+  <!-- <app-dashboard></app-dashboard> -->
+  <!-- <app-home></app-home> -->
+  <router-outlet></router-outlet>
+  </div>          
