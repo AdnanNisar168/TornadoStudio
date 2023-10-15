@@ -1,0 +1,33 @@
+Move master database from one drive to anOther in Sql Server
+https://www.youtube.com/watch?v=oC3n2xRqmNY
+
+Move DataBase from one pc to anOther pc
+https://www.youtube.com/watch?v=N6cOBg9hLIY
+
+LogIn and SignUp Using .Net6 and Angular
+https://www.youtube.com/watch?v=ApSERLzbA9g&list=PLc2Ziv7051bZhBeJlJaqq5lrQuVmBJL6A&index=4
+
+for Programing language concepts
+https://www.youtube.com/@ShivaConceptSolution
+
+Creating the master page in mvc .Net
+https://www.youtube.com/watch?v=AhzuHZCmqag&list=PLIY8eNdw5tW_ZQawyxK0Dd1cZXwcNFWn8&index=4
+
+Conversion between IEnumerable to IList (Dapper return result)
+https://stackoverflow.com/questions/21646674/conversion-between-ienumerable-to-ilist-dapper-return-result
+
+Angular 15 Library Management System from Scratch (2023) | ASP.NET Core 6 | Dapper (JWT ToKen)(Corss Origion)
+https://www.youtube.com/watch?v=Mh_pnH0x_fI
+
+//Best for Asp .Net C# (Channel Name "dotnet")
+ActionResults Methods:
+https://www.youtube.com/watch?v=XUfMfx5SqvA
+
+// Passing Parameter to ActionMethods ( kudvenkat )
+https://www.youtube.com/watch?v=OX69gRT7azs
+
+diff b/w ActionResult and IActionResult Methods
+https://www.youtube.com/watch?v=GGh3zngbW_c
+
+good for Using StoreProcedures in Asp.net c#
+https://www.youtube.com/watch?v=tqUpGo8KwDA
