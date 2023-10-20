@@ -1,0 +1,37 @@
+//////////////////////////////////////////// Query In Controller //////////////////////////////////////////////////////////
+
+qry = string.Format("select count(*) from {0} where CompanyID = @CompanyID and ChartOfAccountKey<>@ChartOfAccountKey AND ChartOfAccountFullCode = @CoaFullCode"
+                        , DapperQuery.DBTables.AccountingChartOfAccount.ToString());
+                    parms.Add("@CompanyID", CurrentCompanyID);
+                    parms.Add("@CoaFullCode", model.CoaCode);
+                    parms.Add("@ChartOfAccountKey", model.ChartOfAccountKey);
+                    var count = DapperQuery.ExecuteScalarQuery<int>(qry, parms, 60);
+                    if (count > 0) //new case
+                    {
+                        this.BrokenRules.Add("This code is already in use for " + chartOfAcccount.CoaFullCode + " " + chartOfAcccount.CoaName);
+                    }
+2nd way
+//chartOfAcccount = DapperQuery.ExecuteScalarQuery<ChartOfAccountListViewModel>(qry, parms, 60);
+
+//////////////////////////////////////////// Dapper Method //////////////////////////////////////////////////////////
+
+public static T ExecuteScalarQuery<T>(string qry, DynamicParameters parms, int timeout)
+        {
+            T result;
+
+            try
+            {
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.ExecuteScalar<T>(qry, parms, commandType: CommandType.Text, commandTimeout: timeout);
+                  
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
