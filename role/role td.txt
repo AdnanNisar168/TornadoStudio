@@ -1,0 +1,19 @@
+  <td *ngFor="let row of menus; let i = index">
+                                <div class="checkbox-nice">
+                                    <input type="checkbox" value="true">
+                                    <!-- <input type="hidden" *ngIf="row[i].IsViewAllowed" value="true"> -->
+                                    <!-- <input type="checkbox" value="true"> -->
+                                    <!-- <input type="checkbox" class="menu-view" [checked]="row[i].IsViewAllowed" value="true">
+                                    <input type="checkbox" class="menu-view" [checked]="row[i].IsNewAllowed" value="true">
+                                    <input type="checkbox" class="menu-view" [checked]="row[i].IsEditAllowed" value="true">
+                                    <input type="checkbox" class="menu-view" [checked]="row[i].IsDeleteAllowed" value="true">
+                                    <input type="checkbox" class="menu-view" [checked]="row[i].IsStatusChangeAllowed" value="true"> -->
+
+                                    <!-- <input type="checkbox" class="menu-view" *ngIf="model.menus[i].IsViewAllowed" checked="" value="true">
+                                    <input type="checkbox" class="menu-view" *ngIf="model.menus[i].IsNewAllowed" checked="" value="true">
+                                    <input type="checkbox" class="menu-view" *ngIf="model.menus[i].IsNewAllowed" checked="" value="true"> -->
+
+                                    <!-- <input type="checkbox" class="menu-view" id="model.MenuAssigned[0].IsViewAllowed" name="model.MenuAssigned[0].IsViewAllowed" checked="" value="true"> -->
+                                    <!-- <label for="model.MenuAssigned[0].IsViewAllowed"></label> -->
+                                </div>
+                            </td>

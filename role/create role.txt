@@ -1,0 +1,409 @@
+@model QuickErp.Areas.QuickSecurity.Models.ViewModels.RoleViewModel
+
+@{
+    ViewData["Title"] = "Role";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section HeadScripts{
+}
+
+<div class="main-box">
+
+    <div class="tabs-wrapper profile-tabs2">
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#tab-menu" data-toggle="tab">Menu</a></li>
+            <li class=""><a href="#tab-report" data-toggle="tab">Report</a></li>
+            <li class=""><a href="#tab-status" data-toggle="tab">Status</a></li>
+            <li class=""><a href="#tab-dashboard" data-toggle="tab">Dashboard</a></li>
+        </ul>
+
+        <div class="tab-content">
+
+            <div class="tab-pane fade in active" id="tab-menu">
+
+                <div class="form-horizontal">
+
+                    <div class="main-box-header">
+                        <div class="col-sm-10">
+                            @*<button id="SaveButton" type="button" value="Save" class="btn btn-primary SaveButton" data-form="form"><i class="fa fa-save"></i> Save</button>
+                                @if (ViewBag.IsCreateAllowed == "true")
+                                {
+                                    <a href="/QuickSecurity/Role/Create" class="btn btn-default"><i class="fa fa-plus"></i> New</a>
+                                }
+                                <a href="/QuickSecurity/Role/Index" class="btn btn-default"><i class="fa fa-list"></i> List</a>*@
+                            @Html.SaveButton("form", Model.RoleAutoID)
+                            @Html.NewButton("/QuickSecurity/Role/Create")
+                            @Html.ListButton("/QuickSecurity/Role/Index")
+                            <a href="#" class="btn btn-warning copy-role" data-toggle="tab">Copy Role</a>
+
+                        </div>
+
+
+                        <label class="col-sm-2 label label-default" data-toggle="tooltip" data-original-title="Last Update Information">
+                            @Model.UpdatedBy @Model.UpdatedAt.ToString("dd-MMM-yyyy hh:mm tt")
+                        </label>
+
+                    </div>
+
+                    <hr />
+
+                    <form action="/QuickSecurity/Role/Save" method="post" id="form">
+
+                        <fieldset class="main-box-body" @(ViewBag.IsEditAllowed == "false" && Model.RoleAutoID > 0 ? "disabled" : "")>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">Company</label>
+                                <div class="col-md-4">
+                                    <input class="form-control" value="@Model.CompanyName" readonly />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input type="hidden" id="RoleAutoID" name="model.RoleAutoID" value="@Model.RoleAutoID" />
+                                <input type="hidden" name="model.CompanyID" value="@Model.CompanyID" />
+                                <input type="hidden" name="model.RoleID" value="@Model.RoleID" />
+                                <label class="col-sm-2 control-label" for="model.RoleName">Name</label>
+                                <div class="col-sm-4">
+                                    <input class="form-control" name="model.RoleName" style="width: 100%" value="@Model.RoleName" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <table class="table table-condensed table-hover" id="menuTable">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                <div class="checkbox-nice"><input type="checkbox" id="menuViewSelectAll" /><label for="menuViewSelectAll"></label></div>
+                                            </th>
+                                            <th>
+                                                <div class="checkbox-nice"><input type="checkbox" id="menuNewSelectAll" /><label for="menuNewSelectAll"></label></div>
+                                            </th>
+                                            <th>
+                                                <div class="checkbox-nice"><input type="checkbox" id="menuEditSelectAll" /><label for="menuEditSelectAll"></label></div>
+                                            </th>
+                                            <th>
+                                                <div class="checkbox-nice"><input type="checkbox" id="menuDeleteSelectAll" /><label for="menuDeleteSelectAll"></label></div>
+                                            </th>
+                                            <th>
+                                                <div class="checkbox-nice"><input type="checkbox" id="menuStatusChangeSelectAll" /><label for="menuStatusChangeSelectAll"></label></div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">View</th>
+                                            <th style="width: 50px;">New</th>
+                                            <th style="width: 50px;">Edit</th>
+                                            <th style="width: 50px;">Delete</th>
+                                            <th style="width: 50px;">Status</th>
+                                            <th>Menu</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                        </fieldset>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+            <div class="tab-pane fade" id="tab-report">
+
+                <div class="form-horizontal">
+
+                    <div class="main-box-header">
+                        <div class="col-sm-11">
+                            <button id="SaveButton" type="button" value="Save" class="btn btn-primary SaveButton" data-form="reportForm"><i class="fa fa-save"></i> Save</button>
+                            @if (ViewBag.IsCreateAllowed == "true")
+                            {
+                                <a href="/QuickSecurity/Role/Create" class="btn btn-default"><i class="fa fa-plus"></i> New</a>
+                            }
+                            <a href="/QuickSecurity/Role/Index" class="btn btn-default"><i class="fa fa-list"></i> List</a>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <form action="/QuickSecurity/Role/Save" method="post" id="reportForm">
+
+                        <fieldset class="main-box-body" @(ViewBag.IsEditAllowed == "false" && Model.RoleAutoID > 0 ? "disabled" : "")>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">Company</label>
+                                <div class="col-md-4">
+                                    <input class="form-control" value="@Model.CompanyName" readonly />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input type="hidden" id="RoleAutoID" name="model.RoleAutoID" value="@Model.RoleAutoID" />
+                                <input type="hidden" name="model.CompanyID" value="@Model.CompanyID" />
+                                <input type="hidden" name="model.RoleID" value="@Model.RoleID" />
+                                <label class="col-sm-2 control-label" for="model.RoleName">Name</label>
+                                <div class="col-sm-4">
+                                    <input class="form-control" name="model.RoleName" style="width: 100%" value="@Model.RoleName" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <table class="table table-condensed table-hover" id="reportTable">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                <div class="checkbox-nice"><input type="checkbox" id="reportViewSelectAll" /><label for="reportViewSelectAll"></label></div>
+                                            </th>
+                                            <th>
+                                                <div class="checkbox-nice"><input type="checkbox" id="reportDownloadSelectAll" /><label for="reportDownloadSelectAll"></label></div>
+                                            </th>
+                                            <th>
+                                                <div class="checkbox-nice"><input type="checkbox" id="reportExportSelectAll" /><label for="reportExportSelectAll"></label></div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 70px;">View</th>
+                                            <th style="width: 70px;">Download</th>
+                                            <th style="width: 70px;">Export</th>
+                                            <th>Report</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                        </fieldset>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+            <div class="tab-pane fade" id="tab-status">
+
+                <div class="form-horizontal">
+
+                    <div class="main-box-header">
+                        <div class="col-sm-10">
+                            @*<button id="SaveButton" type="button" value="Save" class="btn btn-primary SaveButton" data-form="statusForm"><i class="fa fa-save"></i> Save</button>
+                                @if (ViewBag.IsCreateAllowed == "true")
+                                {
+                                    <a href="/QuickSecurity/Role/Create" class="btn btn-default"><i class="fa fa-plus"></i> New</a>
+                                }
+                                <a href="/QuickSecurity/Role/Index" class="btn btn-default"><i class="fa fa-list"></i> List</a>*@
+                            @Html.SaveButton("statusForm", Model.RoleAutoID)
+                            @Html.NewButton("/QuickSecurity/Role/Create")
+                            @Html.ListButton("/QuickSecurity/Role/Index")
+                        </div>
+
+
+                        <label class="col-sm-2 label label-default" data-toggle="tooltip" data-original-title="Last Update Information">
+                            @Model.UpdatedBy @Model.UpdatedAt.ToString("dd-MMM-yyyy hh:mm tt")
+                        </label>
+
+                    </div>
+
+                    <hr />
+
+                    <form action="/QuickSecurity/Role/Save" method="post" id="statusForm">
+
+                        <fieldset class="main-box-body" @(ViewBag.IsEditAllowed == "false" && Model.RoleAutoID > 0 ? "disabled" : "")>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">Company</label>
+                                <div class="col-md-4">
+                                    <input class="form-control" value="@Model.CompanyName" readonly />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input type="hidden" id="RoleAutoID" name="model.RoleAutoID" value="@Model.RoleAutoID" />
+                                <input type="hidden" name="model.CompanyID" value="@Model.CompanyID" />
+                                <input type="hidden" name="model.RoleID" value="@Model.RoleID" />
+
+                                <label class="col-sm-2 control-label" for="model.RoleName">Name</label>
+                                <div class="col-sm-4">
+                                    <input class="form-control" name="model.RoleName" style="width: 100%" value="@Model.RoleName" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <table class="table table-condensed table-hover" id="statusTable">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                <div class="checkbox-nice"><input type="checkbox" id="statusUnpostedSelectAll" /><label for="statusUnpostedSelectAll"></label></div>
+                                            </th>
+                                            <th>
+                                                <div class="checkbox-nice"><input type="checkbox" id="statusPostedSelectAll" /><label for="statusPostedSelectAll"></label></div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 80px;">UnPosted</th>
+                                            <th style="width: 80px;">Posted</th>
+                                            <th>Menu</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.PostedAssigned != null)
+                                        {
+                                            for (int i = 0; i < Model.PostedAssigned.Count; i++)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <input type="hidden" name="model.UnpostedAssigned[@i].RecordStatusID" value="@Model.UnpostedAssigned[i].RecordStatusID" />
+                                                        <input type="hidden" name="model.UnpostedAssigned[@i].RoleStatusAssociationID" value="@Model.UnpostedAssigned[i].RoleStatusAssociationID" />
+                                                        <input type="hidden" name="model.UnpostedAssigned[@i].RoleAutoID" value="@Model.UnpostedAssigned[i].RoleAutoID" />
+                                                        <input type="hidden" name="model.UnpostedAssigned[@i].MenuID" value="@Model.UnpostedAssigned[i].MenuID" />
+                                                        <div class="checkbox-nice">
+                                                            <input type="hidden" name="model.UnpostedAssigned[@i].IsAllowed" value="false" />
+                                                            <input type="checkbox" id="model.UnpostedAssigned[@i].IsAllowed" class="status-unposted" name="model.UnpostedAssigned[@i].IsAllowed" @(Model.UnpostedAssigned[i].IsAllowed ? "checked" : "") value="true" />
+                                                            <label for="model.UnpostedAssigned[@i].IsAllowed"></label>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <input type="hidden" name="model.PostedAssigned[@i].RecordStatusID" value="@Model.PostedAssigned[i].RecordStatusID" />
+                                                        <input type="hidden" name="model.PostedAssigned[@i].RoleStatusAssociationID" value="@Model.PostedAssigned[i].RoleStatusAssociationID" />
+                                                        <input type="hidden" name="model.postedAssigned[@i].RoleAutoID" value="@Model.PostedAssigned[i].RoleAutoID" />
+                                                        <input type="hidden" name="model.PostedAssigned[@i].MenuID" value="@Model.PostedAssigned[i].MenuID" />
+                                                        <div class="checkbox-nice">
+                                                            <input type="hidden" name="model.PostedAssigned[@i].IsAllowed" value="false" />
+                                                            <input type="checkbox" id="model.PostedAssigned[@i].IsAllowed" class="status-posted" name="model.PostedAssigned[@i].IsAllowed" @(Model.PostedAssigned[i].IsAllowed ? "checked" : "") value="true" />
+                                                            <label for="model.PostedAssigned[@i].IsAllowed"></label>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        @Model.PostedAssigned[i].MenuName
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </fieldset>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+
+            <div class="tab-pane fade " id="tab-dashboard">
+
+                <div class="form-horizontal">
+
+                    <div class="main-box-header">
+                        <div class="col-sm-10">
+                            <button id="SaveButton" type="button" value="Save" class="btn btn-primary SaveButton" data-form="dashboardForm"><i class="fa fa-save"></i> Save</button>
+                            @*@if (ViewBag.IsCreateAllowed == "true")
+                                {
+                                    <a href="/QuickSecurity/Role/Create" class="btn btn-default"><i class="fa fa-plus"></i> New</a>
+                                }
+                                <a href="/QuickSecurity/Role/Index" class="btn btn-default"><i class="fa fa-list"></i> List</a>*@
+
+                            @*@Html.SaveButton("form", Model.RoleAutoID)*@
+                            @Html.NewButton("/QuickSecurity/Role/Create")
+                            @Html.ListButton("/QuickSecurity/Role/Index")
+
+                        </div>
+
+
+                        <label class="col-sm-2 label label-default" data-toggle="tooltip" data-original-title="Last Update Information">
+                            @Model.UpdatedBy @Model.UpdatedAt.ToString("dd-MMM-yyyy hh:mm tt")
+                        </label>
+
+                    </div>
+
+                    <hr />
+
+                    <form action="/QuickSecurity/Role/Save" method="post" id="dashboardForm">
+
+                        <fieldset class="main-box-body" @(ViewBag.IsEditAllowed == "false" && Model.RoleAutoID > 0 ? "disabled" : "")>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">Company</label>
+                                <div class="col-md-4">
+                                    <input class="form-control" value="@Model.CompanyName" readonly />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input type="hidden" id="RoleAutoID" name="model.RoleAutoID" value="@Model.RoleAutoID" />
+                                <input type="hidden" name="model.CompanyID" value="@Model.CompanyID" />
+                                <input type="hidden" name="model.RoleID" value="@Model.RoleID" />
+                                <label class="col-sm-2 control-label" for="model.RoleName">Name</label>
+                                <div class="col-sm-4">
+                                    <input class="form-control" name="model.RoleName" style="width: 100%" value="@Model.RoleName" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <table class="table table-condensed table-hover" id="dashboardTable">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                <div class="checkbox-nice"><input type="checkbox" id="dashboardViewSelectAll" /><label for="dashboardViewSelectAll"></label></div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">View</th>
+                                            <th>Dashboard</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                        </fieldset>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/Scripts/QuickSecurity/Role.js?ver=3" type="text/javascript"></script>
+}
+
+<script>
+    $(document).on('click', '.copy-role', function (e) {
+
+        e.preventDefault();
+        let roleAutoID = $('#RoleAutoID').val();
+        var url = '/QuickSecurity/Role/CopyRole/' + roleAutoID;
+
+        $(this).ShowConfirmationModal({ title: 'Confirmation', body: 'Are you sure?' },
+            function () {
+                var ajaxRequest = new Object();
+                ajaxRequest.url = url;
+                ajaxRequest.navigateToUrl = null;
+                ajaxRequest.type = 'POST';
+                ajaxRequest.data = null;
+                AjaxRequestSave(ajaxRequest, function (data) {
+                    $(this).ShowConfirmationModal({ hideCancelButton: true, title: 'Role Create', body: data.message, okButtonText: 'OK' },
+                        function () {
+                            window.location = '/QuickSecurity/Role/Create/' + data.data.id;
+                        }
+                        , null);
+
+                }, null, null);
+            }, function () {
+            });
+    });
+
+</script>

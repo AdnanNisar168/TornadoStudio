@@ -1,0 +1,269 @@
+﻿@model QuickErp.Areas.Inventory.Models.ViewModels.SaleReturnViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var index = -1;
+    var isAutoNumberEnabled = AppSetting.GetSetting(SystemSettings.Inv_SR_IsAutoNumberEnabled.ToString(), false);
+    var itemImageEnabled = AppSetting.GetSetting(SystemSettings.Inv_Item_ImageEnabled.ToString(), false);
+    var showStock = @Model.IsShowStock.ToString().ToLower();
+}
+
+@section HeadScripts{
+    <script type="text/javascript">
+        var autoPrintOnSave = @Model.IsAutoPrintEnabled.ToString().ToLower();
+    </script>
+    <link href="/content/sales-invoice.css?ver=2" media="print" rel="stylesheet" />
+}
+
+<div class="main-box">
+
+    <div class="form-horizontal">
+
+        <div class="main-box-header">
+            <div class="col-sm-10">
+                @Html.SaveButton("form", Model.SaleReturnID, Menus.SaleReturn, (RecordStatuses)Model.RecordStatusID)
+                @Html.StatusButtonEntryForm("form", Model.SaleReturnID, 10022, RecordStatuses.Posted)
+                @Html.NewButton("/Inventory/SaleReturn/Create")
+                @Html.ListButton("/Inventory/SaleReturn/Index")
+                @Html.PrintButton("Print();", "Print")
+            </div>
+
+            <label class="col-sm-2 label label-default" data-toggle="tooltip" data-original-title="Last Update Information">
+                @Model.UpdatedBy @Model.UpdatedAt.ToString("dd-MMM-yyyy hh:mm tt")
+            </label>
+
+        </div>
+
+        <hr />
+
+        <form id="form" action="/Inventory/SaleReturn/Save" method="post" data-navigate-to-url="/Inventory/SaleReturn/Index" class="data-entry-form">
+
+            <fieldset class="main-box-body" @((ViewBag.IsEditAllowed == "false" || !Common.IsRecordStatusAllowed((RecordStatuses)Model.RecordStatusID, (int)Menus.SaleReturn)) && Model.SaleReturnID > 0 ? "disabled" : "")>
+            
+                <div class="form-group">
+                    <div class="@(itemImageEnabled ? "col-sm-10" : "col-sm-12")">
+                        <div class="form-group">
+                            <input type="hidden" id="SaleReturnID" name="Model.SaleReturnID" value="@Model.SaleReturnID" />
+                            <input type="hidden" id="RecordStatusID" name="model.RecordStatusID" value="@Model.RecordStatusID" />
+
+                            <label class="col-sm-1 control-label">Number</label>
+                            <div class="col-sm-2">
+                                <input type="text" id="SaleReturnNumber" name="Model.SaleReturnNumber" class="form-control" @(isAutoNumberEnabled ? "disabled" : "") value="@Model.SaleReturnNumber" @(isAutoNumberEnabled ? "" : "autofocus") placeholder="Auto @Model.AutoNumber" />
+                            </div>
+
+                            <label class="col-sm-1 control-label">Date</label>
+                            <div class="col-sm-3">
+                                @Html.Partial("_DocumentDate", new QuickErp.Models.ViewModels.DocumentDateViewModel() { Date = Model.SaleReturnDate, ElementName = "Model.SaleReturnDate", PastDateEntryEnabledSettingID = SystemSettings.Inv_SR_IsPastDateEntryEnabled.ToString(), PastDaysAllowedSettingID = SystemSettings.Inv_SR_PastDaysAllowed.ToString(), FutureDateEntryEnabledSettingID = SystemSettings.Inv_SR_IsFutureDateEntryEnabled.ToString(), FutureDaysAllowedSettingID = SystemSettings.Inv_SR_FutureDaysAllowed.ToString() })
+                            </div>
+
+                            <label class="col-sm-1 control-label">Mode</label>
+                            <div class="col-sm-3">
+                                <select name="Model.PaymentMode" class="form-control">
+                                    <option value="1" @((Model.PaymentMode ?? 1) == 1 ? "selected" : "")>Cash</option>
+                                    <option value="2" @((Model.PaymentMode ?? 1) == 2 ? "selected" : "")>Credit</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-1 control-label">Customer</label>
+                            <div class="col-sm-5">
+                                <select id="PartyID" name="Model.PartyID" class="form-control customer-dropdown" style="width:100%">
+                                    @if (Model.PartyID > 0)
+                                    {
+                                        <option value="@Model.PartyID" selected="selected">@Model.PartyCode -  @Model.PartyName</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="display: none;">
+                            <label class="col-sm-1 control-label">Mobile</label>
+                            <div class="col-sm-5">
+                                <div class="input-group">
+                                    <div class="input-group-addon" data-toggle="tooltip" data-original-title="Send Sms?">
+                                        <div class="input-group-text">
+                                            <input type="hidden" name="Model.IsSendSms" value="false">
+                                            <input type="checkbox" name="Model.IsSendSms" value="true">
+                                        </div>
+                                    </div>
+                                    <input type="text" class="form-control" name="Model.MobileNumber" value="@Model.MobileNumber">
+                                </div>
+                            </div>
+                            <label class="col-sm-1 control-label">Email</label>
+                            <div class="col-sm-5">
+                                <div class="input-group">
+                                    <div class="input-group-addon" data-toggle="tooltip" data-original-title="Send Email?">
+                                        <div class="input-group-text">
+                                            <input type="hidden" name="Model.IsSendEmail" value="false">
+                                            <input type="checkbox" name="Model.IsSendEmail" value="true">
+                                        </div>
+                                    </div>
+                                    <input type="text" class="form-control" name="Model.EmailAddress" value="@Model.EmailAddress">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-1 control-label">Remarks</label>
+                            <div class="col-sm-11">
+                                <input type="text" name="Model.Remarks" class="form-control" value="@Model.Remarks" />
+                            </div>
+                        </div>
+
+                        @if (Model.IsBarcodeEnabled)
+                        {
+                            <div class="form-group">
+                                <label class="col-sm-1 control-label">Barcode</label>
+                                <div class="col-sm-11">
+                                    <input type="text" id="ItemBarcode" class="form-control" autofocus />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    @if (itemImageEnabled)
+                    {
+                        <div class="col-sm-2">
+                            <img src="/Files/Images/NoImageAvailable.png" class="item-image zoomable" style="max-width: 100%; max-height: 200px; padding: 1px; border: 1px solid gray;" />
+                        </div>
+                    }
+                </div>
+                
+                <div class="form-group">
+                    <table id="table" class="table table-striped table-condensed table-responsive">
+                        <thead>
+                            <tr>
+                                <th class="serial">Sr</th>
+                                <th>Item</th>
+                                <th>Description</th>
+
+                                @if (Model.IsShowStock)
+                                {
+                                    <th class="stock" style="text-align: right">Stock</th>
+                                }
+
+                                <th class="amount" style="text-align: right">Quantity</th>
+                                <th class="amount" style="text-align: right">Rate</th>
+                                <th class="amount" style="text-align: right">Discount</th>
+                                <th class="amount" style="text-align: right">Amount</th>
+                                <th class="action"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.DetailRows.Count; i++)
+                            {
+                                Model.DetailRows[i].Index = i;
+                                index = i;
+                                @Html.Partial("_RowSaleReturn", Model.DetailRows[i])
+                            }
+                            @Html.Partial("_RowSaleReturn", new QuickErp.Areas.Inventory.Models.ViewModels.SaleReturnItem() { Index = ++index, IsSaleReturnRateEditable = Model.IsSaleReturnRateEditable, IsShowStock = Model.IsShowStock })
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td align="right">
+                                    <strong><span id="TotalQty" style="text-align:right"></span></strong>
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td align="right" class="">
+                                    <strong><span id="TotalAmount" style="text-align:right"></span></strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="col-sm-offset-6">
+                        <table class="table table-condensed">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: right"></th>
+                                    <th style="text-align: right">Percentage</th>
+                                    <th style="text-align: right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <span>Discount</span>
+                                    </td>
+                                    <td>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <input type="radio" @(Model.DiscountMode == "p" ? "checked" : "") id="DiscountModePercentage" name="model.DiscountMode" value="p" tabindex="-1">
+                                            </span>
+                                            <input class="form-control percentage-input" id="DiscountPercentage" name="Model.DiscountPercentage" value="@Model.DiscountPercentage" />       
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <input type="radio" @(Model.DiscountMode == "a" ? "checked" : "") id="DiscountModeAmount" name="model.DiscountMode" value="a" tabindex="-1">
+                                            </span>
+                                            <input class="form-control currency-input" id="DiscountAmount" name="Model.DiscountAmount" value="@Model.DiscountAmount" />
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span>Sales Tax</span>
+                                    </td>
+                                    <td>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <input type="radio" @(Model.SalesTaxMode == "p" ? "checked" : "") id="SalesTaxModePercentage" name="model.SalesTaxMode" value="p" tabindex="-1">
+                                            </span>
+                                            <input class="form-control percentage-input" id="SalesTaxPercentage" name="Model.SalesTaxPercentage" value="@Model.SalesTaxPercentage" />
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <input type="radio" @(Model.SalesTaxMode == "a" ? "checked" : "") id="SalesTaxModeAmount" name="model.SalesTaxMode" value="a" tabindex="-1">
+                                            </span>
+                                            <input class="form-control currency-input" id="SalesTaxAmount" name="Model.SalesTaxAmount" value="@Model.SalesTaxAmount" />
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr style="font-weight: bold; text-align: right">
+                                    <td colspan="2">
+                                        <span style="font-weight: bold">Net Amount</span>
+                                    </td>
+                                    <td>
+                                        <span id="NetAmount"></span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </fieldset>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="/Scripts/Inventory/saleReturn.js?ver=@Common.SoftwareVersion" type="text/javascript"></script>
+
+    <script>
+        var emptyRow = '';
+        var index = 0;
+        var salesInvoicePrintSize = "@(AppSetting.GetSetting(Common.LoginData.ImpersonateCompany.CompanyID, 0, SystemSettings.Inv_SR_PrintSize.ToString(), "4inch").ToLower())"
+        var printCopies = @(AppSetting.GetSetting(Common.LoginData.ImpersonateCompany.CompanyID, 0, SystemSettings.Inv_SR_PrintCopies.ToString(), "1").ToLower());
+        var companyId = @Common.LoginData.ImpersonateCompany.CompanyID.ToString();
+        var itemImageEnabled = "@(AppSetting.GetSetting(Common.LoginData.ImpersonateCompany.CompanyID, 0, SystemSettings.Inv_Item_ImageEnabled.ToString(), "false").ToLower())";
+        var defaultQty = "@(AppSetting.GetSetting(SystemSettings.Inv_SR_DefaultQty.ToString(), "0").ToLower())";
+        var showStock = @Model.IsShowStock.ToString().ToLower();
+
+        @{
+            <text>
+                emptyRow = '@Html.Partial("_RowSaleReturn", new QuickErp.Areas.Inventory.Models.ViewModels.SaleReturnItem() { Index = 0, IsSaleReturnRateEditable = Model.IsSaleReturnRateEditable ,IsShowStock = Model.IsShowStock}).ToString().Replace(Environment.NewLine,"")';
+            </text>
+        }
+        emptyRow = $.parseHTML(emptyRow)[0].data;
+        index = @(Model.DetailRows.Count);
+    </script>
+}

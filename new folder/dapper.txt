@@ -1,0 +1,1845 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Reflection;
+using System.Web.Mvc;
+using Dapper;
+using Newtonsoft.Json;
+using QuickErpLibrary.ViewModels;
+
+namespace QuickErpLibrary
+{
+    public partial class DapperQuery
+    {
+        #region "Declarations"
+
+        public static log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        public const string InvItemSize_Select = "SELECT * FROM InvSize WHERE CompanyID=@CompanyID AND RecordStatusID<>4";
+
+        public const string InvDeliveryChallan_Insert = "INSERT INTO InvDeliveryChallan(CompanyID, DeliveryChallanNumber, OrderBookerID, DeliveryChallanDate, PartyID, Remarks, UpdatedByUserAutoID, UpdatedOn, RecordStatusID, ShopID, CreatedByUserAutoID, CreatedOn, DiscountAmount, DiscountPercent, DiscountMode, PurchaseOrderNo, ReferenceNo, DeliveryChallanTime, ShipToAddress, VehicleNo, DriverName, LoadedBy, DriverNo, CheckedBy, SoldToAddress, DeliveryChallanTypeID) OUTPUT INSERTED.* VALUES(@CompanyID, @DeliveryChallanNumber,@OrderBookerID, @DeliveryChallanDate, @PartyID, @Remarks, @UpdatedByUserAutoID, @UpdatedOn, @RecordStatusID, @ShopID, @CreatedByUserAutoID, @CreatedOn, @DiscountAmount, @DiscountPercent, @DiscountMode, @PurchaseOrderNo, @ReferenceNo, @DeliveryChallanTime, @ShipToAddress, @VehicleNo, @DriverName, @LoadedBy, @DriverNo, @CheckedBy, @SoldToAddress, @DeliveryChallanTypeID)";
+        public const string InvDeliveryChallan_Update = "UPDATE InvDeliveryChallan SET DeliveryChallanNumber = @DeliveryChallanNumber, OrderBookerID = @OrderBookerID, DeliveryChallanDate = @DeliveryChallanDate, PartyID = @PartyID, Remarks = @Remarks, UpdatedByUserAutoID = @UpdatedByUserAutoID, UpdatedOn = @UpdatedOn, RecordStatusID = @RecordStatusID, ShopID = @ShopID, DiscountAmount=@DiscountAmount, DiscountPercent=@DiscountPercent, DiscountMode=@DiscountMode, PurchaseOrderNo=@PurchaseOrderNo, ReferenceNo=@ReferenceNo, DeliveryChallanTime=@DeliveryChallanTime, ShipToAddress=@ShipToAddress, VehicleNo=@VehicleNo, DriverName=@DriverName, LoadedBy=@LoadedBy, DriverNo=@DriverNo, CheckedBy=@CheckedBy, SoldToAddress=@SoldToAddress, DeliveryChallanTypeID=@DeliveryChallanTypeID OUTPUT INSERTED.*  WHERE CompanyID = @CompanyID and DeliveryChallanID = @DeliveryChallanID and DeliveryChallanTypeID=@DeliveryChallanTypeID";
+        public const string InvDeliveryChallan_Delete = "DELETE FROM InvDeliveryChallan WHERE CompanyID = @CompanyID and DeliveryChallanID = @DeliveryChallanID";
+
+        public const string InvDeliveryChallanDetail_Insert = "INSERT INTO InvDeliveryChallanDetail(CompanyID, DeliveryChallanID, DeliveryChallanNumber, DeliveryChallanDate, ShopID, ItemVariationKey, ItemQty, ItemRate, StockQty, RecordStatusID)OUTPUT INSERTED.* VALUES(@CompanyID, @DeliveryChallanID, @DeliveryChallanNumber, @DeliveryChallanDate, @ShopID, @ItemVariationKey, @ItemQty, @ItemRate, @StockQty, @RecordStatusID)";
+        public const string InvDeliveryChallanDetail_Update = "UPDATE InvDeliveryChallanDetail SET DeliveryChallanNumber = @DeliveryChallanNumber, DeliveryChallanDate = @DeliveryChallanDate, ShopID = @ShopID, ItemVariationKey = @ItemVariationKey, ItemQty = @ItemQty, ItemRate = @ItemRate, StockQty = @StockQty, RecordStatusID = @RecordStatusID OUTPUT INSERTED.*  WHERE CompanyID = @CompanyID ANd DeliveryChallanDetailID = @DeliveryChallanDetailID";
+        public const string InvDeliveryChallanDetail_Delete = "DELETE FROM InvDeliveryChallanDetail WHERE CompanyID = @CompanyID AND DeliveryChallanID = @DeliveryChallanID ANd DeliveryChallanDetailID = @DeliveryChallanDetailID";
+
+        public const string SecUser_SelectByUserName = "SELECT * FROM SecUser WHERE UserName=@UserName";
+        public const string SecUser_SelectByCompanyIDUserID = "SELECT * FROM SecUser WHERE CompanyID=@CompanyID and UserID=@UserID";
+        public const string SecUser_SelectByCompanyIDUserAutoIDIsSuperAdmin = "SELECT * FROM SecUser WHERE (CompanyID=@CompanyID or @IsSuperAdmin=1) and UserAutoID=@UserAutoID";
+        public const string SecUser_InsertNewUser = "insert into SecUser (CompanyID, UserID, UserName, RecordStatusID) Values(@CompanyID, @UserID, @UserName, @RecordStatusID)";
+
+        
+        public const string BaseCompanyProfile_Insert = "INSERT INTO BaseCompanyProfile(CompanyID, CompanyName, CompanyAddress, LogoPath, Phone, Email, CreatedByUserAutoID, CreatedOn, UpdatedByUserAutoID, UpdatedOn) OUTPUT INSERTED.* VALUES(@CompanyID , @CompanyName, @CompanyAddress, @LogoPath, @Phone,, @Email, @CreatedByUserAutoID, @CreatedOn, @UpdatedByUserAutoID, @UpdatedOn)";
+        public const string BaseCompanyProfile_Update = "UPDATE BaseCompanyProfile  SET CompanyName = @CompanyName,CompanyAddress = @CompanyAddress,LogoPath = @LogoPath,Phone = @Phone,Email = @Email,CreatedByUserAutoID = @CreatedByUserAutoID, CreatedOn = @CreatedOn,UpdatedByUserAutoID = @UpdatedByUserAutoID,UpdatedOn = @UpdatedOn OUTPUT INSERTED.*  WHERE CompanyID = @CompanyID AND CompanyProfileID = @CompanyProfileID";
+        public const string BaseCompanyProfile_Delete = "DELETE FROM BaseCompanyProfile WHERE CompanyID = @CompanyID AND CompanyProfileID = @CompanyProfileID";
+
+        public enum DBTables
+        {
+            AccountingAutoVoucherSetting,
+            AccountingBudget,
+            AccountingBudgetDetail,
+            AccountingChartOfAccount,
+            AccountingCostCenter,
+            AccountingFinancialYear,
+            AccountingGLNote,
+            AccountingGLNoteDetail,
+            AccountingVoucher,
+            AccountingVoucherDetail,
+            AccountingVoucherType,
+            AccountingSubCostCenter,
+            BaseBrand,
+            BaseCompany,
+            BaseCompanyPackage,
+            BaseCompanyPackageEntryLimit,
+            BaseCompanyProfile,
+            BaseCompanyPayment,
+            BaseCompanyTypes,
+            BaseFile,
+            BaseMenu,
+            BaseSetting,
+            BaseShop,
+            CommonGroup,
+            CommonJob,
+            CommonSession,
+            CommonParty,
+            CommonPartySummary,
+            CommonPartyShopAssociation,
+            FinanceHead,
+            FinanceHeadType,
+            FinancePayment,
+            FinancePaymentDetail,
+            FinanceReceipt,
+            FinanceReceiptDetail,
+            FinanceAdjustment,
+            FinanceAdjustmentDetail,
+            FinanceExpense,
+            FinanceHeadShopAssociation,
+
+            //HR
+            HRDepartment,
+            HREmployee,
+            HREmployeeShopAssociation,
+            HrSalaryHead,
+
+            //Inventory
+            InvBatch,
+            InvBrand,
+            InvColor,
+            InvDesign,
+            InvItem,
+            InvItemStock,
+            InvItemSummary,
+            InvItemVariation,
+            InvItemVariationLevel,
+            InvItemCategory,
+            InvIGP,
+            InvIGPDetail,
+            InvOGP,
+            InvOGPDetail,
+            InvWarehouse,
+            InvGender,
+            InvGoodsReceiptNote,
+            InvGoodsReceiptNoteDetail,
+            InvGoodsReceiptNoteExtra,
+            InvProductGroup,
+            InvProductLine,
+            InvManufacturerPartyAssociation,
+            InvPartyRate,
+            InvPurchaseOrderDetail,
+            InvPurchaseOrder,
+            InvGrnReturn,
+            InvGrnReturnDetail,
+            InvReceiveProduction,
+            InvReceiveProductionDetail,
+            InvRepairingInvoice,
+            InvRepairingInvoiceDetail,
+            InvRepairingInvoiceExtra,
+            InvDeliveryChallan,
+            InvDeliveryChallanDetail,
+            InvManufacturer,
+            InvLot,
+            InvSale,
+            InvSaleDetail,
+            InvSaleReturn,
+            InvSaleReturnDetail,
+            InvSaleExtra,
+            InvStoreIssueNoteDetail,
+            InvStoreIssueNote,
+            InvSinReturnDetail,
+            InvSinReturn,
+            InvSize,
+            InvStyle,
+            InvStore,
+            InvSeason,
+            InvTransferStock,
+            InvTransferStockDetail,
+            InvStockAdjustment,
+            InvStockAdjustmentDetail,
+            InvTempInvoice,
+            InvTempInvoiceDetail,
+
+            // Messaging
+            MessagingAlert,
+            MessagingAlertAnswer,
+            MessagingMobileMessage,
+            MessagingAlertTarget,
+
+            // Production
+            ProdAssembly,
+            ProdAssemblyDetail,
+            ProdConOrder,
+            ProdFormula,
+            ProdFormulaDetail,
+            ProdOrder,
+            ProdOrderDetail,
+            ProdOrderRawMaterial,
+            ProdOrderStatus,
+            ProdProcess,
+            ProdProcessProduction,
+            ProdProcessProductionDetail,
+            ProdProcessWorkFlow,
+
+            // Security
+            SecRole,
+            SecRoleDashboardAssociation,
+            SecRoleReportAssociation,
+            SecRoleStatusAssociation,
+            SecRoleMenuAssociation,
+            SecUser,
+            SecUserRoleAssociation,
+            SecUserLoginHistory,
+
+            // Views
+            vwItemSummary,
+            vwItemSummary2,
+            vwItem,
+            vwItemLedger,
+            vwFinanceHeadTypeSummary,
+            vwPartyLedgerSummary,
+        }
+
+        public enum StoredProcedures
+        {
+            spAccountingChartOfAccountGetIndentedByCompanyID,
+            spAccountingGLNoteGetByCompanyIDGLNoteID,
+            spAccountingAutoVoucherSettingGetAll,
+            spAccountingBudgetGetByComapnyIDBudgetID,
+            spAccountingVoucherGetByCompanyIDSortingPaging,
+            spAccountingVoucherGetByCompanyIDVoucherID,
+            spAccountingCostCenterGetByCompanyIDSortingPaging,
+            spAccountingCostCenterGetByCostCenterID,
+            spAccountingSubCostCenterGetByCompanyIDSortingPaging,
+            spAccountingFinancialYearGetByCompanyIDSortingPaging,
+            spAccountingFinancialYearGetByFinancialYearID,
+
+            spCommonSessionGetCurrent,
+            spBaseBrandGetByBrandIDSortingPaging,
+            spBaseBrandGetByBrandID,
+            spBaseCompanyPaymentGetOverduePayments,
+            spBaseCompanySetupForCrystal,
+            spBaseCompanyChangeCompanyID,
+            spBaseCompanyDeleteAllData,
+            spBaseCompanyDeleteAllDataByCompanyKey,
+            spBaseCompanyGetBySortingPaging,
+            spBaseCompanyGetTopActiveCompanies,
+            spBaseCompanyPaymentGetByYear,
+            spBaseCompanyPaymentAssert,
+            spBaseCompanyTypicalSettingForShop,
+            spBaseCompanyGetByCompanyKey,
+            spBaseMenuGetAllowedByCoIDApplicationIDParentMenuIDUserID,
+            spBaseReportGetActiveByParentIDUserAutoID,
+            spBaseReportGetAllowedByUserAutoID,
+            spBaseSettingGetByCompany,
+            spGetCompanySettingsByCompnayKeyUserKey,
+            spBaseReportGetAllowedByParentReportIDRoleAutoID,
+
+            spCommonDashboardGetAllowedByUserAutoID,
+            spCommonGroupGetByCompanyIDSortingPaging,
+            spCommonJobGetPending,
+            spCommonJobInsertVerifyStock,
+            spCommonJobGenerateForDocumentUpdate,
+            spCommonJobRecalculateStock,
+            spCommonJobRecalculateStockForCurrentMonth,
+            spCommonPartyShopAssociationWithStatus,
+            spCommonPartyGetByCompanyIDPartyKey,
+            spCommonRecordStatusGetAllowedByMenuIDUserAutoID,
+            spCompanyProfileGetByCompanyIDCompanyProfileID,
+            spCompanyProfileGetByCompanyIDSortingPaging,
+            spCommonGroupGetByCompanyIDGroupID,
+            spDashboardInvWarehouseSale,
+            spDashboardCategoryPurchaseToProfit,
+            spDashboardShopSale,
+            spDashboardCategoryStock,
+            spDashboardFinanceHeadClosing,
+            spPartyGetByCompanyIDSortingPaging,
+            spHREmployeeShopAssociationWithStatus,
+            spHrEmployeeGetByEmployeeID,
+            spHRDepartmentGetByCompanyIDSortingPaging,
+            spHRSalaryHeadGetByCompanyIDSortingPaging,
+            spHrSalaryHeadGetBySalaryHeadD,
+            spLogGetByCompanyIDSortingPaging,
+            spShopGetByCompanyIDShopID,
+            spMessagingSmsGetByCompanyIDSortingPaging,
+            spNewNumberByCompanyIDFormat,
+            spPartyGetClosingBalance,
+            // HR
+            spHrDepartmentGetByDeparmentID,
+            spHREmployeeGetByCompanyIDSortingPaging,
+
+            // Inventory
+            spInvBatchGetByCompanyIDSortingPaging,
+            spInvBatchGetByBatchID,
+            spInvBrandGetByCompanyIDSortingPaging,
+            spInvBrandGetByBrandID,
+            spInvColorGetByCompanyIDSortingPaging,
+            spInvColorGetByColorID,
+            spInvDeliveryChallanGetPending,
+            spAccountingBudgetGetByCompanyIDSortingPaging,
+            spInvDeliveryChallanGetByCompanyIDSortingPaging,
+            spInvDeliveryChallanGetByCompanyIDDeliveryChallanID,
+            spInvDeliveryChallanUpdateSaleQty,
+            spInvDesignGetByCompanyIDSortingPaging,
+            spInvDesignGetByDesignID,
+            spInvGoodsReceiptNoteGetByCompanyIDGoodsReceiptNoteID,
+            spInvGoodsReceiptNoteGetByCompanyIDSortingPaging,
+            spInvGrnReturnGetByCompanyIDSortingPaging,
+            spInvGrnReturnGetByCompanyIDGrnReturnID,
+            spInvGenderGetByCompanyIDSortingPaging,
+            spInvGenderGetByGenderID,
+            spInvItemGetByCompanyIDItemVariationKey,
+            spInvItemSummaryUpdateByItemVariationKeys,
+            spInvItemGetByCompanyIDSortingPaging,
+            spInvItemGetForItemRate,
+            spInvItemCategoryGetByCompanyIDSortingPaging,
+            spInvItemCategoryGetByCompanyIDItemCategoryID,
+            spInvItemGetReorderForPurchaseOrder,
+            spInvItemDeleteByCompanyIDItemTypeID,
+            spInvItemNewCodeGetByCompanyIDItemCategoryKey,
+            spInvItemSummaryByItemVariations,
+            spInvItemSummaryByItemVariations2,
+            spInvItemForDropdown,
+            spInvItemListFullDetail,
+            spInvItemGetByCompanyIDItemKey,
+            spInvItemSummaryRecalculate,
+            spInvItemStockUpdate,
+            spInvItemVariationUpdateItemFullCodeFormatted,
+            spInvItemVariationLevelGetByWarehouseID,
+            spInvIGPGetbyCompanyIDSortingPaging,
+            spInvRawMaterialGetForItemRate,
+            spInvManufacturerPartyAssociationGetAssigned,
+            spInvManufacturerGetByManufacturerID,
+            spInvOgpGetByCompanyIDSortingPaging,
+            spInvIGPGetByCompanyIDIGPKey,
+            spInvOGPGetByCompanyIDOGPKey,
+            spInvProductGroupGetByCompanyIDSortingPaging,
+            spInvPurchaseOrderGetByCompanyIDSortingPaging,
+            spInvProductGroupGetByProductGroupID,
+            spInvProductLineGetByProductLineID,
+            spInvReceiveProductionGetByCompanyIDSortingPaging,
+            spInvReceiveProductionGetByCompanyIDReceiveProductionID,
+            spInvRepairingInvoiceGetByCompanyIDSortingPaging,
+            spInvRepairingInvoiceGetByInvoiceKey,
+            spInvSaleGetByCompanyIDSaleID,
+            spInvSaleGetByCompanyIDSortingPaging,
+            spInvSaleReturnGetByCompanyIDSaleReturnID,
+            spInvSaleReturnGetByCompanyIDSortingPaging,
+            spInvSizeGetByCompanyIDSortingPaging,
+            spInvSinReturnGetByCompanyIDSortingPaging,
+            spInvSizeGetByCompanyIDOrderBySizeCode,
+            spInvStoreIssueNoteReturnGetByCompanyIDStoreIssueNoteID,
+            spInvStoreIssueNoteGetByCompanyIDSortingPaging,
+            spInvStockAdjustmentGetByCompanyIDStockAdjustmentID,
+            spInvStockAdjustmentGetByCompanyIDSortingPaging,
+            spInvStoreGetByStoreID,
+            spInvStyleGetByCompanyIDSortingPaging,
+            spInvStoreGetByCompanyIDSortingPaging,
+            spInvTransferStockDetailByMinimumStockLevel,
+            spInvTempInvoiceGetByCompanyIDSortingPaging,
+            spInvTempInvoiceGetByCompanyIDTempInvoiceKey,
+            spInventoryItemWithoutSizesForDropdown,
+            spInventoryWarehouseGetByCompanyIDSortingPaging,
+            spInventoryOgpGetByCompanyIDSortingPaging,
+            spInventoryShopGetByCompanyIDSortingPaging,
+            spInventorySaleOrderGetByCompanyIDSortingPaging,
+            spInvLotGetByCompanyIDSortingPaging,
+            spInvLotGetByLotID,
+            spInvSeasonGetByCompanyIDSortingPaging,
+            spInvSeasonGetBySeasonID,
+            spInvStyleGetByStyleID,
+
+            spReportInvRepairigSaleSummary,
+            spReportInvRepairigSaleItemized,
+            spReportRepairingInvoice,
+            spReportProdReceiveProductionListSizeWise,
+            spReportPurchaseDetail,
+            spReportInvPurchaseByItemCategory,
+            spReportInvPurchaseByYear,
+            spReportInvPurchaseByMonth,
+            spReportInvTransferStockItemized,
+            spReportInvTransferStockSummary,
+            spReportSalesInvoiceCustomerBalance,
+            spReportShopSaleDiscountsByMonth,
+            spReportTempInvoice,
+            spInvStoreIssueNoteGetByCompanyIDStoreIssueNoteID,
+            spCommonJobGetListBySortingPaging,
+            spReportInvSaleBySalesmanAndItem,
+
+            //PMS
+            spPmsTicketGetByCompanyIDSortingPaging,
+
+            //Production
+            spProdAssemblyGetByCompanyIDAssemblyKey,
+            spProdAssemblyGetByCompanyIDSortingPaging,
+            spProdConOrderGetByCompanyIDSortingPaging,
+            spProdFormulaGetByCompanyIDFormulaID,
+            spProdFormulaGetByCompanyIDSortingPaging,
+            spProdProcessStockByCompanyIDOrderIDWorkflowID,
+            spProdProcessWorkflowGetByCompanyIDWorkflowID,
+            spProdProcessWorkFlowGetByCompanyID,
+            spProdProcessStatusRecalculate,
+            spProdProcessGetByProcessID,
+            spProdOrderGetInCompleteByCompanyID,
+            spProdOrderGetByCompanyIDOrderID,
+            spProdOrderDetailGetForReceiveProductionByCompanyIDOrderID,
+            spProdOrderGetRequiredRawMaterialsByCompanyIDItemVariationKey,
+            spProdOrderGetRawMaterialsByOrderID,
+            spProdProcessWorkflowGetByCompanyIDSortingPaging,
+            spProdProcessGetByCompanyIDSortingPaging,
+            spProdProcessProductionGetByCompanyIDSortingPaging,
+            spProdProcessProductionByComapnyIDProcessProductionID,
+            spReportProdProductionAssembly,
+            spReportProdReceiveProductionList,
+            spReportProdOrderIssuances,
+
+            //Finance
+            spFinanceAdjustmentGetByCompanyIDAdjustmentID,
+            spFinanceAdjustmentGetByCompanyIDSortingPaging,
+            spFinanceExpenseGetByCompanyIDSortingPaging,
+            spFinanceHeadShopAssociationWithStatus,
+            spFinanceHeadGetByCompanyIDSortingPaging,
+            spFinanceReceiptGetByCompanyIDReceiptID,
+            spFinanceReceiptGetByCompanyIDSortingPaging,
+            spFinancePaymentGetByCompanyIDSortingPaging,
+            spFinancePaymentGetByCompanyIDPaymentID,
+            spFinanceHeadShopAssociationGetAll,
+
+            //Base
+            spBaseCompanyGetTableRowCount,
+
+            // Messaging
+            spMessagingAlertGetPending,
+            spMessagingAlertGetByAlertKeySortingPaging,
+            spMessagingAlertGetByAlertKey,
+
+            //Report
+            spReportBudget,            
+            spReportCommonContacts,
+            spReportCompanyStock,
+            spReportCompanyOverview,
+            spReportFinanceCustomerLedgerSummary,
+            spReportFinanceCustomerRecoverySheet,
+            spReportSaleSummaryByPartySizeWise,
+            spReportSaleSummarySizeWise,
+            spReportFinanceHeadLedger,            
+            spReportFinanceHeadLedgerSummary,
+            spReportGeneralLedger,
+            spReportItemIncomeStatement,
+            spReportInvDeadItems,
+            spReportInvPendingDeliveryChallans,
+            spReportInvPendingDeliveryChallansItemized,
+            spReportInvInventoryActivity,
+            spReportInvPurchasesSizeWise,
+            spReportInvPurchaseReturnDetailSizeWise,
+            spReportSaleSummaryDynamicGroup,
+            spReportInvSaleByItem,
+            spReportInvBardCode,
+            spReportStock,
+            spReportStock2,
+            spReportInvSeasonStock,
+            spReportInvStockByWarehouse,
+            spReportStockRegister,
+            spReportStockRegisterSize,
+            spReportAccTrialBalance,
+            spReportAccTrialBalance2,
+            spReportAccountingMonthlySummary,
+            spReportInvCategoryWiseStock,
+            spReportInvDayEnd,
+            spReportInvStoreIssnueNoteGeneralList,
+            spReportInvStoreIssnueNoteReceipeList,            
+            spReportInvStockTransfersSizeWise,
+            spReportInvSaleByPaymentMode,
+            spReportInvSaleByItemCategoryWithProfit,
+            spReportInvSaleByItemProductGroup,
+            spReportInvRawMaterialStock,
+            spReportInvSalesSizeWise,
+            spReportInvSaleReturnsSizeWise,
+            spReportInvProcessWiseIssuanceAndReturn,
+            spReportInvPurchaseReturnsSizeWise,
+            spReportInvPurchaseDetailSizeWise,
+            spReportInvSalesAndReturnsSizeWise,
+            spReportInvSaleItemized,
+            spReportInvStockTransfersDetailSizeWise,
+            spReportInvStockMovement,
+
+            spReportFinanceReceiptsSummaryByPartyManager,
+            spReportFinanceReceiptsMonthSummaryByCustomer,
+            spReportFinancePaymentsSummaryByPartyManager,
+            spReportFinanceHeadLedgerDetail,
+            spReportFinanceReceiptsList,
+            spReportYearBudget,
+            spReportProdProcessStatusSizeWise,
+            spReportSecUserActivity,
+            spReportUnbalancedVouchers,
+            spReportVouchersBalanceSummary,
+           
+            //Security
+            spSecStatusAllowed,
+            spSecRoleDashboardAssociationWithStatus,
+            spSecRoleGetAssignedToMenu,
+            spSecRoleGetByCompanyIDSortingPaging,
+            spSecRoleGetByRoleID,
+            spSecRoleMenuAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID,
+            spSecRoleMenuAssociationGetByRoleKey,
+            spSecUserGetBySortingPaging,
+            spSecUserGetByCompanyIDUserID,
+            spSecUserGetShopUsersByCompanyIDSortingPaging,
+            spStatusRoleAssociationGetStatus,
+            spSecRoleCreateCopy,
+            spWarehouseGetByCompanyIDWarehouseID,
+            spSecUserGetLoginHistoryList,
+            spSecUserGetActiveUserList,
+            spSecUserGetLocked,
+
+            // Account
+            spReportAccChartOfAccountAging,
+            spReportAccountingAccountsPayable,
+            spReportFinanceHeadTypeMonthly,
+            spReportFinancialActivity,
+            spProdConOrderOutGetByCompanyIDSortingPaging,
+            spInvProductLineGetByCompanyIDSortingPaging,
+        }
+
+        public static object GetListBySP<T>(StoredProcedures spSecUserGetLocked)
+        {
+            throw new NotImplementedException();
+        }
+
+        public enum QueryTypes
+        {
+            Select,
+            SelectOne,
+            Insert,
+            Update,
+            Delete
+        }
+
+        public string Query { get; set; }
+        public DynamicParameters sqlParams { get; set; }
+
+        #endregion
+
+        #region "General"
+        public static string NewNumberByWarehouse(DBTables table, string numberColumn, int CompanyID, int? warehouseID)
+        {
+            try
+            {
+                log.Debug("Started");
+
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                var sql = string.Format("SELECT ISNULL(MAX(CONVERT(INT,{1})),0) + 1 from {0} where CompanyID={2} and ISNULL(WarehouseID,-1)={3} and dbo.fnIsNumber({1}) = 1", tableName, numberColumn, CompanyID, (warehouseID ?? -1));
+                int result = 0;
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Query<int>(sql).FirstOrDefault();
+                }
+
+                return result.ToString();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static string NewNumber(DBTables table, string numberColumn, int CompanyID, int? shopID)
+        {
+            try
+            {
+                log.Debug("Started");
+
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                var sql = string.Format("SELECT ISNULL(MAX(CONVERT(INT,{1})),0) + 1 from {0} where CompanyID={2} and ISNULL(ShopID,-1)={3} and dbo.fnIsNumber({1}) = 1", tableName, numberColumn, CompanyID, (shopID ?? -1));
+                int result = 0;
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Query<int>(sql).FirstOrDefault();
+                }
+
+                return result.ToString();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static string NewNumber(DBTables table, string numberColumn)
+        {
+            try
+            {
+                log.Debug("Started");
+
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                // Had to add length due to the phone numbers in code field, they cause int overflow and also we don't want to auto increment the phone numbers.
+                var sql = string.Format("SELECT CONVERT(INT, ISNULL(MAX(CONVERT(INT, {1})),0)) + 1 from {0} where CompanyID={2} and dbo.fnIsNumber({1}) = 1 and LEN({1}) <= 8", tableName, numberColumn, Common.LoginData.ImpersonateCompany.CompanyID);
+                int result = 0;
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Query<int>(sql).FirstOrDefault();
+                }
+
+                return result.ToString();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static string NewNumber(DBTables table, string numberColumn, DynamicParameters whereParams)
+        {
+            try
+            {
+                log.Debug("Started");
+                var i = 0;
+
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                var sql = "SELECT CONVERT(INT, ISNULL(MAX(CASE WHEN dbo.fnIsNumber({1})=1 and LEN({1}) <= 8 THEN {1} ELSE 0 END),0)) + 1 from {0} ";
+                int result = 0;
+
+                if (whereParams != null && whereParams.ParameterNames.Count() > 0)
+                {
+                    sql += " where ";
+
+                    foreach (var param in whereParams.ParameterNames)
+                    {
+                        if (i > 0)
+                        {
+                            sql += " and ";
+                        }
+
+                        if (param.ToLower() == "shopid")
+                        {
+                            sql += " isnull(" + param + ",0)=isnull(@" + param + ",0)";
+                        }
+                        else
+                        {
+                            sql += " " + param + "=@" + param;
+                        }
+                        i++;
+                    }
+                }
+
+                sql = string.Format(sql, tableName, numberColumn);
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Query<int>(sql, whereParams).FirstOrDefault();
+                }
+
+                return result.ToString();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static int NewCompanyID()
+        {
+            try
+            {
+                log.Debug("Started");
+
+                var sql = "SELECT CONVERT(INT, ISNULL(MAX(CompanyID),0)) + 1 from BaseCompany";
+                int result = 0;
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Query<int>(sql).FirstOrDefault();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static IEnumerable<T> Select<T>(string query, DynamicParameters columns)
+        {
+            try
+            {
+                IEnumerable<T> model;
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    model = cn.Query<T>(query, columns);
+                }
+
+                return model;
+            }
+            catch (Exception ex)
+            {
+                var paramString = ", Parameters=" + string.Join(", ", from pn in columns.ParameterNames select string.Format("@{0}={1}", pn, (columns as SqlMapper.IParameterLookup)[pn]));
+                var ex1 = new Exception(query + paramString + (query ?? ""), ex);
+                log.Error(ex1);
+                throw;
+            }
+        }
+
+        public static IEnumerable<T> Select<T>(DBTables table, DynamicParameters columns)
+        {
+            var query = "";
+
+            try
+            {
+                query = GetQuery(table, QueryTypes.SelectOne);
+                IEnumerable<T> model;
+                //var queryParams = new DynamicParameters();
+
+                if (columns.ParameterNames.Count() > 0)
+                {
+                    //query += " where " + string.Join(" and ", columns.Select(s => s.Key + "=" + "@" + s.Key));
+                    query += " where ";
+
+                    foreach (var column in columns.ParameterNames)
+                    {
+                    if (column.ToLower() == "warehouseid")
+                        {
+                            query += "isnull(" + column + ",0)=isnull(@" + column + ",0) and ";
+                        }
+                        else
+                        {
+                            query += column + "=@" + column + " and ";
+                        }
+                    }
+
+                    query = query.Substring(0, query.Length - 4);
+                }
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    model = cn.Query<T>(query, columns);
+                }
+
+                return model;
+            }
+            catch (Exception ex)
+            {
+                var paramString = " Parameters=" + string.Join(", ", from pn in columns.ParameterNames select string.Format("@{0}={1}", pn, (columns as SqlMapper.IParameterLookup)[pn]));
+                var ex1 = new Exception(table.ToString() + paramString + (query ?? ""), ex);
+                log.Error(ex1);
+                throw;
+            }
+        }
+
+        public static IEnumerable<T> Select<T>(DBTables table, List<KeyValuePair<string, object>> columns)
+        {
+            try
+            {
+                var query = GetQuery(table, QueryTypes.SelectOne);
+                IEnumerable<T> model;
+                var queryParams = new DynamicParameters();
+
+                if (columns.Count > 0)
+                {
+                    query += " where " + string.Join(" and ", columns.Select(s => s.Key + "=" + "@" + s.Key));
+
+                    foreach (var column in columns)
+                    {
+                        queryParams.Add("@" + column.Key, column.Value);
+                    }
+                }
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    model = cn.Query<T>(query, queryParams);
+                }
+
+                return model;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static int Delete(DBTables table, DynamicParameters columns)
+        {
+            try
+            {
+                var query = "DELETE FROM " + Enum.GetName(typeof(DBTables), table);
+                var result = 0;
+
+                if (columns.ParameterNames.Count() > 0)
+                {
+                    query += " where ";
+
+                    foreach (var column in columns.ParameterNames)
+                    {
+                        query += column + "=@" + column + " and ";
+                    }
+
+                    query = query.Substring(0, query.Length - 4);
+
+                    using (var cn = new SqlConnection(Common.ConnectionString))
+                    {
+                        result = cn.Execute(query, columns);
+                    }
+                }
+                else
+                {
+                    throw new Exception("You must provide columns in delete query.");
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static int Delete(DBTables table, List<KeyValuePair<string, object>> columns)
+        {
+            try
+            {
+                var query = "DELETE FROM " + Enum.GetName(typeof(DBTables), table);
+                var queryParams = new DynamicParameters();
+                var result = 0;
+
+                if (columns.Count > 0)
+                {
+                    query += " where " + string.Join(" and ", columns.Select(s => s.Key + "=" + "@" + s.Key));
+
+                    foreach (var column in columns)
+                    {
+                        queryParams.Add("@" + column.Key, column.Value);
+                    }
+
+                    using (var cn = new SqlConnection(Common.ConnectionString))
+                    {
+                        result = cn.Execute(query, queryParams);
+                    }
+                }
+                else
+                {
+                    throw new Exception("You must provide columns in delete query.");
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static int Delete(DBTables table, string idColumn, int id)
+        {
+            try
+            {
+                log.Debug("Started");
+
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                var parms = new DynamicParameters();
+
+                var sql = string.Empty;
+                if (Common.LoginData.ImpersonateUser.IsSuperAdmin)
+                {
+                    sql = string.Format("DELETE FROM {0} WHERE {1}=@{1}", tableName, idColumn);
+                    parms.Add("@" + idColumn, id);
+                }
+                else
+                {
+                    sql = string.Format("DELETE FROM {0} WHERE CompanyID=@CompanyID AND {2}=@{2}", tableName, Common.LoginData.ImpersonateCompany.CompanyID, idColumn);
+                    parms.Add("@CompanyID", Common.LoginData.ImpersonateCompany.CompanyID);
+                    parms.Add("@" + idColumn, id);
+                }
+
+                int result = 0;
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Execute(sql, parms);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static int Delete(DBTables table, string idColumn, Guid id)
+        {
+            try
+            {
+                log.Debug("Started");
+
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                var parms = new DynamicParameters();
+
+                var sql = string.Empty;
+                if (Common.LoginData.ImpersonateUser.IsSuperAdmin)
+                {
+                    sql = string.Format("DELETE FROM {0} WHERE {1}=@{1}", tableName, idColumn);
+                    parms.Add("@" + idColumn, id);
+                }
+                else
+                {
+                    sql = string.Format("DELETE FROM {0} WHERE CompanyID=@CompanyID AND {2}=@{2}", tableName, Common.LoginData.ImpersonateCompany.CompanyID, idColumn);
+                    parms.Add("@CompanyID", Common.LoginData.ImpersonateCompany.CompanyID);
+                    parms.Add("@" + idColumn, id);
+                }
+
+                int result = 0;
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Execute(sql, parms);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static int UpdateRecordStatusID(DBTables table, string IDColumnName, int ID, int CompanyID, int RecordStatusID)
+        {
+            try
+            {
+                var query = string.Format("update {0} set RecordStatusID=@RecordStatusID where {1} and CompanyID=@CompanyID", Enum.GetName(typeof(DBTables), table), IDColumnName + "=@" + IDColumnName);
+                var parameters = new DynamicParameters();
+                var result = 0;
+
+                parameters.Add("@CompanyID", CompanyID);
+                parameters.Add("@RecordStatusID", RecordStatusID);
+                parameters.Add("@" + IDColumnName, ID);
+
+                switch (table)
+                {
+                    case DBTables.InvSale:
+                        query = string.Format("update {0} set RecordStatusID=@RecordStatusID, UpdatedOn=GetUtcDate(), UpdatedByUserAutoID=@UpdatedByUserAutoID where {1} and CompanyID=@CompanyID", Enum.GetName(typeof(DBTables), table), IDColumnName + "=@" + IDColumnName);
+                        parameters.Add("@UpdatedByUserAutoID", Common.LoginData.ImpersonateUser.UserAutoID);
+
+                        break;
+                }
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Execute(query, parameters);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static int Insert(DBTables table, Dapper.DynamicParameters queryParams)
+        {
+            try
+            {
+
+                 var query = GetQuery(table, DapperQuery.QueryTypes.Insert);
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    return cn.QuerySingle<int>(query, queryParams);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                log.Error(table.ToString());
+
+               throw;
+            }
+        }
+
+        public static T SaveChanges<T>(DBTables table, DapperQuery.QueryTypes queryType, T model)
+        {
+            try
+            {
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                var parms = new DynamicParameters();
+                var qry = "";
+                var columns = "";
+                var values = "";
+                T result;
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    var parms1 = new DynamicParameters();
+                    parms1.Add("@TableName", tableName);
+
+                    var cols = cn.Query<TableColumns>("SELECT *, COLUMNPROPERTY(object_id(TABLE_SCHEMA+'.'+TABLE_NAME), COLUMN_NAME, 'IsIdentity') 'IsIdentity',  COLUMNPROPERTY(object_id(TABLE_SCHEMA+'.'+TABLE_NAME), COLUMN_NAME, 'IsComputed') 'IsComputed' FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @TableName AND TABLE_SCHEMA='dbo'", parms1, commandTimeout: 120);
+
+                    foreach (PropertyInfo prop in model.GetType().GetProperties())
+                    {
+                        var col = cols.Where(w => w.COLUMN_NAME.ToLower() == prop.Name.ToLower()).FirstOrDefault();
+                        if (col != null)
+                        {
+                            //var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+
+                            System.Diagnostics.Debug.WriteLine("@{0}={1}", prop.Name, prop.GetValue(model));
+
+                            switch (queryType)
+                            {
+                                case QueryTypes.Insert:
+                                    if (!col.IsIdentity && !col.IsComputed)
+                                    {
+                                        columns += "," + prop.Name;
+                                        values += ",@" + prop.Name;
+
+                                        parms.Add("@" + prop.Name, prop.GetValue(model));
+                                    }
+                                    //columns += string.Join(",", cols.Where(w => !w.IsIdentity).Select(s => s.COLUMN_NAME));
+                                    //values += string.Join(",", cols.Where(w => !w.IsIdentity).Select(s => "@" + s.COLUMN_NAME));
+
+                                    break;
+                                case QueryTypes.Update:
+                                    if (!col.IsComputed)
+                                    {
+                                        if (!col.IsIdentity)
+                                        {
+                                            values += "," + prop.Name + "=@" + prop.Name;
+                                        }
+                                        parms.Add("@" + prop.Name, prop.GetValue(model));   // for where clause down below
+                                    }
+
+                                    //values += string.Join(", ", cols.Where(w => !w.IsIdentity && w.COLUMN_NAME != "CompanyID" && !w.COLUMN_NAME.Contains("Created"))
+                                    //    .Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+
+                                    break;
+                            }
+                        }
+                    }
+
+                    switch (queryType)
+                    {
+                        case QueryTypes.Insert:
+                            qry = "insert into " + table.ToString() + " (" + columns.Substring(1) + ") "
+                                + " OUTPUT INSERTED.*"
+                                + " values (" + values.Substring(1) + ")";
+
+                            break;
+                        case QueryTypes.Update:
+                            qry = "update " + table.ToString() + " set " 
+                                + values.Substring(1)
+                                + " OUTPUT INSERTED.*"
+                                + " where " + string.Join(" and ", cols.Where(w => (w.IsIdentity || w.COLUMN_NAME == "CompanyID")).Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+
+                            break;
+                    }
+
+                    result = cn.Query<T>(qry, parms).FirstOrDefault();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static List<T> SaveChanges<T>(DBTables table, List<T> modelList)
+        {
+            try
+            {
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                var parms = new DynamicParameters();
+                var insertQry = "";
+                var updateQry = "";
+                //var updateColumns = "";
+                var insertColumns = "";
+                var updateValues = "";
+                var insertValues = "";
+                List<T> results = new List<T>();
+                T result;
+                var cacheKey = string.Format("{0}-table-columns", table);
+
+                var cols = CacheManager.Get<IEnumerable<TableColumns>>(cacheKey);
+                if (cols == null)
+                {
+                    var qry = "SELECT COLUMNPROPERTY(object_id(c.TABLE_SCHEMA+'.'+c.TABLE_NAME), c.COLUMN_NAME, 'IsIdentity') 'IsIdentity', ISNULL(OBJECTPROPERTY(OBJECT_ID(k.CONSTRAINT_SCHEMA + '.' + QUOTENAME(k.CONSTRAINT_NAME)), 'IsPrimaryKey'),0) 'IsPrimaryKey', COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA+'.'+c.TABLE_NAME),c.COLUMN_NAME,'IsComputed') AS 'IsComputed', c.* FROM INFORMATION_SCHEMA.COLUMNS c left join INFORMATION_SCHEMA.KEY_COLUMN_USAGE k on c.table_name=k.table_name and c.COLUMN_NAME=k.COLUMN_NAME and OBJECTPROPERTY(OBJECT_ID(k.CONSTRAINT_SCHEMA + '.' + QUOTENAME(k.CONSTRAINT_NAME)), 'IsPrimaryKey') = 1 WHERE c.TABLE_NAME = @TableName AND c.TABLE_SCHEMA='dbo'";
+
+                    using (var cn = new SqlConnection(Common.ConnectionString))
+                    {
+                        var parms1 = new DynamicParameters();
+                        parms1.Add("@TableName", tableName);
+                        cols = cn.Query<TableColumns>(qry, parms1, commandTimeout: 120);
+
+                        CacheManager.Set(cacheKey, cols);
+                    }
+                }
+
+                var identityCol = cols.Where(w => (w.IsIdentity)).FirstOrDefault();
+                var primaryKeyCol = cols.Where(w => (w.IsPrimaryKey)).FirstOrDefault();
+                var isPrimaryKeyGuid = cols.Where(w => w.IsPrimaryKey && w.DATA_TYPE == "uniqueidentifier").FirstOrDefault() != null ? true : false;
+
+                if (modelList != null && modelList.Count > 0)
+                {
+                    var model = modelList[0];
+
+                    foreach (PropertyInfo prop in model.GetType().GetProperties())
+                    {
+                        var col = cols.Where(w => w.COLUMN_NAME.ToLower() == prop.Name.ToLower()).FirstOrDefault();
+                        if (col != null && !col.IsComputed)     // cannot insert or update computed column
+                        {
+                            if (!col.IsIdentity)
+                            {
+                                insertColumns += "," + prop.Name;
+                                insertValues += ",@" + prop.Name;
+                            }
+
+                            if (!col.IsIdentity && !col.IsPrimaryKey)  // new tables have guid / uniqueidentifier as primary key
+                            {
+                                updateValues += "," + prop.Name + "=@" + prop.Name;
+                            }
+                        }
+                    }
+
+                    insertQry = "SET NOCOUNT ON; "
+                        + " DECLARE @generated_keys table(" + primaryKeyCol.COLUMN_NAME + " " + (isPrimaryKeyGuid ? "uniqueidentifier" : "int") + ")"
+                        + " insert into " + table.ToString() + " (" + insertColumns.Substring(1) + ") " + " OUTPUT INSERTED." + primaryKeyCol.COLUMN_NAME + " into @generated_keys values (" + insertValues.Substring(1) + ")"
+                        + " SELECT t.* FROM @generated_keys AS g INNER JOIN " + table.ToString() + " AS t ON g." + primaryKeyCol.COLUMN_NAME + " = t." + primaryKeyCol.COLUMN_NAME + " WHERE @@ROWCOUNT > 0";
+
+                    updateQry = "update " + table.ToString() + " set " + updateValues.Substring(1) + " where " + string.Join(" and ", cols.Where(w => (w.IsIdentity || w.COLUMN_NAME == "CompanyID" || w.IsPrimaryKey)).Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+                    updateQry += " select * from " + table.ToString() + " where " + string.Join(" and ", cols.Where(w => (w.IsIdentity || w.COLUMN_NAME == "CompanyID" || w.IsPrimaryKey)).Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+
+                    QueryTypes queryType;
+                    foreach (var model1 in modelList)
+                    {
+                        if (identityCol != null)
+                        {
+                            var id = (int)model1.GetType().GetProperties().Where(w => w.Name == identityCol.COLUMN_NAME).FirstOrDefault().GetValue(model1);
+                            queryType = id > 0 ? QueryTypes.Update : QueryTypes.Insert;
+                        }
+                        else if (primaryKeyCol != null && isPrimaryKeyGuid)     // new tables have guid / uniqueidentifier as primary key
+                        {
+                            var id = (Guid)model1.GetType().GetProperties().Where(w => w.Name == primaryKeyCol.COLUMN_NAME).FirstOrDefault().GetValue(model1);
+                            var whereParms = new DynamicParameters();
+                            whereParms.Add("@" + primaryKeyCol.COLUMN_NAME, id);
+                            var record = DapperQuery.Select<T>(table, whereParms).FirstOrDefault();
+                            queryType = record != null ? QueryTypes.Update : QueryTypes.Insert;
+                        }
+                        else
+                        {
+                            queryType = QueryTypes.Insert;
+                        }
+
+                        if (table == DBTables.SecUserRoleAssociation) queryType = QueryTypes.Insert;    //temporary solution because there is no identity column.
+
+                        parms = new DynamicParameters();
+
+                        foreach (PropertyInfo prop in model1.GetType().GetProperties())
+                        {
+                            var col = cols.Where(w => w.COLUMN_NAME.ToLower() == prop.Name.ToLower()).FirstOrDefault();
+                            if (col != null)
+                            {
+                                switch (queryType)
+                                {
+                                    case QueryTypes.Insert:
+                                        if (identityCol == null || prop.Name != identityCol.COLUMN_NAME) parms.Add("@" + prop.Name, prop.GetValue(model1));
+
+                                        break;
+                                    case QueryTypes.Update:
+                                        parms.Add("@" + prop.Name, prop.GetValue(model1));   // for where clause down below
+
+                                        break;
+                                }
+                            }
+                        }
+
+                        using (var cn = new SqlConnection(Common.ConnectionString))
+                        {
+
+                            switch (queryType)
+                            {
+                                case QueryTypes.Insert:
+                                    result = cn.Query<T>(insertQry, parms).FirstOrDefault();
+                                    results.Add(result);
+
+                                    break;
+                                case QueryTypes.Update:
+                                    result = cn.Query<T>(updateQry, parms).FirstOrDefault();
+                                    results.Add(result);
+
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+
+
+
+
+
+
+
+
+
+
+                //foreach (PropertyInfo prop in model.GetType().GetProperties())
+                //{
+                //    var col = cols.Where(w => w.COLUMN_NAME.ToLower() == prop.Name.ToLower()).FirstOrDefault();
+                //    if (col != null)
+                //    {
+                //        //System.Diagnostics.Debug.WriteLine("@{0}={1}", prop.Name, prop.GetValue(model));
+
+                //        switch (queryType)
+                //        {
+                //            case QueryTypes.Insert:
+                //                if (!col.IsIdentity)
+                //                {
+                //                    columns += "," + prop.Name;
+                //                    values += ",@" + prop.Name;
+
+                //                    parms.Add("@" + prop.Name, prop.GetValue(model));
+                //                }
+                //                //columns += string.Join(",", cols.Where(w => !w.IsIdentity).Select(s => s.COLUMN_NAME));
+                //                //values += string.Join(",", cols.Where(w => !w.IsIdentity).Select(s => "@" + s.COLUMN_NAME));
+
+                //                break;
+                //            case QueryTypes.Update:
+                //                if (!col.IsIdentity)
+                //                {
+                //                    values += "," + prop.Name + "=@" + prop.Name;
+                //                }
+                //                parms.Add("@" + prop.Name, prop.GetValue(model));   // for where clause down below
+
+                //                //values += string.Join(", ", cols.Where(w => !w.IsIdentity && w.COLUMN_NAME != "CompanyID" && !w.COLUMN_NAME.Contains("Created"))
+                //                //    .Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+
+                //                break;
+                //        }
+                //    }
+                //}
+
+                //switch (queryType)
+                //{
+                //    case QueryTypes.Insert:
+                //        qry = "insert into " + table.ToString() + " (" + columns.Substring(1) + ") "
+                //            + " OUTPUT INSERTED.*"
+                //            + " values (" + values.Substring(1) + ")";
+
+                //        break;
+                //    case QueryTypes.Update:
+                //        qry = "update " + table.ToString() + " set "
+                //            + values.Substring(1)
+                //            + " OUTPUT INSERTED.*"
+                //            + " where " + string.Join(" and ", cols.Where(w => (w.IsIdentity || w.COLUMN_NAME == "CompanyID")).Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+
+                //        break;
+                //}
+
+                //result = cn.Query<T>(qry, parms).FirstOrDefault();
+
+                return results;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static T SaveChanges<T>(DBTables table, T model)
+        {
+            var list = new List<T>();
+            list.Add(model);
+
+            var results = SaveChanges<T>(table, list);
+
+            return results.FirstOrDefault();
+        }
+
+        public static int Update(DBTables table, Dapper.DynamicParameters queryParams)
+        {
+            try
+            {
+                var query = GetQuery(table, DapperQuery.QueryTypes.Update);
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    return cn.QueryFirstOrDefault<int>(query, queryParams);
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static string GetQuery(DBTables table, QueryTypes queryType)
+        {
+            try
+            {
+                var cacheKey = string.Format("{0}-{1}", table.ToString(), queryType);
+                var finalQuery = CacheManager.Get<string>(cacheKey);
+
+                if (string.IsNullOrEmpty(finalQuery))
+                {
+                    log.InfoFormat("Query '{0}' for table '{1}' is not in cache so building it ...", queryType, table);
+
+                    using (var cn = new SqlConnection(Common.ConnectionString))
+                    {
+                        var params1 = new DynamicParameters();
+                        params1.Add("@TableName", Enum.GetName(typeof(DBTables), table));
+                        var cols = cn.Query<TableColumns>("SELECT COLUMNPROPERTY(object_id(c.TABLE_SCHEMA+'.'+c.TABLE_NAME), c.COLUMN_NAME, 'IsIdentity') 'IsIdentity', ISNULL(OBJECTPROPERTY(OBJECT_ID(k.CONSTRAINT_SCHEMA + '.' + QUOTENAME(k.CONSTRAINT_NAME)), 'IsPrimaryKey'),0) 'IsPrimaryKey', c.* FROM INFORMATION_SCHEMA.COLUMNS c left join INFORMATION_SCHEMA.KEY_COLUMN_USAGE k on c.table_name=k.table_name and c.COLUMN_NAME=k.COLUMN_NAME and OBJECTPROPERTY(OBJECT_ID(k.CONSTRAINT_SCHEMA + '.' + QUOTENAME(k.CONSTRAINT_NAME)), 'IsPrimaryKey') = 1 WHERE c.TABLE_NAME = @TableName AND c.TABLE_SCHEMA='dbo'", params1, commandTimeout: 120);
+                        var primaryKeyCol = cols.Where(w => (w.IsPrimaryKey)).FirstOrDefault();
+                        var isPrimaryKeyGuid = cols.Where(w => w.IsPrimaryKey && w.DATA_TYPE == "uniqueidentifier").FirstOrDefault() != null ? true : false;
+
+                        switch (queryType)
+                        {
+                            case QueryTypes.SelectOne:
+                                finalQuery = "select " + string.Join(",", cols.Select(s => s.COLUMN_NAME))
+                                    + " from " + table.ToString();
+                                break;
+                            case QueryTypes.Insert:
+                                finalQuery = "SET NOCOUNT ON; "
+                                    + " DECLARE @generated_keys table(" + primaryKeyCol.COLUMN_NAME + " " + (isPrimaryKeyGuid ? "uniqueidentifier" : "int") + ")"
+                                    + "insert into " + table.ToString() + " (" + string.Join(",", cols.Where(w => !w.IsIdentity).Select(s => s.COLUMN_NAME)) + ") "
+                                    + " OUTPUT INSERTED." + primaryKeyCol.COLUMN_NAME + " into @generated_keys "
+                                    + " values (" + string.Join(",", cols.Where(w => !w.IsIdentity).Select(s => "@" + s.COLUMN_NAME)) + ")"
+                                    + " SELECT t.* FROM @generated_keys AS g INNER JOIN " + table.ToString() + " AS t ON g." + primaryKeyCol.COLUMN_NAME + " = t." + primaryKeyCol.COLUMN_NAME + " WHERE @@ROWCOUNT > 0";
+
+                                break;
+                            case QueryTypes.Update:
+                                finalQuery = "update " + table.ToString() + " set ";
+                                finalQuery += string.Join(", ", cols.Where(w => !w.IsIdentity && w.COLUMN_NAME != "CompanyID" && !w.COLUMN_NAME.Contains("Created"))
+                                    .Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+                                //finalQuery += (model.Where(w => w.IsIdentity).Count() > 0 ? " OUTPUT INSERTED." + string.Join(",INSERTED.", model.Select(s => s.COLUMN_NAME)) : "");
+                                finalQuery += " where " + string.Join(" and ", cols.Where(w => (w.IsIdentity || w.COLUMN_NAME == "CompanyID")).Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+
+                                finalQuery += (cols.Where(w => w.IsIdentity).Count() > 0 ? " select " + string.Join(",", cols.Select(s => s.COLUMN_NAME)) : "") + " from " + table.ToString();
+                                finalQuery += " where " + string.Join(" and ", cols.Where(w => (w.IsIdentity || w.COLUMN_NAME == "CompanyID")).Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+
+                                break;
+                            case QueryTypes.Delete:
+                                finalQuery = "delete from " + table.ToString() + " where " + string.Join(" and ", cols.Where(w => w.IsIdentity).Select(s => s.COLUMN_NAME));
+                                break;
+                        }
+                    }
+
+                    CacheManager.Set(cacheKey, finalQuery);
+                }
+
+                return finalQuery;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static int ExecuteSP(string storedProcedureName, DynamicParameters spParams)
+        {
+            int result = 0;
+
+            try
+            {
+                using (var db = new SqlConnection(Common.ConnectionString))
+                {
+                    result = db.QueryFirstOrDefault<int>(storedProcedureName, spParams, commandType: CommandType.StoredProcedure, commandTimeout: 120);
+                }
+            }
+            catch (Exception ex)
+            {
+                var paramString = " Parameters=" + string.Join(", ", from pn in spParams.ParameterNames select string.Format("@{0}={1}", pn, (spParams as SqlMapper.IParameterLookup)[pn]));
+                var ex1 = new Exception(storedProcedureName + paramString, ex);
+                throw;
+            }
+
+            return result;
+        }
+
+        public static ContentResult GetContentResultBySP<T>(string storedProcedureName, DynamicParameters spParams)
+        {
+            return GetContentResultBySP<T>(storedProcedureName, spParams, 60);
+        }
+
+        public static ContentResult GetContentResultBySP<T>(string storedProcedureName, DynamicParameters spParams, int timeout)
+        {
+            var content = new ContentResult();
+            content.ContentType = "application/json";
+
+            try
+            {
+                using (var db = new SqlConnection(Common.ConnectionString))
+                {
+                    var data = db.Query<T>(storedProcedureName, spParams, commandType: CommandType.StoredProcedure, commandTimeout: timeout);
+                    content.Content = JsonConvert.SerializeObject(data, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+
+            return content;
+        }
+
+        public static ContentResult GetContentResultBySP<T>(StoredProcedures storedProcedure, DynamicParameters spParams, int timeout)
+        {
+            return GetContentResultBySP<T>(Enum.GetName(typeof(StoredProcedures), storedProcedure), spParams, timeout);
+        }
+
+        public static ContentResult GetContentResultBySP<T>(StoredProcedures storedProcedure, DynamicParameters spParams)
+        {
+            return GetContentResultBySP<T>(Enum.GetName(typeof(StoredProcedures), storedProcedure), spParams);
+            //var content = new ContentResult();
+            //content.ContentType = "application/json";
+
+            //try
+            //{
+            //    using (var db = new SqlConnection(Common.ConnectionString))
+            //    {
+            //        var data = db.Query<T>(Enum.GetName(typeof(StoredProcedures), storedProcedure), spParams, commandType: CommandType.StoredProcedure, commandTimeout: 120);
+            //        content.Content = JsonConvert.SerializeObject(data, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    log.Error(ex);
+            //    throw;
+            //}
+
+            //return content;
+        }
+
+        public static T ExecuteScalarQuery<T>(string qry, DynamicParameters parms, int timeout)
+        {
+            T result;
+
+            try
+            {
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.ExecuteScalar<T>(qry, parms, commandType: CommandType.Text, commandTimeout: timeout);
+                  
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static List<T> ExecuteQuery<T>(string query, DynamicParameters spParams, int timeout)
+        {
+            var result = new List<T>();
+            try
+            {
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Query<T>(query, spParams, commandType: CommandType.Text, commandTimeout: timeout).ToList();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+
+            return result;
+        }
+
+        public static List<T> ExecuteQuery<T>(string query, int timeout)
+        {
+            var result = new List<T>();
+            try
+            {
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Query<T>(query, commandType: CommandType.Text, commandTimeout: timeout).ToList();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+
+            return result;
+        }
+
+        public static List<T> GetListBySP<T>(StoredProcedures storedProcedure, DynamicParameters spParams, int timeout)
+        {
+            var result = new List<T>();
+
+            try
+            {
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Query<T>(Enum.GetName(typeof(StoredProcedures), storedProcedure), spParams, commandType: CommandType.StoredProcedure, commandTimeout: timeout).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                var paramString = " Parameters=" + string.Join(", ", from pn in spParams.ParameterNames select string.Format("@{0}={1}", pn, (spParams as SqlMapper.IParameterLookup)[pn]));
+                var ex1 = new Exception(storedProcedure.ToString() + paramString, ex);
+                log.Error(ex1);
+                throw ex;
+            }
+
+            return result;
+        }
+
+        public static List<T> GetListBySP<T>(StoredProcedures storedProcedure, DynamicParameters spParams)
+        {
+            return GetListBySP<T>(storedProcedure, spParams, 1 * 60);
+        }
+
+        #endregion
+
+        #region "Inventory"
+
+        public static List<ItemSummaryViewModel> GetStock(int companyID, int? warehouseID, List<Guid> ItemVariationKeys)
+        {
+            try
+            {
+                var columns = new DynamicParameters();
+                columns.Add("@CompanyID", companyID);
+                columns.Add("@WarehouseID", warehouseID);
+                columns.Add("@ItemVariationKeys", string.Join(",", ItemVariationKeys));
+               // columns.Add("@ItemCategoryID", string.Join(",", ItemCategoryID));
+                //var qry = "SELECT * FROM {0} WHERE CompanyID=@CompanyID AND ISNULL(WarehouseID,-1)=ISNULL(WarehouseID,-1) AND ItemVariationKey IN dbo.fn_Split(@ItemVariationKeys)";
+                //qry = string.Format(qry, DBTables.vwItemSummary.ToString());
+                ////var stock = DapperQuery.Select<ItemSummaryViewModel>(DapperQuery.DBTables.vwItemSummary, columns).ToList();
+                //var stock = DapperQuery.ExecuteQuery< ItemSummaryViewModel>(qry, columns, 60 * 2);
+                var stock = DapperQuery.GetListBySP<ItemSummaryViewModel>(StoredProcedures.spInvItemSummaryByItemVariations2, columns);
+
+                return stock;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static List<ItemSummaryViewModel> GetStock2(int companyID, int? warehouseID, List<Guid> ItemVariationKeys)
+        {
+            try
+            {
+                var columns = new DynamicParameters();
+                columns.Add("@CompanyID", companyID);
+                columns.Add("@WarehouseID", warehouseID);
+                columns.Add("@ItemVariationKeys", string.Join(",", ItemVariationKeys));
+                var stock = DapperQuery.GetListBySP<ItemSummaryViewModel>(StoredProcedures.spInvItemSummaryByItemVariations2, columns);
+
+                return stock;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static ItemViewModel GetItem(int companyID, Guid itemVariationKey)
+        {
+            var parms = new DynamicParameters();
+            parms.Add("@CompanyID", companyID);
+            parms.Add("@ItemVariationKey", itemVariationKey);
+
+            return DapperQuery.GetListBySP<ItemViewModel>(StoredProcedures.spInvItemGetByCompanyIDItemVariationKey, parms).FirstOrDefault();
+        }
+
+        public static ItemSummaryViewModel GetItemSummary(int companyID, int? warehouseID, Guid ItemVariationKey)
+        {
+            var parms = new DynamicParameters();
+            parms.Add("@CompanyID", companyID);
+            parms.Add("@WarehouseID", warehouseID);
+            parms.Add("@ItemVariationKeys", ItemVariationKey);
+
+            return DapperQuery.GetListBySP<ItemSummaryViewModel>(StoredProcedures.spInvItemSummaryByItemVariations, parms).FirstOrDefault();
+        }
+
+        public static void DeliveryChallanUpdateInvoiceQty(int companyID, int deliveryChallanID)
+        {
+            var dcParms = new DynamicParameters();
+            dcParms.Add("@CompanyID", companyID);
+            dcParms.Add("@DeliveryChallanID", deliveryChallanID);
+            DapperQuery.ExecuteSP(DapperQuery.StoredProcedures.spInvDeliveryChallanUpdateSaleQty.ToString(), dcParms);  // this will invoice qty in delivery challan.
+        }
+
+        #endregion
+
+        #region "Base"
+
+        public static bool IsDuplicate(DapperQuery.DBTables table, int companyID, string keyColumn , string key, string valueColumn, string value)
+        {
+            try
+            {
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                var qry = string.Format("SELECT COUNT(*) FROM {0} WHERE CompanyID = @CompanyID AND {1} <> @{1} AND {2} = @{2} ", DapperQuery.DBTables.BaseCompany.ToString(), keyColumn, valueColumn);
+
+                var parms = new DynamicParameters();
+                parms.Add("@CompanyID", companyID);
+                parms.Add('@' + keyColumn, key);
+                parms.Add('@' + valueColumn, value);
+
+                var count = DapperQuery.ExecuteScalarQuery<int>(qry, parms, 60);
+
+                return (count > 0);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static bool IsDuplicate(DapperQuery.DBTables table, int companyID, string keyColumn, int key, string valueColumn, string value)
+        {
+            try
+            {
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                var qry = string.Format("SELECT COUNT(*) FROM {0} WHERE CompanyID = @CompanyID AND {1} <> @{1} AND {2} = @{2} ", table, keyColumn, valueColumn);
+
+                var parms = new DynamicParameters();
+                parms.Add("@CompanyID", companyID);
+                parms.Add('@' + keyColumn, key);
+                parms.Add('@' + valueColumn, value);
+
+                var count = DapperQuery.ExecuteScalarQuery<int>(qry, parms, 60);
+
+                return (count > 0);
+
+
+                //return Select<CompanyViewModel>(DBTables.BaseCompany, parms).FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+        
+        public static bool IsDuplicate(DapperQuery.DBTables table, int companyID, int? shopID, string keyColumn, int key, string valueColumn, string value)
+        {
+            try
+            {
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                var qry = string.Format("SELECT COUNT(*) FROM {0} WHERE CompanyID = @CompanyID AND {1} <> @{1} AND {2} = @{2} AND ISNULL(ShopID,-1)=ISNULL(@ShopID,-1)", table, keyColumn, valueColumn);
+
+                var parms = new DynamicParameters();
+                parms.Add("@CompanyID", companyID);
+                parms.Add("@ShopID", shopID);
+                parms.Add('@' + keyColumn, key);
+                parms.Add('@' + valueColumn, value);
+
+                var count = DapperQuery.ExecuteScalarQuery<int>(qry, parms, 60);
+
+                return (count > 0);
+
+
+                //return Select<CompanyViewModel>(DBTables.BaseCompany, parms).FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static CompanyViewModel GetCompany(int companyID)
+        {
+            try
+            {
+                var parms = new DynamicParameters();
+                parms.Add("@CompanyID", companyID);
+
+                return Select<CompanyViewModel>(DBTables.BaseCompany, parms).FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static ShopViewModel GetShop(int companyID, int shopID)
+        {
+            try
+            {
+                var parms = new DynamicParameters();
+                parms.Add("@ShopID", shopID);
+
+                return Select<ShopViewModel>(DBTables.BaseShop, parms).FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static WarehouseViewModel GetWarehouse(int companyID, int warehouseID)
+        {
+            try
+            {
+                var parms = new DynamicParameters();
+                parms.Add("@WarehouseID", warehouseID);
+
+                return Select<WarehouseViewModel>(DBTables.InvWarehouse, parms).FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static int GetWarehouseCount(int companyID)
+        {
+            try
+            {
+                var qry = string.Format("select count(*) from {0} where CompanyID=@CompanyID", DapperQuery.DBTables.InvWarehouse.ToString());
+                var parms = new DynamicParameters();
+                parms.Add("@CompanyID", companyID);
+
+                return ExecuteScalarQuery<int>(qry, parms, 30);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region "Production"
+
+        public static int spProdOrderRecalculateRecievedProductionQty(short companyID, int OrderID)
+        {
+            try
+            {
+                var spParams = new DynamicParameters();
+                spParams.Add("@CompanyID", companyID);
+                spParams.Add("@OrderID", OrderID);
+
+                return DapperQuery.ExecuteSP("spProdOrderRecalculateRecievedProductionQty", spParams);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static List<CompanyPaymentViewModel> spBaseCompanyPaymentGetOverduePayments(short companyID)
+        {
+            try
+            {
+                var spParams = new DynamicParameters();
+                spParams.Add("@CompanyID", companyID);
+
+                return DapperQuery.GetListBySP<CompanyPaymentViewModel>(StoredProcedures.spBaseCompanyPaymentGetOverduePayments, spParams);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region "Security"
+
+        public static UserViewModel GetUserByCompanyIDUserAutoID(int companyID, int userAutoID)
+        {
+            try
+            {
+                var parms = new DynamicParameters();
+                parms.Add("@CompanyID", companyID);
+                parms.Add("@UserAutoID", userAutoID);
+                return DapperQuery.ExecuteQuery<UserViewModel>(SecUser_SelectByCompanyIDUserID, parms, 60)
+                    .FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static UserViewModel GetUserByCompanyIDUserID(int companyID, int userID)
+        {
+            try
+            {
+                var parms = new DynamicParameters();
+                parms.Add("@CompanyID", companyID);
+                parms.Add("@UserID", userID);
+                return DapperQuery.ExecuteQuery<UserViewModel>(SecUser_SelectByCompanyIDUserID, parms, 60)
+                    .FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static UserViewModel GetUserByCompanyIDUserAutoIDIsSuperAdmin(int companyID, int userAutoID, bool isSuperAdmin)
+        {
+            try
+            {
+                var parms = new DynamicParameters();
+                parms.Add("@CompanyID", companyID);
+                parms.Add("@UserAutoID", userAutoID);
+                parms.Add("@IsSuperAdmin", isSuperAdmin);
+                return DapperQuery.ExecuteQuery<UserViewModel>(SecUser_SelectByCompanyIDUserAutoIDIsSuperAdmin, parms, 60)
+                    .FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        #endregion
+    }
+
+    public class TableColumns
+    {
+        public string TABLE_CATALOG { get; set; }
+        public string  TABLE_SCHEMA { get; set; }
+        public string TABLE_NAME { get; set; }
+        public string COLUMN_NAME { get; set; }
+        public int ORDINAL_POSITION { get; set; }
+        public string COLUMN_DEFAULT { get; set; }
+        public string IS_NULLABLE { get; set; }
+        public string DATA_TYPE { get; set; }
+        public int CHARACTER_MAXIMUM_LENGTH { get; set; }
+        public int CHARACTER_OCTET_LENGTH { get; set; }
+        public int NUMERIC_PRECISION { get; set; }
+        public int NUMERIC_PRECISION_RADIX { get; set; }
+        public int NUMERIC_SCALE { get; set; }
+        public string DATETIME_PRECISION { get; set; }
+        public string CHARACTER_SET_CATALOG { get; set; }
+        public string CHARACTER_SET_SCHEMA { get; set; }
+        public string CHARACTER_SET_NAME { get; set; }
+        public string COLLATION_CATALOG { get; set; }
+        public string COLLATION_SCHEMA { get; set; }
+        public string COLLATION_NAME { get; set; }
+        public string DOMAIN_CATALOG { get; set; }
+        public string DOMAIN_SCHEMA { get; set; }
+        public string DOMAIN_NAME { get; set; }
+        public bool IsIdentity { get; set; }
+        public bool IsComputed { get; set; }
+        public bool IsPrimaryKey { get; set; }
+    }
+
+}

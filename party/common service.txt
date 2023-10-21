@@ -1,0 +1,1150 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpResponse, } from '@angular/common/http';
+import { ResponseContentType } from '@angular/http';
+
+import { Observable, of, forkJoin } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
+
+import { Menu } from '../models/menu';
+import { LoginInfo, UserInfo, CompanyInfo } from '../models/loginInfo';
+import { MenuRoleAssociation } from '../models/menuRoleAssociation';
+import { Contact } from '../models/contact';
+import { Spinner } from '../models/spinner';
+import { ReportViewer } from '../models/reportViewer';
+import { saveAs } from 'file-saver';
+import { Dropdown } from '../models/dropdown';
+import { Dashboard, CommonDashboard } from '../models/dashboard';
+import { ResponseMessage } from '../models/responseMessage';
+import { CompanyProfileList, CompanyProfile } from '../common/models/companyProfile';
+import { CompanySetting, CompanySettingDetail } from '../common/models/companySetting';
+import { CompanyPayment, CompanyPaymentDatabase, CompanyPaymentDetail } from '../common/models/companyPayment';
+import { ShopList, Shop } from '../common/models/Shop';
+import { UserList } from '../security/models/userlist';
+import { SystemSettings } from '../models/common';
+import { GroupList, Group } from '../common/models/group';
+import { Item } from '../models/item';
+import { CommonPartyShopAssociationWithStatus, ManufacturerPartyAssociation, Party, PartyList } from '../models/party';
+import { CompanyModelList, CompanyModel } from 'src/app/common/models/company';
+
+import { BaseCompanyType } from 'src/app/common/models/BaseCompanyType';
+import { SelectList } from '../models/selectList';
+import { QTDrive } from '../common/models/qtDrive';
+import { SoftwareBrand, SoftwareBrandList } from '../common/models/softwarebrand';
+import { CommonJobList } from '../common/models/CommonJobList';
+import { DeleteCompanyData } from '../common/models/deleteCompanyData';
+import { UserListDetail } from '../security/models/userlist';
+@Injectable({
+    providedIn: 'root'
+})
+export class CommonService {
+    private companyTypes: any;
+    private url;
+    public menus: Menu[];
+    private companySetting: CompanySettingDetail[];
+    private contacts: any;
+    private customers: any;
+    private suppliers: any;
+    private partyManagers: any;
+    private warehouses: any;
+    // private itemcategory: any;
+    public loginInfo: LoginInfo;
+    private dashboard: Dashboard;
+    private allowedDashboards: CommonDashboard[];
+    private spinner: Spinner = new Spinner();
+    private isBusySpinnerVisible = false;
+    private AppSettingBackupPath: string = ''
+    private cao: any;
+    private appSettingsFetched = false;
+    public viewReportData: ResponseMessage;
+  
+    public appSettings = {
+        General_MenuStyle: 'default',
+        Inv_SI_PrintFooter: '',
+        Inv_SI_ShowGstNumber: false,
+        Inv_SI_GstNumber: '',
+        Inv_SI_IsPrintHeaderEnabled: false,
+        Inv_SI_PrintHeader: '',
+        General_IsFbrIntegrationEnabled: false,
+        Inv_SI_ShowNtnNumber: false,
+        Inv_SI_NtnNumber: '',
+        Inv_SI_SessionPinCode: '',
+        Inv_DC_IsAutoNumberEnabled: false,
+    }
+    private companySettings: CompanySetting[];
+
+    constructor(private http: HttpClient) {
+    }
+
+    public viewReport(reportViewer: ReportViewer): Observable<ResponseMessage> {
+        var url = '/reportviewer/index';
+
+        return this.http.post<ResponseMessage>(url, reportViewer);
+    }
+
+    public downloadReport(reportViewer: ReportViewer): Observable<HttpResponse<Blob>> {
+        const headers = new HttpHeaders();  //.set('content-type', 'multipart/form-data');
+        var url = '/reportviewer/index';
+        this.showSpinner(null);
+
+        return this.http.post(url, reportViewer, { headers, responseType: 'blob', observe: 'response' })
+            .pipe(
+            tap(res => {
+                const blob = new Blob([res.body], { type: 'application/pdf' });
+                var contentDisposition = res.headers.get('content-disposition');
+                //var filename = contentDisposition.split(';')[1].split('filename')[1].split('=')[1].trim();
+                var filename = contentDisposition.substring(contentDisposition.indexOf("filename=") + 10, contentDisposition.length - 1)
+                //const url = window.URL.createObjectURL(blob);
+                //window.open(url);
+                saveAs(blob, filename);
+                this.hideSpinner();
+            })
+            );
+    }
+
+    public printReport(reportViewer: ReportViewer): Observable<HttpResponse<Blob>> {
+        const headers = new HttpHeaders();  //.set('content-type', 'multipart/form-data');
+        var url = '/reportviewer/index';
+        this.showSpinner(null);
+
+        return this.http.post(url, reportViewer, { headers, responseType: 'blob', observe: 'response' })
+            .pipe(
+            tap(res => {
+                const blob = new Blob([res.body], { type: 'application/pdf' });
+                const blobUrl = URL.createObjectURL(blob);
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = blobUrl;
+                document.body.appendChild(iframe);
+                iframe.contentWindow.print();
+                this.hideSpinner();
+            })
+            );
+    }
+
+    backupDatabase(data): Observable<ResponseMessage> {
+        var url = '/Home/BackupDatabase?Path=' + encodeURIComponent(data);
+
+        return this.http.post<ResponseMessage>(url, data)
+            .pipe(
+            tap(res => console.log('saved'))
+            );
+    }
+
+    showSpinner(title: string) {
+        if (!title) {
+            this.spinner.title = "Please wait ...";
+        } else {
+            this.spinner.title = title;
+        }
+
+        this.spinner.isVisible = true;
+    }
+
+    hideBusySpinner() {
+        this.isBusySpinnerVisible = false;
+    }
+
+    showBusySpinner() {
+        this.isBusySpinnerVisible = true;
+    }
+
+    getBusySpinner(): boolean {
+        return this.isBusySpinnerVisible;
+    }
+
+    hideSpinner() {
+        this.spinner.isVisible = false;
+    }
+
+    getSpinner(): Spinner {
+        return this.spinner;
+    }
+    getMenu(): Observable<Menu[]> {
+        // if (this.menus == null) {
+            this.url = '/Menu/Menu?activeMenuID=null&json=true';  //url for api
+            return this.http.get<Menu[]>(this.url)
+                .pipe(
+                tap(data => {
+                    //console.log('fetched menu');
+                    this.menus = data;
+                }));
+        // } else {
+        //     return of(this.menus);
+        // }
+    }
+
+    getMenuById(menuId: number): Observable<Menu> {
+        var menu: Menu;
+
+        if (this.menus == null) {
+            this.getMenu().subscribe(menuData => {
+                this.menus = menuData;
+                menu = this.findMenu(menuId, this.menus);
+
+                return of(menu);
+            });
+        } else {
+            menu = this.findMenu(menuId, this.menus);
+
+            return of(menu);
+        }
+    }
+
+    findMenu(id: number, menus: Menu[]): Menu {
+        if (menus) {
+            var menu = menus.find(menu => menu.MenuID == id);
+            if (menu != null) {
+                return menu;
+            } else {
+                menus.forEach(row => {
+                    if (row.SubMenu != null && row.SubMenu.length > 0) {
+                        menu = menu || this.findMenu(id, row.SubMenu);
+                    }
+                });
+                return menu;
+            }    
+        } else {
+            return null;
+        }
+    }
+
+    getCOA(): Observable<any> {
+        if (this.cao == null) {
+            this.url = '/Accounting/ChartOfAccount/GetForSelect2?q=';  //url for api
+            return this.http.get<any>(this.url).pipe(
+                tap(data => {
+                    this.cao = data;
+                })
+            );
+        }
+        else {
+            return of(this.cao);
+        }
+    }
+
+    getWarehouses(): Observable<any> {
+        if (this.warehouses == null) {
+            this.url = '/Warehouse/GetForSelect2?q=';  //url for api
+            return this.http.get<any>(this.url)
+                .pipe(
+                tap(data => {
+                    this.warehouses = data;
+                })
+                );
+        } else {
+            return of(this.warehouses);
+        }
+    }
+
+    getCustomers(customers: boolean, suppliers: boolean): Observable<any> {
+        if (this.customers == null) {
+            this.url = '/Party/GetPartiesForSelect2?q=&customers=true&suppliers=false';  //url for api
+            return this.http.get<any>(this.url)
+                .pipe(
+                tap(data => {
+                    //console.log('fetched parties');
+                    this.customers = data;
+                }));
+        } else {
+            return of(this.customers);
+        }
+    }
+
+
+
+    getSuppliers(customers: boolean, suppliers: boolean): Observable<any> {
+        if (this.suppliers == null) {
+            this.url = '/Party/GetPartiesForSelect2?q=&customers=false&suppliers=true';  //url for api
+            return this.http.get<any>(this.url)
+                .pipe(
+                tap(data => {
+                    //console.log('fetched parties');
+                    this.suppliers = data;
+                }));
+        } else {
+            return of(this.suppliers);
+        }
+    }
+
+    getPartyManagers(): Observable<any> {
+        if (this.partyManagers == null) {
+            this.url = '/HR/Employee/GetForSelect2?q=&type=3';  //url for api
+            return this.http.get<any>(this.url)
+                .pipe(
+                tap(data => {
+                    //console.log('fetched parties');
+                    this.partyManagers = data;
+                }));
+        } else {
+            return of(this.partyManagers);
+        }
+    }
+
+    getPartys(data): Observable<PartyList> {
+        var url = '/Party/ListNG';
+
+        return this.http.post<PartyList>(url, data)
+            .pipe(
+                tap(res => console.log('fetched receive Party list'))
+            );
+    }   
+
+    getPartyByCode(partyCode: string): Observable<Party> {
+        this.url = '/Party/GetByPartyCode?partyCode=' + partyCode; //url for api
+        return this.http.get<Party>(this.url)
+            .pipe(
+            tap(data => {
+                console.log('fetched party');
+            }));
+    }
+
+    getAppSettingBackupPath(): Observable<string> {
+        this.url = '/Home/GetAppSettingBackupPath';  //url for api
+
+        return this.http.get<string>(this.url)
+            .pipe(
+            tap(data => {
+                //console.log('fetched categories');
+                this.AppSettingBackupPath = data;
+            }));
+    }
+
+    getAppSettingString(settingId: string): Observable<string> {
+        this.url = '/Home/GetAppSettingString?settingid=' + settingId;  //url for api
+
+        return this.http.get<string>(this.url)
+            .pipe(
+            tap(data => {
+                this.appSettings[settingId] = data;
+            }));
+    }
+
+    getAppSettingBool(settingId: string): Observable<boolean> {
+        this.url = '/Home/GetAppSettingBool?settingid=' + settingId + '&defaultValue=false';  //url for api
+
+        return this.http.get<boolean>(this.url)
+            .pipe(
+            tap(data => {
+                this.appSettings[settingId] = data;
+            }));
+    }
+
+    getAppSettingByShop(settingId: string, shopId: number): Observable<string> {
+        this.url = '/Home/GetAppSettingString?settingid=' + settingId + '&warehouseId=' + shopId;  //url for api
+
+        return this.http.get<string>(this.url)
+            .pipe(
+            tap(data => {
+                this.appSettings[settingId] = data;
+            }));
+    }
+
+    getAllCompanySettings(): Observable<CompanySetting[]> {
+        this.url = '/Base/Company/GetAllCompanySettings';   //url for api
+
+        return this.http.get<CompanySetting[]>(this.url)
+            .pipe(
+            tap(data => {
+                this.companySettings = data;
+            }));
+    }
+
+    getLoginInfo(): Observable<LoginInfo> {
+        // if (this.loginInfo == null) {
+            this.url = '/QuickSecurity/User/GetLoginInfo';  //url for api
+
+            return this.http.get<LoginInfo>(this.url)
+                .pipe(
+                tap(data => {
+                    //console.log('fetched login info');
+                    this.loginInfo = data;
+                }));
+        // } else {
+        //     return of(this.loginInfo);
+        // }
+    }
+
+    getContacts(): Observable<Contact[]> {
+        this.url = '/Base/Common/GetContacts';  //url for api
+        return this.http.get<Contact[]>(this.url)
+            .pipe(
+            tap(data => {
+                //console.log('fetched contacts');
+                this.contacts = data;
+            }));
+    }
+
+    isRecordStatusAllowed(recordStatus: number, menuID: number): Observable<boolean> {
+        this.url = '/Base/Common/IsRecordStatusAllowed?recordStatus=' + recordStatus + '&menuID=' + menuID;
+        return this.http.get<boolean>(this.url)
+            .pipe(
+            tap(data => {
+                //console.log(data);
+            }));
+    }
+
+    //getMenuRoleAssociationByParentID(roleAutoId: number): Observable<MenuRoleAssociation[]> {
+    //    if (this.loginInfo == null) {
+    //        this.url = '/Menu/GetAllAllowed';  //url for api
+
+    //        return this.http.get<MenuRoleAssociation[]>(this.url)
+    //            .pipe(
+    //                tap(data => {
+    //                    console.log('fetched menu role assocation');
+    //                    this.menuRoleAssociations = data;
+    //                }));
+    //    } else {
+    //        return of(this.menuRoleAssociations);
+    //    }
+    //}
+
+    getDashboard(): Observable<Dashboard> {
+        if (this.dashboard == null) {
+            this.url = '/Home/Dashboard?json=true';  //url for api
+
+            return this.http.get<Dashboard>(this.url)
+                .pipe(
+                tap(data => {
+                    //console.log('fetched login info');
+                    this.dashboard = data;
+                }));
+        } else {
+            return of(this.dashboard);
+        }
+    }
+
+    getAllowedDashboards(): Observable<CommonDashboard[]> {
+        if (this.dashboard == null) {
+            this.url = '/QuickDashboard/GetAllowed';  //url for api
+
+            return this.http.get<CommonDashboard[]>(this.url)
+                .pipe(
+                tap(data => {
+                    //console.log('fetched login info');
+                    this.allowedDashboards = data;
+                }));
+        } else {
+            return of(this.allowedDashboards);
+        }
+    }
+
+    getReportsForTreeView(): Observable<any> {
+        if (this.warehouses == null) {
+            this.url = '/ReportViewer/GetReportsForTreeView';  //url for api
+            return this.http.get<any>(this.url)
+                .pipe(
+                tap(data => {
+                    this.warehouses = data;
+                })
+                );
+        } else {
+            return of(this.warehouses);
+        }
+    }
+
+    getCompanyProfiles(data): Observable<CompanyProfileList> {
+        var url = '/Base/CompanyProfile/List';
+
+        return this.http.post<CompanyProfileList>(url, data)
+            .pipe(
+            tap(res => console.log('fetched company profile list'))
+            );
+    }
+
+    getCompanyProfile(data): Observable<CompanyProfile> {
+        var url = '/Base/CompanyProfile/index/' + data;
+
+        return this.http.post<CompanyProfile>(url, data)
+            .pipe(
+            tap(res => console.log('fetched receive production list'))
+            );
+    }
+
+    saveCompanyProfile(data): Observable<ResponseMessage> {
+        var url = '/Base/CompanyProfile/Save';
+
+        return this.http.post<ResponseMessage>(url, data)
+            .pipe(
+            tap(res => console.log('saved'))
+            );
+    }
+
+    deleteCompanyProfile(id): Observable<ResponseMessage> {
+        var url = '/Base/CompanyProfile/Delete?id=' + id;
+
+        return this.http.get<ResponseMessage>(url)
+            .pipe(
+            tap(res => console.log('deleted company profile'))
+            );
+    }
+
+    saveCompany(data): Observable<ResponseMessage> {
+        var url = '/Base/Company/SaveNG';
+
+        return this.http.post<ResponseMessage>(url, data)
+            .pipe(
+            tap(res => console.log('saved'))
+            );
+    }
+
+    deleteUser(id): Observable<ResponseMessage> {
+        var url = '/QuickSecurity/User/Delete?id=' + id;
+
+        return this.http.get<ResponseMessage>(url)
+            .pipe(
+            tap(res => console.log('deleted user'))
+            );
+    }
+    
+    getCompanyPayment(year, month, statuses): Observable<CompanyPayment> {
+        var url = `/Base/CompanyPayment/index?year=${year}&month=${month}&statuses=${statuses}`;
+        return this.http.post<CompanyPayment>(url, year)
+            .pipe(
+            tap(res => console.log('fetched company payments'))
+            );
+    }
+
+    saveCompanyPayment(data): Observable<ResponseMessage> {
+        var url = '/Base/CompanyPayment/Save';
+
+        return this.http.post<ResponseMessage>(url, data)
+            .pipe(
+            tap(res => console.log('saved'))
+            );
+    }
+
+    getCompanyDropDown(): Observable<any> {
+        var url = '/Base/Company/GetCompaniesForSelect2';
+
+        return this.http.get<any>(url)
+            .pipe(
+            tap(res => console.log('fetched companies'))
+            );
+    }
+
+    getBaseCompanyTypes(): Observable<any> {
+        var url = '/Base/Company/GetBaseCompanyTypesForDropdown';
+
+        return this.http.get<BaseCompanyType[]>(url)
+            .pipe(
+            tap(res => {
+                console.log('fetched finance head types');
+            })
+            );
+    }
+
+    getParentCompanies(): Observable<any> {
+        var url = '/Base/Company/GetCompaniesForSelect2';
+
+        return this.http.get<any>(url)
+            .pipe(
+            tap(res => {
+                console.log('fetched parent companies');
+            })
+            );
+    }
+
+
+    getCompanies(data): Observable<CompanyModelList> {
+        var url = '/Base/Company/ListNG';
+
+        return this.http.post<CompanyModelList>(url, data)
+            .pipe(
+                tap(res => console.log('fetched companies list'))
+            );
+    }
+    
+    deleteCompany(id): Observable<ResponseMessage> {
+        var url = '/Base/Company/Delete?id=' + id;
+
+        return this.http.get<ResponseMessage>(url)
+            .pipe(
+            tap(res => console.log('deleted company'))
+            );
+    }
+
+    /*
+    () pranthises
+    {} brases
+    [] brakets
+    */
+
+    
+    deleteParty(id): Observable<ResponseMessage> {
+        var url = '/Party/Delete?id=' + id;
+
+        return this.http.post<ResponseMessage>(url,{})
+            .pipe(
+            tap(res => console.log('deleted Party'))
+            );
+    }   
+
+    deleteCompanyByCompanyKey(id): Observable<ResponseMessage> {
+        var url = '/Base/Company/Delete?id=' + id;
+
+        return this.http.post<ResponseMessage>(url, id)
+            .pipe(
+            tap(res => console.log('deleted company'))
+            );
+    }
+
+    deletePartyByPartyKey(key): Observable<ResponseMessage> {
+        var url = 'Party/DeleteByKey?key=' + key;
+
+        return this.http.get<ResponseMessage>(url)
+            .pipe(
+            tap(res => console.log('deleted Party'))
+            );
+    }
+
+    GetSoftwareKey(id):Observable<any>{
+        var url = '/Base/Company/GetSoftwareKey?id=' + id;
+
+        return this.http.get<any>(url)
+        .pipe(
+            tap(res => console.log('deleted company'))
+        );
+    }
+    getQTDriveList(): Observable<QTDrive[]> {
+        var url = '/Base/QTDrive/List';
+
+        return this.http.post<QTDrive[]>(url, {})
+            .pipe(
+            tap(re => console.log('fetched QTDrive list'))
+            )
+    };
+    uploadFileList(data): Observable<ResponseMessage> {
+        var url = '/Base/QTDrive/UploadFile';
+
+        return this.http.post<ResponseMessage>(url, data)
+            .pipe(
+                tap(res => console.log('saved'))
+            );
+    }
+    uploadFile(data): Observable<ResponseMessage> {
+        var url = '/File/Upload';
+
+        return this.http.post<ResponseMessage>(url, data)
+            .pipe(
+                tap(res => console.log('saved'))
+            );
+    }
+
+    downloadFile(filename: string): Observable<Blob> {
+        const headers = new HttpHeaders().append('Content-Type', 'application/json');
+        return this.http.get<Blob>(`/api/download/${filename}`, {
+          headers: headers,
+          responseType: 'blob' as 'json'
+        });
+      }
+  
+    
+    getShops(data): Observable<ShopList> {
+        var url = '/Base/shop/List';
+
+        return this.http.post<ShopList>(url, data)
+            .pipe(
+            tap(re => console.log('fetched shops list'))
+            )
+    };
+
+    newShopAutoNumber(): Observable<string> {
+        return this.http.get<string>('/Base/Shop/NewNumber');
+    }
+
+
+
+    parseNumber(val) {
+        if (val == '' || val == null)
+            val = 0;
+        if (typeof val == 'string') {
+            val = +(val.replace(/,/g, '') || 0);
+        }
+        else if (typeof val == 'number') {
+            val = +(val);
+        }
+        return val;
+    }
+
+
+
+    deleteShop(id): Observable<any> {
+        var url = '/Base/shop/delete?id=' + id;
+        return this.http.get<any>(url)
+            .pipe(
+            tap(res => console.log('deleted shop'))
+            )
+
+        //deleteShop(id): Observable < ResponseMessage > {
+        //    var url = '/Base/shop/delete?id=' + id;
+        //    return this.http.get<ResponseMessage>(url)
+        //        .pipe(
+        //            tap(res => console.log('deleted shop'))
+        //        )
+
+    };
+
+    getParty(data):Observable<Party>{
+        var url = '/Party/CreateNewNG/' + data;
+
+        return this.http.get<Party>(url)
+        .pipe(
+            tap(res => console.log('fetched party'))
+        );
+    }
+
+    saveParty(data):Observable<ResponseMessage>{
+        var url ='/Party/SaveNG';
+
+        return this.http.post<ResponseMessage>(url,data)
+        .pipe(
+            tap(res => console.log('saved'))
+        );
+    }
+
+    getShop(data): Observable<Shop> {
+        var url = '/Base/Shop/index/' + data;
+
+        return this.http.get<Shop>(url)
+            .pipe(
+            tap(res => console.log('fetched shop'))
+            );
+    }
+
+    saveShop(data): Observable<ResponseMessage> {
+        var url = '/Base/Shop/Save';
+
+        return this.http.post<ResponseMessage>(url, data)
+            .pipe(
+            tap(res => console.log('saved'))
+            );
+    }
+
+    getShopDropdown(): Observable<Shop> {
+        var url = '/Base/Shop/GetForSelectAll';
+
+        return this.http.get<Shop>(url)
+            .pipe(
+                tap(res => console.log('Fetched Shop Dropdown'))
+            );
+    }
+
+    getAllShops(): Observable<Shop> {
+        var url = '/Base/Shop/GetAllShopsForSelect';
+
+        return this.http.get<Shop>(url)
+            .pipe(
+                tap(res => console.log('Fetched All Shop Dropdown'))
+            );
+    }    
+        getAllUsers(data): Observable<any> {
+            var url = '/QuickSecurity/User/GetUsersForSelect2';
+            return this.http.post<any>(url, data)
+                .pipe(
+                    tap(res => console.log('fetched receive All Users'))
+                );
+        }
+
+        getImpersonateUser(data): Observable<any> {
+            var url = '/Account/Impersonate?impersonateUser=' + data;
+            return this.http.post<ResponseMessage>(url, data)
+                .pipe(
+                    tap(res => console.log('fetched receive Impersonate Users'))
+                );
+        }
+
+    getCustomerDropdown(): Observable<any> {
+        var url = '/Party/GetPartiesForSelect2?customers=true';
+
+        return this.http.get<any>(url)
+            .pipe(
+            tap(res => console.log('customer fetched'))
+            );
+    }
+
+    getSupplierDropdown(): Observable<any> {
+        var url = '/Party/GetPartiesForSelect2?suppliers=true';
+
+        return this.http.get<any>(url)
+            .pipe(
+            tap(res => console.log('supplier fetched'))
+            );
+    }
+
+    getEnployeeDropdown(): Observable<any> {
+        var url = '/HR/Employee/GetForSelect2';
+        return this.http.get<any>(url)
+            .pipe(
+            tap(res => console.log('employee fetched'))
+            );
+    }
+// Dropdown[]
+    getSalesmanDropdown(): Observable<any> {
+        var url = '/HR/Employee/GetForSelect2';
+        return this.http.get<any>(url);
+    }
+
+    getUserList(data): Observable<UserList> {
+        var url = '/QuickSecurity/User/List2';
+
+        return this.http.post<UserList>(url, data)
+            .pipe(
+            tap(res => console.log('fetched user list'))
+            );
+    }
+    getSoftwareBrands(data): Observable<SoftwareBrandList> {
+        var url = '/Base/SoftwareBrand/ListNG';
+
+        return this.http.post<SoftwareBrandList>(url, data)
+            .pipe(
+                tap(res => console.log('fetched Brand'))
+            );
+    }
+    getSoftwareBrand(data): Observable<SoftwareBrand> {
+        var url = '/Base/SoftwareBrand/CreateNG/' + data; 
+        return this.http.get<SoftwareBrand>(url)
+            .pipe(
+                tap(res => console.log('fetched Software Brand'))
+            );
+    }
+    saveSoftwareBrand(data): Observable<ResponseMessage> {
+        var url = '/Base/SoftwareBrand/SaveNG';
+
+        return this.http.post<ResponseMessage>(url, data)
+            .pipe(
+                tap(res => console.log('saved'))
+            );
+    }
+    deleteSoftwareBrands(id): Observable<ResponseMessage> {
+        var url = '/Base/SoftwareBrand/Delete?id=' + id;
+
+        return this.http.post<ResponseMessage>(url, id)
+            .pipe(
+                tap(res => console.log('deleted Brand'))
+            );
+    }
+
+    getCompany(key): Observable<CompanyModel> {
+        var url = '/Base/Company/CreateNG?key=' + key;
+
+        return this.http.get<CompanyModel>(url)
+            .pipe(
+            tap(res => console.log('fetched group list'))
+            );
+    }
+    
+    getCompanySettings(id):Observable<CompanySetting>{
+        var url = '/Base/CompanySetting/CreateNG/' + id;
+        return this.http.get<CompanySetting>(url)
+        .pipe(
+            tap(res=>console.log('fetched company setting list'))
+        )
+
+    }
+
+    saveCompanySettings(data): Observable<ResponseMessage> {
+        var url = '/Base/CompanySetting/SaveNG';
+
+        return this.http.post<ResponseMessage>(url, data)
+            .pipe(
+            tap(res => console.log('saved'))
+            );
+    }
+
+
+    getOfflineCompany(key): Observable<CompanyModel> {
+        var url = '/Base/Company/CreateOfflineNG?key=' + key;
+
+        return this.http.get<CompanyModel>(url)
+            .pipe(
+            tap(res => console.log('fetched group list'))
+            );
+    }
+
+    newCompanyNumber(): Observable<string> {
+        return this.http.get<string>('/Base/Company/NewNumber');
+    }
+
+    newPartyNumber():Observable<string>{
+        return this.http.get<string>('/Party/NewNumber');
+    }
+    getPartyNewNumber(partyTypeID: number): Observable<Party> {
+        return this.http.get<Party>('/Party/NewNumber1?partyTypeID='+ partyTypeID);
+    }
+
+    getManufacturers(key):Observable<ManufacturerPartyAssociation[]>{
+        var url = '/Party/GetManufacturers/' + key;
+
+        return this.http.get<ManufacturerPartyAssociation[]>(url)
+        .pipe(
+            tap(res => console.log('fetched manufacturers'))
+        );
+    }
+
+    getPartyShops(key):Observable<CommonPartyShopAssociationWithStatus[]>{
+        var url = '/Party/GetPartyShops/' + key;
+        
+        return this.http.get<CommonPartyShopAssociationWithStatus[]>(url)
+        .pipe(
+            tap(res => console.log('fetched party shops'))
+        );
+    }
+
+    getPartyManager():Observable<Dropdown[]>{
+        var url = '/Party/GetPartyManagers';
+        return this.http.get<Dropdown[]>(url)
+        .pipe(
+            tap(res => console.log('fetched managers'))
+        );
+    }
+    getCompanySetting():Observable<CompanySettingDetail[]>{
+        if(this.companySetting == null) {
+        var url = '/Base/Company/GetCompanySettings';
+        return this.http.get<CompanySettingDetail[]>(url)
+        .pipe(
+            tap(data =>{
+                this.companySetting = data; 
+                //console.log('fetched Company settings')
+            }));
+        } else{
+            return of(this.companySetting);
+        }
+    }
+    findCompanySettingById(settingId: string): string {
+        var setting = this.companySetting.find(menu => menu.SettingID == settingId);
+
+        if (setting) {
+            return setting.SettingValue;
+        } else {
+            return "";
+        }
+    }
+
+    getAllSystemSettings(): Observable<any> {
+        if (!this.appSettingsFetched) {
+            forkJoin(
+                this.getAppSettingString(SystemSettings.Inv_SI_PrintFooter).pipe(catchError(error => of(error))),   //0
+                this.getAppSettingString(SystemSettings.Inv_SI_GstNumber).pipe(catchError(error => of(error))),   //1
+                this.getAppSettingString(SystemSettings.Inv_SI_ShowGstNumber).pipe(catchError(error => of(error))),   //2
+                this.getAppSettingString(SystemSettings.Inv_SI_IsPrintHeaderEnabled).pipe(catchError(error => of(error))),   //3
+                this.getAppSettingString(SystemSettings.Inv_SI_PrintHeader).pipe(catchError(error => of(error))),   //4
+                this.getAppSettingString(SystemSettings.General_IsFbrIntegrationEnabled).pipe(catchError(error => of(error))),   //5
+                this.getAppSettingString(SystemSettings.Inv_SI_ShowNtnNumber).pipe(catchError(error => of(error))),   //6
+                this.getAppSettingString(SystemSettings.Inv_SI_NtnNumber).pipe(catchError(error => of(error))),   //7
+                this.getAppSettingString(SystemSettings.Inv_SI_SessionPinCode).pipe(catchError(error => of(error))),   //8
+                this.getAppSettingString(SystemSettings.General_MenuStyle).pipe(catchError(error => of(error))),//9
+            ).subscribe(data => {
+                this.appSettings.Inv_SI_PrintFooter = data[0];
+                this.appSettings.Inv_SI_GstNumber = data[1];
+                this.appSettings.Inv_SI_ShowGstNumber = data[2] && data[2] == 'True';
+                this.appSettings.Inv_SI_IsPrintHeaderEnabled = data[3] && data[3] == 'True';
+                this.appSettings.Inv_SI_PrintHeader = data[4];
+                this.appSettings.General_IsFbrIntegrationEnabled = data[5] && data[5] == 'True';
+                this.appSettings.Inv_SI_ShowNtnNumber = data[6] && data[6] == 'True';
+                this.appSettings.Inv_SI_NtnNumber = data[7];
+                this.appSettings.Inv_SI_SessionPinCode = data[8];
+                this.appSettings.General_MenuStyle = data[9];
+
+                this.appSettingsFetched = true;
+            });
+        }
+
+        return of(this.appSettings);
+    }
+
+    getGroups(data): Observable<GroupList> {
+        var url = '/Base/Group/List';
+
+        return this.http.post<GroupList>(url, data)
+            .pipe(
+            tap(res => console.log('fetched group list'))
+            );
+    }
+
+    getGroup(id): Observable<Group> {
+        var url = '/Base/Group/index/' + id;
+
+        return this.http.get<Group>(url)
+            .pipe(
+            tap(res => console.log('fetched group list'))
+            );
+    }
+
+    saveGroup(data): Observable<ResponseMessage> {
+        var url = '/Base/Group/Save';
+
+        return this.http.post<ResponseMessage>(url, data)
+            .pipe(
+            tap(res => console.log('saved'))
+            );
+    }
+
+    deleteGroup(id): Observable<ResponseMessage> {
+        var url = '/Base/Group/Delete?id=' + id;
+
+        return this.http.get<ResponseMessage>(url)
+            .pipe(
+            tap(res => console.log('deleted group'))
+            );
+    }
+
+    getParyBalance(id: string): Observable<Number> {
+        this.url = '/Party/GetBalance/' + id;
+
+        return this.http.get<Number>(this.url)
+            .pipe(
+            tap(data => { }),
+            catchError(error => of(error))
+            );
+    }
+
+    getCommonJobList(data): Observable<CommonJobList> {
+        var url = '/Base/CommonJob/ListNG';
+
+        return this.http.post<CommonJobList>(url, data)
+            .pipe(
+                tap(res => console.log('fetched Common Job List'))
+            );
+    }
+
+    deleteCommonJobList(id): Observable<ResponseMessage> {
+        var url = '/Base/CommonJob/Delete?key=' + id;
+
+        return this.http.get<ResponseMessage>(url)
+            .pipe(
+                tap(res => console.log('deleted common job'))
+            );
+    }
+
+    getTableCount(companyID): Observable<DeleteCompanyData> {
+        var url = '/Base/Company/GetTableCount?companyID='+ companyID;
+
+        return this.http.post<DeleteCompanyData>(url, {})
+            .pipe(
+            tap(re => console.log('fetched Table Count'))
+            )
+    };
+
+    deleteAllCompanyData(menuId: number,isCustomer: boolean,isSupplier: boolean,employeeType: number, companyID: number): Observable<ResponseMessage> {
+        var url = '/Base/Company/DeleteCompanyData?menuId='+menuId+'&isCustomer='+isCustomer+'&isSupplier='+isSupplier+'&employeeType='+employeeType+'&companyID='+companyID ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All Purchases'))
+            );
+    }
+
+    deleteAllCompanyPurchases(): Observable<ResponseMessage> {
+        var url = '/Inventory/GoodsReceiptNote/DeleteAllCompanyData' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All Purchases'))
+            );
+    }
+    deleteAllCompanySaleReturns(): Observable<ResponseMessage> {
+        var url = '/Inventory/SaleReturn/DeleteAllCompanyData' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All Sale Return'))
+            );
+    }
+    deleteAllCompanySales(): Observable<ResponseMessage> {
+        var url = '/Inventory/Sale/DeleteAllCompanyData' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All Sales'))
+            );
+    }
+    deleteAllCompanyPurchaseReturns(): Observable<ResponseMessage> {
+        var url = '/Inventory/GrnReturn/DeleteAllCompanyData' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All GRN Return'))
+            );
+    }
+    deleteAllCompanyTransferStocks(): Observable<ResponseMessage> {
+        var url = '/Inventory/TransferStock/DeleteAllCompanyData' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All Stock Transfers'))
+            );
+    }
+    deleteAllCompanyStockAdjustments(): Observable<ResponseMessage> {
+        var url = '/Inventory/StockAdjustment/DeleteAllCompanyStockAdjustment' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All Stock Transfers'))
+            );
+    }
+    deleteAllCompanyCustomers(): Observable<ResponseMessage> {
+        var url = '/Party/DeleteAllCompanyCustomers' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All Customers'))
+            );
+    }
+    deleteAllCompanySppliers(): Observable<ResponseMessage> {
+        var url = '/Party/DeleteAllCompanySuppliers' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All Suppliers'))
+            );
+    }
+    deleteAllCompanySalesmen(): Observable<ResponseMessage> {
+        var url = '/HR/Employee/DeleteAllCompanySalesmen' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All Salesmen'))
+            );
+    }
+    deleteAllCompanyOrderBooker(): Observable<ResponseMessage> {
+        var url = '/HR/Employee/DeleteAllCompanyOrderBooker' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All OrderBooker'))
+            );
+    }
+    deleteAllCompanyPayments(): Observable<ResponseMessage> {
+        var url = '/Accounting/Payment/DeleteAllCompanyPayments' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All OrderBooker'))
+            );
+    }
+    deleteAllCompanyReceipts(): Observable<ResponseMessage> {
+        var url = '/Accounting/Receipt/DeleteAllCompanyReceipts' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All Receipts'))
+            );
+    }
+    deleteAllCompanyItems(): Observable<ResponseMessage> {
+        var url = '/Inventory/Item/DeleteAll?itemtypeid=1' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All Items'))
+            );
+    }
+    deleteAllCompanyRawMaterials(): Observable<ResponseMessage> {
+        var url = '/Inventory/Item/DeleteAll?itemtypeid=2' ;
+        return this.http.post<ResponseMessage>(url,'')
+            .pipe(
+                tap(res => console.log('deleted Company All RawMaterials'))
+            );
+    }
+
+
+    //Working on Single Page Application in Angular in case I not remove remote it if Angular SAP is proper working
+
+    // getAllMenus(): Observable<any> {
+    //     var url = '/Menu/Menu/';
+
+    //     return this.http.get<any>(url)
+    //         .pipe(
+    //             tap(res => console.log('fetched Menus'))
+    //         );
+    // }
+    
+}
+
+
+

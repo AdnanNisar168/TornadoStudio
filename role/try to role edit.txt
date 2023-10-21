@@ -1,0 +1,220 @@
+<!-- <hr> -->
+ <div class="tabs-wrapper profile-tabs2" style="margin-top: 2px;">
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#tab-menu" data-toggle="tab">Menu</a></li>
+        <li class=""><a href="#tab-report" data-toggle="tab">Report</a></li>
+        <li class=""><a href="#tab-status" data-toggle="tab">Status</a></li>
+        <li class=""><a href="#tab-dashboard" data-toggle="tab">Dashboard</a></li>
+    </ul>
+    <div class="main-box">
+
+        <div class="form-horizontal">
+
+            <form id="form" class="data-entry-form" (ngSubmit)="onSubmit()" [formGroup]="formGroup">
+
+                <div class="main-box-header" style="margin-top: -2px;">
+                    <div class="col-sm-10">
+                        <!-- *ngIf="IsEditAllowed || IsCreateAllowed" -->
+
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save</button>
+                        <a routerLink="/security/role" class="btn btn-default"><i class="fa fa-plus"></i> New</a>
+                        <a routerLink="/security/role/list" class="btn btn-default"><i class="fa fa-list"></i> List</a>
+                    </div>
+                    <label class="col-sm-2 label label-default" data-toggle="tooltip" data-original-title="Last Update Information" style="padding-top: 6px;">
+                        <span>{{role.UpdatedByName}}</span>&nbsp;<span>{{role.UpdatedOn | date : 'dd-MMM-yy hh:mm a'}}</span>
+                    </label>
+                </div>
+
+                <hr />
+                <!--*ngIf="IsEditAllowed && SeasonID > 0"-->
+                <fieldset class="main-box-body">
+
+                    <div class="form-group" style="margin-bottom: -3px;">
+                        <div class="col-sm-2"></div>
+                        <div class="col-sm-4" *ngIf="loginInfo.ImpersonateUser.IsSuperAdmin">
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <div class="input-group-text">Company</div>
+                                </div>
+                                <ng-select [items]="companies"
+                                    bindLabel="text"
+                                    bindValue="id"
+                                    formControlName="CompanyID"
+                                    [virtualScroll]="true"
+                                    [loading]="loading"
+                                    placeholder="Select Company">
+                                </ng-select>
+                            </div>
+                        </div>
+                    </div>    
+
+                    <div class="form-group">
+                        <div class="col-sm-2"></div>
+                        <div class="col-sm-4" *ngIf="!loginInfo.ImpersonateUser.IsSuperAdmin">
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <div class="input-group-text">Company</div>
+                                </div>
+                                <input class="form-control" type="text" formControlName="CompanyName" [(ngModel)]="inputValue" readonly/>
+                            </div>
+                        </div>
+                    </div>
+
+                <div class="form-group">
+                    <div class="col-sm-2"></div>
+                        <div class="col-sm-4">
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <div class="input-group-text">Name</div>
+                                </div>
+                                <input class="form-control" type="text" formControlName="RoleName" />
+                            </div>
+                        </div>
+
+                    </div>
+                <table class="table table-condensed table-hover" id="menuTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <div class="checkbox-nice">
+                                    <input type="checkbox" id="menuViewSelectAll" name="menuViewSelectAll">
+                                    <label for="menuViewSelectAll"></label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="checkbox-nice">
+                                    <input type="checkbox" id="menuNewSelectAll">
+                                    <label for="menuNewSelectAll"></label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="checkbox-nice">
+                                    <input type="checkbox" id="menuEditSelectAll">
+                                    <label for="menuEditSelectAll"></label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="checkbox-nice">
+                                    <input type="checkbox" id="menuDeleteSelectAll">
+                                    <label for="menuDeleteSelectAll"></label>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="checkbox-nice">
+                                    <input type="checkbox" id="menuStatusChangeSelectAll">
+                                    <label for="menuStatusChangeSelectAll"></label>
+                                </div>
+                                <input type="checkbox" name="subscribe" id="subscribe" />
+                            </th>
+                        </tr>
+                    </thead>
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">View</th>
+                            <th style="width: 50px;">New</th>
+                            <th style="width: 50px;">Edit</th>
+                            <th style="width: 50px;">Delete</th>
+                            <th style="width: 50px;">Status</th>
+                            <th>Menu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- <input type="checkbox" value="true"> -->
+                        <!--  checked="row.IsViewAllowed ? 'checked' : ''"  -->
+                        <!-- [(ngModel)]="row.IsViewAllowed" -->
+                        <ng-container *ngFor="let row of menus; let i = index">
+                          <tr >
+                            <!-- value="{{row.IsViewAllowed}}" -->
+                            <td>
+                              <div class="checkbox-nice" >
+                                  <input type="checkbox" id="{{row.MenuID}}" >
+                                  <!-- *ngIf="row.IsViewAllowed" -->
+                                  <!-- *ngIf="{{row.IsViewAllowed}} == True" -->
+                                  <label for="{{row.MenuID}}"></label>
+                              </div>
+                            </td>
+                            <td>
+                              <div class="checkbox-nice">
+                                  <input type="checkbox" id="{{row.MenuID}}" value="{{row.IsNewAllowed}}" checked="{{row.IsNewAllowed}}">
+                                  <label for="{{row.MenuID}}"></label>
+                              </div>
+                            </td>
+                            <td>
+                              <div class="checkbox-nice">
+                                  <input type="checkbox" id="{{row.MenuID}}" value="{{row.IsEditAllowed}}" checked="{{row.IsEditAllowed}}">
+                                  <label for="{{row.MenuID}}"></label>
+                              </div>
+                            </td>
+                            <td>
+                              <div class="checkbox-nice">
+                                  <input type="checkbox" id="{{row.MenuID}}" value="{{row.IsDeleteAllowed}}" checked="{{row.IsDeleteAllowed}}">
+                                  <label for="{{row.MenuID}}"></label>
+                              </div>
+                            </td>
+                            <td>
+                              <div class="checkbox-nice">
+                                  <input type="checkbox" id="{{row.MenuID}}">
+                                  <!-- {{row.IsStatusChangeAllowed}} -->
+                                  <label for="{{row.MenuID}}"></label>
+                              </div>
+                            </td>
+                            <td>{{row.MenuName}}</td>
+                          </tr>
+                          <ng-container *ngFor="let sMenu of row.SubMenu; let j = index">
+                            <tr >
+                              <td>
+                                <div class="checkbox-nice">
+                                    <input type="checkbox" id="{{sMenu.MenuID}}" checked="{{sMenu.IsViewAllowed ? true :'' }}">
+                                    <label for="{{sMenu.MenuID}}"></label>
+                                </div>
+                              </td>
+                              <td>
+                                <div class="checkbox-nice">
+                                    <input type="checkbox" id="{{sMenu.MenuID}}" checked="{{sMenu.IsNewAllowed ? true : '' }}">
+                                    <label for="{{sMenu.MenuID}}"></label>
+                                </div>
+                              </td>
+                              <td>
+                                <div class="checkbox-nice">
+                                    <input type="checkbox" id="{{sMenu.MenuID}}" checked="{{sMenu.IsEditAllowed }}==true">
+                                    <label for="{{sMenu.MenuID}}"></label>
+                                </div>
+                              </td>
+                              <td>
+                                <div class="checkbox-nice">
+                                    <input type="checkbox" id="{{sMenu.MenuID}}" checked="{{sMenu.IsDeleteAllowed}}==true">
+                                    <label for="{{sMenu.MenuID}}"></label>
+                                </div>
+                              </td>
+                              <td>
+                                <div class="checkbox-nice">
+                                    <input type="checkbox" id="{{sMenu.MenuID}}" checked="{{sMenu.IsStatusChangeAllowed  ? true : '' }}">>
+                                    <label for="{{sMenu.MenuID}}"></label>
+                                </div>
+                              </td>
+                              <td style="padding-left: 20px;">{{sMenu.MenuName}}</td>
+                            </tr>                              
+                          </ng-container>
+                        </ng-container>
+
+                    </tbody>
+                </table>
+                
+                
+                
+                
+                </fieldset>
+                
+            
+
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+
+
+
+

@@ -1,0 +1,46 @@
+<!-- <input type="checkbox" value="true"> -->
+                        <!--  checked="row.IsViewAllowed ? 'checked' : ''"  -->
+                        <!-- [(ngModel)]="row.IsViewAllowed" -->
+
+                            <!-- value="{{row.IsViewAllowed}}" -->
+
+<!-- *ngIf="row.IsViewAllowed" -->
+                                  <!-- *ngIf="{{row.IsViewAllowed}} == True" -->
+
+
+                                  <!-- <label for="IsStatusChangeAllowed{{row.MenuID}}"></label> -->
+
+
+
+<!-- <td>
+                              <div class="checkbox-nice" >
+                                  <input type="checkbox" id="IsViewAllowed{{i}}" [formControl]="row.get('IsViewAllowed')">
+                                  
+                                  <label for="IsViewAllowed{{i}}"></label>
+                              </div>
+                            </td>
+                            <td>
+                              <div class="checkbox-nice">
+                                  <input type="checkbox" id="IsNewAllowed{{i}}" [formControl]="row.get('IsViewAllowed')">
+                                  <label for="IsNewAllowed{{i}}"></label>
+                              </div>
+                            </td>
+                            <td>
+                              <div class="checkbox-nice">
+                                  <input type="checkbox" id="IsEditAllowed{{i}}" [formControl]="row.get('IsEditAllowed')">
+                                  <label for="IsEditAllowed{{i}}"></label>
+                              </div>
+                            </td>
+                            <td>
+                              <div class="checkbox-nice">
+                                  <input type="checkbox" id="IsDeleteAllowed{{i}}" [formControl]="row.get('IsDeleteAllowed')">
+                                  <label for="IsDeleteAllowed{{i}}"></label>
+                              </div>
+                            </td>
+                            <td>
+                              <div class="checkbox-nice">
+                                  <input type="checkbox" id="IsStatusChangeAllowed{{i}}" [formControl]="row.get('IsStatusChangeAllowed')">
+                                  <label for="IsStatusChangeAllowed{{i}}"></label>
+                              </div>
+                            </td> -->
+

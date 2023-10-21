@@ -1,0 +1,80 @@
+export class Party {
+
+    PartyID: number;
+    PartyTypeID: number;
+    PartyKey:string;
+    PartyCode: string;
+    PartyName: string;
+    IsCustomer: boolean;
+    IsSupplier: boolean;
+    IsSalesMan: boolean;
+    IsActive: boolean;
+    IsInternal: boolean;
+    Address: string;
+    DeliveryAddress: string;
+    City: string;
+    State: string;
+    Country: string;
+    Phone: string;
+    Email: string;
+    ZipCode: string;
+    ManagerID: number;
+    ManagerName: string;
+    ActiveCustomers:boolean;
+    Balance: number;
+    CreditLimit:number;
+    OpeningDebitAmount: number;
+    OpeningCreditAmount: number;
+    ChartOfAccountID: number;
+    PartyImageRelativePath: string;
+    PartyImageFileID: number;
+    IsCommonPartyAllShops: boolean;
+    UpdatedBy: number;
+    UpdatedByName:string;
+    UserName:string;
+    UpdatedOn:Date;
+    Manufacturers: ManufacturerPartyAssociation[];
+//       public SelectList Managers { get; set; }
+    IsFromDialogBox: boolean;
+    PartyShops: CommonPartyShopAssociationWithStatus[];
+}
+
+export class CommonPartyShopAssociationWithStatus {
+    CommonPartyShopAssociationID: number;
+    ShopCode: string;
+    ShopName: string;
+    ShopID: number;
+    PartyID: number;
+    IsAssigned: boolean;
+}
+
+export class ManufacturerPartyAssociation {
+    CompanyID:number;
+    CreatedByUserAutoID:number;
+    CreatedOn:Date;
+    IsActive:boolean;
+    ManufacturerID:number;
+    PartyID:number;
+    UpdatedByUserAutoID:number;
+    UpdatedOn:Date;
+    ManufacturerCode: string;
+    ManufacturerName: string;
+    IsAssigned: boolean;
+}
+
+
+export class PartyList {
+    data: Party[];
+    TotalQty: number;
+    recordsTotal: number;
+}
+
+
+export class PartyDropdown {
+    id: number;
+    text: string;
+    mobile: string;
+    email: string;
+}
+
+

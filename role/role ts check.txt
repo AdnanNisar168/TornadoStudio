@@ -1,0 +1,23 @@
+// if(self.menus) {
+            //     this.menus.forEach((mMenu)=>{
+            //         let checkbox = document.getElementById(`${mMenu.MenuID}`) as HTMLInputElement | null;
+            //         if(mMenu.IsStatusChangeAllowed){
+            //             checkbox.checked = true;
+            //         }
+            //         if(mMenu.IsDeleteAllowed){
+            //             checkbox.checked = true;
+            //         }
+            //         mMenu.SubMenu.forEach((sMenu)=>{
+            //             let checkbox = document.getElementById(`${sMenu.MenuID}`) as HTMLInputElement | null;
+            //             // if(sMenu.IsStatusChangeAllowed){
+            //             //     checkbox.checked = true;
+            //             // }
+            //             (sMenu.IsStatusChangeAllowed) ? checkbox.checked = true :checkbox.checked = false;
+            //              (sMenu.IsDeleteAllowed) ? checkbox.checked = true: checkbox.checked = false
+                        
+            //             // if(sMenu.IsDeleteAllowed){
+            //             //     checkbox.checked = true;
+            //             // }
+            //         })
+            //     })
+            // }

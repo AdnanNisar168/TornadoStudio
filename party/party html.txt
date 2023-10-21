@@ -1,0 +1,321 @@
+<div class="main-box">
+<!-- 
+    list link "/party"
+    edit link "/Party/Create"
+ -->
+    <div class="form-horizontal">
+
+        <form id="form" class="data-entry-form" [formGroup]="formGroup" EnterKey>
+
+            <div class="main-box-header">
+                <div class="col-sm-11">
+                    <button type="button" class="btn btn-primary" (click)="onSubmit()" data-form="form" tabindex="-1" *ngIf="menu && ((menu.IsEditAllowed && Id != '0' ) || (menu.IsNewAllowed && Id == '0'))"><i class="fa fa-save"></i> Save</button>
+                    <!-- <a routerLink="/common/party" class="btn btn-default"><i class="fa fa-plus"></i> New</a> -->
+                    <a [routerLink]="isPartySupplier ? '/common/supplier' : '/common/customer'" class="btn btn-default" *ngIf="menu && menu.IsNewAllowed"><i class="fa fa-plus"></i> New</a>
+                    <!-- <a routerLink="/common/party/list" class="btn btn-default"><i class="fa fa-list"></i> List</a> -->
+                    <a [routerLink]="isPartySupplier ? '/common/supplier/list' : '/common/customer/list'" class="btn btn-default"><i class="fa fa-list"></i> List</a>
+                    <a href="/Inventory/Sale/CreateRetail" class="btn btn-default new-button"><i class="fa fa-plus"></i> Sales Invoice</a>
+                    <a href="/Inventory/GoodsReceiptNote/Create" class="btn btn-default new-button"><i class="fa fa-plus"></i> Purchase</a>
+                </div>
+                <label class="col-sm-2 label label-default" data-toggle="tooltip"
+                    data-original-title="Last Update Information" style="padding-top: 6px;">
+                    <span>{{party.UserName}}</span>&nbsp;<span>{{party.UpdatedOn | date : 'dd-MMM-yy hh:mm a'}}</span>
+                </label>
+
+            </div>
+
+            <hr/>
+
+            <!-- <fieldset class="main-box-body" [disabled]="party.PartyID > 0 && IsEditAllowed"> -->
+            <fieldset class="main-box-body" [disabled]="((menu && !menu.IsEditAllowed && Id != '0') || (!menu.IsNewAllowed && Id == '0'))">
+
+                <div class="form-group">
+                    <div class="col-sm-9">
+                        <div class="form-group">
+                            <!-- <input class="form-control" name="model.PartyID" type="hidden" value="@Model.PartyID" /> -->
+
+                            <div class="col-sm-2">
+                                <div class="input-group" data-toggle="tooltip" data-original-title="Party Code">
+                                    <div class="input-group-addon">
+                                        <div class="input-group-text">Code</div>
+                                    </div>
+                                    <input type="text" formControlName="PartyCode" class="form-control" placeholder="Auto {{autoNumber}}" value="{{autoNumber}}" />
+                                    <!-- placeholder="Auto {{autoNumber}}" value="{{autoNumber}}" -->
+                                </div>
+                            </div>
+
+                            <div class="col-sm-8">
+                                <div class="input-group">
+                                    <div class="input-group-addon">
+                                        <div class="input-group-text">Name</div>
+                                    </div>
+                                    <input class="form-control" formControlName="PartyName" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <!-- @Html.LabelFor(p => p.Phone, new { @class = "col-sm-1 control-label" }) -->
+                            <!-- <label class="col-sm-1 control-label">Phone</label>
+                            <div class="col-sm-5">
+                                <textarea formControlName="Phone" rows="3" class="form-control"></textarea>
+                            </div> -->
+                            <div class="col-sm-5">
+                                <div class="input-group">
+                                    <div class="input-group-addon">
+                                        <div class="input-group-text">Phone</div>
+                                    </div>
+                                    <input class="form-control" formControlName="Phone" />
+                                </div>
+                            </div>
+
+                            <!-- @Html.LabelFor(p => p.Email, new { @class = "col-sm-1 control-label" }) -->
+                            <!-- <label class="col-sm-1 control-label">Email</label>
+                            <div class="col-sm-5">
+                                <textarea formControlName="Email" rows="3" class="form-control"></textarea>
+                            </div> -->
+                            <div class="col-sm-5">
+                                <div class="input-group">
+                                    <div class="input-group-addon">
+                                        <div class="input-group-text">Email</div>
+                                    </div>
+                                    <input class="form-control" formControlName="Email" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+
+                            <div class="col-sm-6" >
+                                <div class="input-group">
+                                    <div class="input-group-addon">
+                                        <div class="input-group-text">Manager</div>
+                                    </div>
+                                    
+                                    <ng-select [items]="partymanagers" bindLabel="text" bindValue="id"
+                                    formControlName="ManagerID" [virtualScroll]="true" [loading]="loading"
+                                    placeholder="Select party manager">
+
+                                    </ng-select>
+                                    
+                                </div>
+                            </div>
+                        </div>
+
+                        
+
+
+                        <div class="form-group ">
+                            <div class="col-sm-12 col-sm-offset-1">
+                                <div class="checkbox-nice" *ngIf="isPartySupplier">
+                                    <input id="IsCustomer" type="checkbox" formControlName="IsCustomer">
+                                    <label for="IsCustomer" title="Check if it is customer">
+                                        Customer
+                                    </label>
+                                </div>
+                                <div class="checkbox-nice" *ngIf="!isPartySupplier">
+                                    <input id="IsSupplier" type="checkbox" formControlName="IsSupplier">
+                                    <label for="IsSupplier" title="Check if it is supplier">
+                                        Supplier
+                                    </label>
+                                </div>
+                                <div class="checkbox-nice">
+                                    <input id="IsActive" type="checkbox" formControlName="IsActive">
+                                    <label for="IsActive" title="Check if it is active">Active</label>
+                                  </div>
+                                <div class="checkbox-nice">
+                                    <input id="IsInternal" type="checkbox" formControlName="IsInternal">
+                                    <label for="IsInternal" title="Internal party does not appear in summries">
+                                        Internal
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <div class="col-sm-3">
+                                <div class="input-group" data-toggle="tooltip" >
+                                    <div class="input-group-addon">
+                                        <div class="input-group-text" data-toggle="tooltip"
+                                        data-original-title="Opening Debit (Receivable)">Op. Dr</div>
+                                    </div>
+                                    <input class="form-control" formControlName="OpeningDebitAmount" style="text-align: right;"
+                                             title="Receivable" [textMask]="{mask: numberMask}" />
+                                </div>
+                            </div>
+
+                            <div class="col-sm-3">
+                                <div class="input-group" data-toggle="tooltip" >
+                                    <div class="input-group-addon">
+                                        <div class="input-group-text" data-toggle="tooltip"
+                                        data-original-title="Opening Credit (Payable)">Op. Cr</div>
+                                    </div>
+                                    <input class="form-control" formControlName="OpeningCreditAmount" style="text-align: right;"
+                                            title="Payable" [textMask]="{mask:numberMask}"/>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-3">
+                                <div class="input-group" data-toggle="tooltip" data-original-title="Credit Limit">
+                                    <div class="input-group-addon">
+                                        <div class="input-group-text">Credit Limit</div>
+                                    </div>
+                                    <input type="text" formControlName="CreditLimit" style="text-align: right;" class="form-control" [textMask]="{mask:numberMask}" />
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                    <div class="col-sm-2 col-sm-offset-1" for="fileInput" (click)="onFileSelected($event)" style="display: flex;">
+                        <!-- @Html.Partial("_ImageUpload2", new QuickErp.Models.ViewModels.ImageUploadViewModel() { ID = "PartyImageRelativePath", Name = "model.PartyImageRelativePath", SectionName = "party", MenuID = (int)Menus.Party, ImagePath = Model.PartyImageRelativePath ?? "", CompanyID = Common.LoginData.ImpersonateCompany.CompanyID, RecID = Model.PartyID, Class = "", Style = "cursor:pointer; max-width:100%; max-height: 100%;" })
+                        @*@Html.Partial("_ImageUpload", new QuickErp.Models.ViewModels.ImageUploadViewModel() { ID = "PartyImage", Name = "Model.PartyImageFileID", SectionName = "PartyImage", MenuID = (int)Menus.Party, ImagePath = Model.PartyImageRelativePath ?? "", Class = "", Style = "cursor:pointer; max-width:100%; max-height: 100%;" })*@ -->
+
+                        <input type="file" #fileInput style="display: none" (change)="onFileSelected($event)">
+
+                        <img src="{{party.PartyImageRelativePath}}" class="item-image"
+                            style="width: 200px; height: 200px; padding: 1px; border: 1px solid gray;"
+                            (click)="fileInput.click()" />
+                    </div>
+
+                </div>
+
+                <hr />
+
+                <div class="form-group">
+                    <!-- @Html.LabelFor(p => p.Address, "Address", new { @class = "col-sm-1 control-label" }) -->
+
+                    <div class="col-sm-12">
+                        <div class="input-group">
+                            <div class="input-group-addon">
+                                <div class="input-group-text">Address</div>
+                            </div>
+                            <input id="Address" class="form-control" formControlName="Address" type="text" />
+
+                        </div>
+                    </div>
+                </div>
+
+                
+
+                <div class="form-group">
+                    <!-- @Html.LabelFor(p => p.City, "City", new { @class = "col-sm-1 control-label" }) -->
+
+                    <div class="col-sm-3">
+                        <div class="input-group">
+                            <div class="input-group-addon">
+                                <div class="input-group-text">City</div>
+                            </div>
+                            <input class="form-control" formControlName="City" type="text" />
+
+                        </div>
+                    </div>
+
+                    <!-- @Html.LabelFor(p => p.State, new { @class = "col-sm-1 control-label" }) -->
+
+                    <div class="col-sm-3">
+                        <div class="input-group">
+                            <div class="input-group-addon">
+                                <div class="input-group-text">State</div>
+                            </div>
+                            <input class="form-control" formControlName="State" type="text" />
+
+                        </div>
+                    </div>
+
+                    <!-- @Html.LabelFor(p => p.Country, new { @class = "col-sm-1 control-label" }) -->
+
+                    <div class="col-sm-3">
+                        <div class="input-group">
+                            <div class="input-group-addon">
+                                <div class="input-group-text">Country</div>
+                            </div>
+                            <input class="form-control" formControlName="Country" type="text" />
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <!-- @Html.LabelFor(p => p.ZipCode, new { @class = "col-sm-1 control-label" }) -->
+
+                    <div class="col-sm-3">
+                        <div class="input-group">
+                            <div class="input-group-addon">
+                                <div class="input-group-text">ZipCode</div>
+                            </div>
+                            <input class="form-control" formControlName="ZipCode" type="text" />
+
+                        </div>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="form-group">
+                    
+                    <div class="col-sm-12">
+                        <div class="input-group">
+                            <div class="input-group-addon">
+                                <div class="input-group-text">Delivery Address</div>
+                            </div>
+                            <input id="DeliveryAddress" class="form-control" formControlName="DeliveryAddress" type="text" />
+
+                        </div>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="form-group">
+
+                    <label class="col-sm-1 control-label">Manufacturers</label>
+                    <div class="col-sm-10">
+                        <div class="checkbox-nice" style="width: 300px;"
+                            *ngFor="let manufacturer of formGroup.get('Manufacturers')?.controls; let i = index">
+                            <input type="checkbox" id="m{{i}}" [formControl]="manufacturer.get('IsAssigned')" />
+                            <label for="m{{i}}">
+                                {{manufacturer.get('ManufacturerName').value}}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <hr />
+                <!-- <div class="form-group" *ngIf=" party.PartyShops != null  && IsCommonPartyAllShops == false"> -->
+                <div class="form-group">
+
+                    <label class="col-sm-1 control-label">Shops</label>
+                    <div class="col-sm-10">
+                        <div class="checkbox-nice" style="width: 300px;"
+                            *ngFor="let partyShop of formGroup.get('PartyShops')?.controls; let i = index">
+                            <input type="checkbox" id="p{{i}}" [formControl]="partyShop.get('IsAssigned')" />
+                            <label for="p{{i}}">
+                                {{partyShop.get('ShopName').value}}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- <div class="form-group" *ngIf=" (party.PartyShops != null && party.PartyShops != undefined) && IsCommonPartyAllShops "> -->
+
+                <!-- <div class="form-group">
+                    <label class="col-sm-1 control-label">Shops</label>
+                    <div class="col-sm-10" id="rolename">
+                        <fieldset *ngFor="let shop of formGroup.get('PartyShops')?.controls; let i = index">
+                            <div class="checkbox-nice">
+
+                                <input id="p{{i}}" type="checkbox" formControlName="shop.get('IsAssigned')" />
+                                <label for="p{{i}}">
+                                    {{shop.get('ShopName').value}}
+                                </label>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div> -->
+
+            </fieldset>
+
+        </form>
+    </div>
+</div>
