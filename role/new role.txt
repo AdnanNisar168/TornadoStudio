@@ -1,0 +1,51 @@
+<!-- app.component.html (or your Angular component's HTML template) -->
+
+<!-- Include Bootstrap CSS and Font Awesome for styling -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<div class="container">
+  <p>
+    <ng-container *ngIf="isCreateAllowed">
+      <a [routerLink]="['/QuickSecurity/Role/Create']" class="btn btn-primary"><i class='fa fa-plus'></i> New Role</a>
+    </ng-container>
+    <div class="text-right"></div>
+  </p>
+
+  <div class="search-criteria">
+    <form class="search-form form-horizontal">
+      <div class="form-group row">
+        <div class="col-sm-3">
+          <input id="searchRoleName" name="searchRoleName" class="form-control" placeholder="Role Name" [(ngModel)]="searchRoleName" />
+        </div>
+        <div class="col-sm-3" *ngIf="isSuperAdmin">
+          <input id="searchCompanyName" name="searchCompanyName" class="form-control" placeholder="Company Name" [(ngModel)]="searchCompanyName" />
+        </div>
+        <button class="btn btn-primary search-button" (click)="searchRoles()"><i class="fa fa-search"></i> Search</button>
+      </div>
+    </form>
+  </div>
+
+  <table class="table table-bordered table-striped table-condensed table-hover list-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Role</th>
+        <th>Company Code</th>
+        <th>Company</th>
+        <th>Users</th>
+        <th style="width: 10px;"></th>
+      </tr>
+    </thead>
+    <tfoot>
+      <tr>
+        <th>ID</th>
+        <th>Role</th>
+        <th>Company Code</th>
+        <th>Company</th>
+        <th>Users</th>
+        <th></th>
+      </tr>
+    </tfoot>
+  </table>
+</div>

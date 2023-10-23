@@ -1,0 +1,101 @@
+//////////////////////////////////////////// Calling Method In Controller //////////////////////////////////////////////////////////
+
+ public JsonResult Delete(Int32 id)
+        {
+            //ActionResultJson<general_result> ActionResultJson = new ActionResultJson<general_result>();
+            //QuickErpEF db = new QuickErpEF();
+            var actionResultJson = new ActionResultJson<BudgetViewModel>();
+
+            try
+            {
+                log.Info("Started");
+
+                //var Budget = db.AccountingBudgets.Where(w => w.CompanyID == Common.LoginData.ImpersonateCompany.CompanyID && w.BudgetID == id).FirstOrDefault();
+                //var BudgetDetail = db.AccountingBudgetDetails.Where(w => w.CompanyID == Common.LoginData.ImpersonateCompany.CompanyID && w.BudgetID == id);
+
+                //if (Budget != null)
+                //{
+                //    Budget.RecordStatusID = (int)RecordStatuses.Deleted;
+                //    Budget.StampUserID = Common.LoginData.ImpersonateUser.UserID;
+
+                //    foreach (var row in BudgetDetail)
+                //    {
+                //        row.RecordStatusID = (int)RecordStatuses.Deleted;
+                //        row.StampUserID = Common.LoginData.ImpersonateUser.UserID;
+                //    }
+
+                //    db.SaveChanges();
+
+                //    ActionResultJson.http_code = HttpStatusCode.OK;
+                //    ActionResultJson.message = "Record deleted successfully";
+                //}
+                //else
+                //{
+                //    ActionResultJson.http_code = HttpStatusCode.NotFound;
+                //    ActionResultJson.message = "Record could not be found";
+                //}
+
+                var parms = new DynamicParameters();
+                parms.Add("@CompanyID", CurrentCompanyID);
+                parms.Add("@BudgetID", id);
+
+                DapperQuery.Delete(DapperQuery.DBTables.AccountingBudgetDetail, "BudgetID", id);
+                DapperQuery.Delete(DapperQuery.DBTables.AccountingBudget, "BudgetID", id);
+
+                actionResultJson.message = "Budget is deleted successfully";
+                actionResultJson.http_code = HttpStatusCode.OK;
+
+
+                log.Info("Completed");
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                actionResultJson.message = "Error while deleting budget";
+                actionResultJson.http_code = HttpStatusCode.InternalServerError;
+            }
+
+            return Json(actionResultJson);
+
+        }
+
+//////////////////////////////////////////// Dapper Method //////////////////////////////////////////////////////////
+
+ public static int Delete(DBTables table, string idColumn, int id)
+        {
+            try
+            {
+                log.Debug("Started");
+
+                var tableName = Enum.GetName(typeof(DBTables), table);
+                var parms = new DynamicParameters();
+
+                var sql = string.Empty;
+                if (Common.LoginData.ImpersonateUser.IsSuperAdmin)
+                {
+                    sql = string.Format("DELETE FROM {0} WHERE {1}=@{1}", tableName, idColumn);
+                    parms.Add("@" + idColumn, id);
+                }
+                else
+                {
+                    sql = string.Format("DELETE FROM {0} WHERE CompanyID=@CompanyID AND {2}=@{2}", tableName, Common.LoginData.ImpersonateCompany.CompanyID, idColumn);
+                    parms.Add("@CompanyID", Common.LoginData.ImpersonateCompany.CompanyID);
+                    parms.Add("@" + idColumn, id);
+                }
+
+                int result = 0;
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Execute(sql, parms);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }

@@ -1,0 +1,134 @@
+//////////////////////////////////////////// Calling Method In Controller //////////////////////////////////////////////////////////
+
+// case for update 
+
+// GenderViewModel genderViewModel
+                    var parms = new DynamicParameters();
+                    parms.Add("@CompanyID", CurrentCompanyID);
+                    parms.Add("@GenderID", source.GenderID);
+                    //genderViewModel will save in db
+                    genderViewModel = DapperQuery.Select<GenderViewModel>(DapperQuery.DBTables.InvGender, parms).FirstOrDefault();//for first record or null
+
+
+
+//////////////////////////////////////////// Dapper Method //////////////////////////////////////////////////////////
+
+ public enum QueryTypes // also in dapper.cs
+        {
+            Select,
+            SelectOne,
+            Insert,
+            Update,
+            Delete
+        }
+
+
+public static IEnumerable<T> Select<T>(DBTables table, DynamicParameters columns)
+        {
+            var query = "";
+
+            try
+            {
+                query = GetQuery(table, QueryTypes.SelectOne);
+                IEnumerable<T> model;
+                //var queryParams = new DynamicParameters();
+
+                if (columns.ParameterNames.Count() > 0)
+                {
+                    //query += " where " + string.Join(" and ", columns.Select(s => s.Key + "=" + "@" + s.Key));
+                    query += " where ";
+
+                    foreach (var column in columns.ParameterNames)
+                    {
+                    if (column.ToLower() == "warehouseid")
+                        {
+                            query += "isnull(" + column + ",0)=isnull(@" + column + ",0) and ";
+                        }
+                        else
+                        {
+                            query += column + "=@" + column + " and ";
+                        }
+                    }
+
+                    query = query.Substring(0, query.Length - 4);
+                }
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    model = cn.Query<T>(query, columns);
+                }
+
+                return model;
+            }
+            catch (Exception ex)
+            {
+                var paramString = " Parameters=" + string.Join(", ", from pn in columns.ParameterNames select string.Format("@{0}={1}", pn, (columns as SqlMapper.IParameterLookup)[pn]));
+                var ex1 = new Exception(table.ToString() + paramString + (query ?? ""), ex);
+                log.Error(ex1);
+                throw;
+            }
+        }
+
+//GetQuery is called in upper method
+  public static string GetQuery(DBTables table, QueryTypes queryType)
+        {
+            try
+            {
+                var cacheKey = string.Format("{0}-{1}", table.ToString(), queryType);
+                var finalQuery = CacheManager.Get<string>(cacheKey);
+
+                if (string.IsNullOrEmpty(finalQuery))
+                {
+                    log.InfoFormat("Query '{0}' for table '{1}' is not in cache so building it ...", queryType, table);
+
+                    using (var cn = new SqlConnection(Common.ConnectionString))
+                    {
+                        var params1 = new DynamicParameters();
+                        params1.Add("@TableName", Enum.GetName(typeof(DBTables), table));
+                        var cols = cn.Query<TableColumns>("SELECT COLUMNPROPERTY(object_id(c.TABLE_SCHEMA+'.'+c.TABLE_NAME), c.COLUMN_NAME, 'IsIdentity') 'IsIdentity', ISNULL(OBJECTPROPERTY(OBJECT_ID(k.CONSTRAINT_SCHEMA + '.' + QUOTENAME(k.CONSTRAINT_NAME)), 'IsPrimaryKey'),0) 'IsPrimaryKey', c.* FROM INFORMATION_SCHEMA.COLUMNS c left join INFORMATION_SCHEMA.KEY_COLUMN_USAGE k on c.table_name=k.table_name and c.COLUMN_NAME=k.COLUMN_NAME and OBJECTPROPERTY(OBJECT_ID(k.CONSTRAINT_SCHEMA + '.' + QUOTENAME(k.CONSTRAINT_NAME)), 'IsPrimaryKey') = 1 WHERE c.TABLE_NAME = @TableName AND c.TABLE_SCHEMA='dbo'", params1, commandTimeout: 120);
+                        var primaryKeyCol = cols.Where(w => (w.IsPrimaryKey)).FirstOrDefault();
+                        var isPrimaryKeyGuid = cols.Where(w => w.IsPrimaryKey && w.DATA_TYPE == "uniqueidentifier").FirstOrDefault() != null ? true : false;
+
+                        switch (queryType)
+                        {
+                            case QueryTypes.SelectOne:
+                                finalQuery = "select " + string.Join(",", cols.Select(s => s.COLUMN_NAME))
+                                    + " from " + table.ToString();
+                                break;
+                            case QueryTypes.Insert:
+                                finalQuery = "SET NOCOUNT ON; "
+                                    + " DECLARE @generated_keys table(" + primaryKeyCol.COLUMN_NAME + " " + (isPrimaryKeyGuid ? "uniqueidentifier" : "int") + ")"
+                                    + "insert into " + table.ToString() + " (" + string.Join(",", cols.Where(w => !w.IsIdentity).Select(s => s.COLUMN_NAME)) + ") "
+                                    + " OUTPUT INSERTED." + primaryKeyCol.COLUMN_NAME + " into @generated_keys "
+                                    + " values (" + string.Join(",", cols.Where(w => !w.IsIdentity).Select(s => "@" + s.COLUMN_NAME)) + ")"
+                                    + " SELECT t.* FROM @generated_keys AS g INNER JOIN " + table.ToString() + " AS t ON g." + primaryKeyCol.COLUMN_NAME + " = t." + primaryKeyCol.COLUMN_NAME + " WHERE @@ROWCOUNT > 0";
+
+                                break;
+                            case QueryTypes.Update:
+                                finalQuery = "update " + table.ToString() + " set ";
+                                finalQuery += string.Join(", ", cols.Where(w => !w.IsIdentity && w.COLUMN_NAME != "CompanyID" && !w.COLUMN_NAME.Contains("Created"))
+                                    .Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+                                //finalQuery += (model.Where(w => w.IsIdentity).Count() > 0 ? " OUTPUT INSERTED." + string.Join(",INSERTED.", model.Select(s => s.COLUMN_NAME)) : "");
+                                finalQuery += " where " + string.Join(" and ", cols.Where(w => (w.IsIdentity || w.COLUMN_NAME == "CompanyID")).Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+
+                                finalQuery += (cols.Where(w => w.IsIdentity).Count() > 0 ? " select " + string.Join(",", cols.Select(s => s.COLUMN_NAME)) : "") + " from " + table.ToString();
+                                finalQuery += " where " + string.Join(" and ", cols.Where(w => (w.IsIdentity || w.COLUMN_NAME == "CompanyID")).Select(s => s.COLUMN_NAME + "=@" + s.COLUMN_NAME));
+
+                                break;
+                            case QueryTypes.Delete:
+                                finalQuery = "delete from " + table.ToString() + " where " + string.Join(" and ", cols.Where(w => w.IsIdentity).Select(s => s.COLUMN_NAME));
+                                break;
+                        }
+                    }
+
+                    CacheManager.Set(cacheKey, finalQuery);
+                }
+
+                return finalQuery;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+

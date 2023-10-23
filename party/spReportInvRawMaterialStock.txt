@@ -1,0 +1,99 @@
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spReportInvRawMaterialStock')
+	DROP PROC spReportInvRawMaterialStock
+go
+-- ==========================================================================================
+-- Author:		Faisal Saleem
+-- Create date: 14-Jun-2020
+-- Description:	Raw Material Stock
+-- ==========================================================================================
+-- ------------ Modification History --------------------------------------------------------
+-- Author	Date		Details
+-- ------   ----        -------
+-- ------------------------------------------------------------------------------------------
+CREATE PROCEDURE spReportInvRawMaterialStock
+	(@CompanyID SMALLINT
+	, @WarehouseID INT
+	, @ShowZeroValueRows BIT
+	, @SupplierID INT
+	, @ItemCategoryKey VARCHAR(50)
+	, @EndDate DATETIME
+	) WITH ENCRYPTION
+AS
+BEGIN
+	
+	IF @EndDate IS NULL
+	begin
+		SELECT
+			iis.WarehouseID, ISNULL(w.WarehouseCode, 'WH') 'WarehouseCode', iis.ItemVariationKey, iv.ItemFullCode 'ItemFullCode', i.ItemName
+			, iis.StockQty, iis.StockQty * iis.Cost 'StockValue'
+			, ic.ItemCategoryFullNumber, ISNULL(ic.ItemCategoryName, '') 'ItemCategoryName', ISNULL(p.PartyName, '') ' PartyName'
+			, iv.ReorderQuantity, iv.MinimumQuantity, iv.MaximumQuantity, iv.OpeningQuantity, iv.OpeningValue
+		FROM
+			vwItemSummary iis
+		INNER JOIN
+			InvItemVariation iv ON iis.ItemVariationKey=iv.ItemVariationKey
+		INNER JOIN
+			InvItem i ON iv.ItemKey=i.ItemKey
+		LEFT JOIN
+			InvItemCategory ic ON i.CompanyID=ic.CompanyID and i.ItemCategoryID=ic.ItemCategoryID
+		LEFT JOIN
+			InvWarehouse w ON iis.CompanyID = w.CompanyID and iis.WarehouseID = w.WarehouseID
+		LEFT JOIN
+			CommonParty p ON i.CompanyID = p.CompanyID and i.PartyID = p.PartyID
+
+		WHERE
+			(i.ItemTypeID = 2)
+			and iis.CompanyID = @CompanyID
+			and (isnull(iis.WarehouseID,0) = isnull(@WarehouseID,0) or @WarehouseID is null)
+			and (i.PartyID = @SupplierID OR @SupplierID IS NULL)
+			and (CONVERT(NVARCHAR(36), i.ItemCategoryKey) = @ItemCategoryKey OR @ItemCategoryKey IS NULL)
+			and iis.StockQty <> 0
+	end
+	ELSE
+	begin
+		SELECT
+			vw.WarehouseID, ISNULL(w.WarehouseCode, 'HO') 'WarehouseCode', vw.ItemVariationKey, vw.ItemFullCode, vw.ItemName
+			, ISNULL(CASE WHEN dbo.fnBaseSetting(vw.CompanyID, 0, 0, 'General_CostingMethod') = 'lastpurchase' THEN iis.LastPurchaseRate ELSE vw.Cost END, 0) 'Cost'
+			, vw.OpeningQuantity + SUM(ISNULL(vw.ItemQty, 0)) 'StockQty',
+			CASE WHEN dbo.fnBaseSetting(vw.CompanyID, 0, 0, 'General_CostingMethod') = 'lastpurchase' THEN
+				vw.OpeningValue + (SUM(ISNULL(vw.ItemQty,0)) * iis.LastPurchaseRate)
+			ELSE
+				vw.OpeningValue + SUM(ISNULL(vw.ItemQty,0) * ISNULL(vw.Cost,0))
+			END 'StockValue'
+			, ISNULL(ic.ItemCategoryFullNumber, '') 'ItemCategoryFullNumber', ISNULL(ic.ItemCategoryName, '') 'ItemCategoryName', vw.PartyName ' PartyName'
+			, iv.ReorderQuantity, iv.MinimumQuantity, iv.MaximumQuantity, iv.OpeningQuantity, iv.OpeningValue
+		FROM
+			vwItemLedger vw
+		INNER JOIN
+			InvItemVariation iv ON iv.CompanyID=vw.CompanyID and iv.ItemVariationKey=vw.ItemVariationKey
+		LEFT JOIN
+			InvItemCategory ic ON vw.CompanyID=ic.CompanyID and vw.ItemCategoryKey=ic.ItemCategoryKey
+		LEFT JOIN
+			InvWarehouse AS w ON vw.WarehouseID = w.WarehouseID
+		LEFT JOIN
+			InvItemSummary iis ON iv.CompanyID=iis.CompanyID and iv.ItemVariationKey=iis.ItemVariationKey and ISNULL(w.WarehouseID,0)=ISNULL(iis.WarehouseID,0)
+
+		WHERE
+			(vw.CompanyID = @CompanyID)
+			AND (ISNULL(vw.WarehouseID, 0) = @WarehouseID OR @WarehouseID IS NULL)
+			AND (dbo.fnDateOnly(vw.DocumentDate) <= dbo.fnDateOnly(@EndDate))
+		GROUP BY
+			vw.CompanyID, vw.WarehouseID, ISNULL(w.WarehouseCode, 'HO'), vw.ItemVariationKey, vw.ItemFullCode, vw.ItemName, vw.Cost
+			, vw.OpeningQuantity, vw.OpeningValue, ic.ItemCategoryFullNumber, ic.ItemCategoryName, vw.PartyName
+			, iv.ReorderQuantity, iv.MinimumQuantity, iv.MaximumQuantity, iv.OpeningQuantity, iv.OpeningValue, iis.LastPurchaseRate
+	end
+END
+go
+/*
+exec spReportInvRawMaterialStock @CompanyID=60, @WarehouseID=9
+	, @ShowZeroValueRows=null, @SupplierID=null, @ItemCategoryKey=null
+	, @EndDate='2022-12-10'
+
+exec spReportInvRawMaterialStock @CompanyID=60, @WarehouseID=null
+	, @ShowZeroValueRows=null, @SupplierID=null, @ItemCategoryKey=null
+	, @EndDate=null
+
+select ItemCategoryName from InvItemCategory
+*/
+
+

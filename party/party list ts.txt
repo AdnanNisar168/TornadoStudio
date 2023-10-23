@@ -1,0 +1,213 @@
+import { Component, OnInit, Inject, LOCALE_ID } from '@angular/core';
+import { formatDate } from '@angular/common';
+import { FormBuilder, FormGroup, FormControl, Validators, FormArray } from '@angular/forms';
+import { of } from 'rxjs';
+import { ICellRendererAngularComp } from "ag-grid-angular";
+import { Router, ActivatedRoute, Params } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import createNumberMask from 'text-mask-addons/dist/createNumberMask';
+
+// import { DeleteButton } from '../../common/buttons/delete-button.component';
+import { DeleteButton } from './buttons/delete-button.component';
+//import { PostButton } from '../../common/buttons/post-button.component';
+// import { InventoryService } from '../../services/inventory.service';
+import { InventoryService } from '../services/inventory.service';
+// import { CommonService } from '../../services/common.service';
+import { CommonService } from '../services/common.service';
+// import { DeliveryChallan, DeliveryChallanList } from '../models/deliveryChallan';
+import { DeliveryChallan } from '../inventory/models/deliveryChallan';
+// import { CommonComponent } from '../../common/common.component';
+import { CommonComponent } from './common.component';
+// import { Common } from '../../models/common';
+import { Common } from '../models/common';
+// import { Dropdown } from 'src/app/models/dropdown';
+import { Dropdown } from '../models/dropdown';
+// import { PartyDropdown } from '../../models/party';
+import { PartyDropdown } from '../models/party';
+// import { ReportViewer } from '../../models/reportViewer';
+import { ReportViewer } from '../models/reportViewer';
+import { catchError } from 'rxjs/operators';
+// import { LoginInfo } from '../../models/loginInfo';
+import { LoginInfo } from '../models/loginInfo';
+import { Party, PartyList } from '../models/party';
+import Swal from 'sweetalert2';
+import { Menu } from '../models/menu';
+
+@Component({
+  selector: 'app-party-list',
+    templateUrl: './party-list.component.html',
+})
+export class PartyListComponent extends CommonComponent implements OnInit {
+    formGroup: FormGroup;
+    private context;
+    public menuId: number = 10018;
+    public listData: PartyList = new PartyList();
+    public menu: Menu = new Menu();
+    public currentPage: number = 1;
+    public pageSize: number = 10;
+    public sortColumn: string = 'PartyDate';
+    public sortOrder: string = 'desc'
+    public mask = ['(', /[1-9]/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/];
+    numberMask = createNumberMask({
+        allowDecimal: true,
+        decimalLimit: 2,
+        prefix: '',
+        suffix: '' // This will put the dollar sign at the end, with a space.
+    });
+    public customers: PartyDropdown[];
+    private loginInfo: LoginInfo;
+    private ImageAvailable: boolean;
+    public isPartySupplier: boolean = true;
+
+    constructor(private fb: FormBuilder, private router: Router, private route: ActivatedRoute, private inventoryService: InventoryService, private commonService: CommonService, @Inject(LOCALE_ID) private locale: string) {
+        super();
+
+        if(this.route.snapshot.routeConfig.path === 'common/supplier/list'){
+            this.isPartySupplier = true;
+            this.menuId = 10125;
+        }else{
+            this.isPartySupplier = false;
+        }
+
+        this.formGroup = this.fb.group({
+            PartyCode: [''],
+            PartyName: [''],
+            Phone: [''],
+            City:[''],
+            ManagerName:[''],
+            ActiveCustomers:[true],
+            IsActive:[true],
+            PartyTypeID: this.isPartySupplier ? 2 : 1
+        });
+
+        this.context = { componentParent: this };
+    }
+
+    ngOnInit() {
+        var self = this;
+        this.loadData();
+
+        this.commonService.getCustomers(true, false).subscribe(data => {
+            this.customers = data.results;
+        });
+        self.commonService.getLoginInfo().pipe(catchError(error => of(error)))
+        .subscribe(data => {
+            self.loginInfo = data;
+        });
+        self.commonService.getMenu().pipe(catchError(error => of(error)))
+        .subscribe(data => {
+            const menus = data;
+            self.menu = self.commonService.findMenu(self.menuId, menus);
+        });
+
+    }
+
+    NoImageAvailable(){
+       this.ImageAvailable = false;
+        return this.ImageAvailable;
+    }
+    
+    loadData() {
+        let self = this;
+        let data = {
+            ...this.formGroup.value,
+            PageNumber: this.currentPage, PageLength: this.pageSize, SortColumn: self.sortColumn, SortOrder: self.sortOrder
+        };
+
+        this.commonService.showSpinner("");
+
+        this.commonService.getPartys(data).subscribe(data => {
+            this.listData = data;
+            this.listData.data.forEach(row => {
+                if (row.PartyImageRelativePath == null || row.PartyImageRelativePath == "") {
+                    row.PartyImageRelativePath = "/Files/Images/NoImageAvailable.png";
+                }
+            });
+           
+            self.commonService.hideSpinner();
+        });
+    }
+
+    onPageSizeChanged(event) {
+        this.loadData();
+    }
+
+    pageChanged(event) {
+        console.log('page changed', event);
+        this.currentPage = event.page;
+        this.loadData();
+    }
+
+    onPost(data) {
+        var self = this;
+
+    }
+
+    onDelete(data) {
+        Swal({
+            title: 'Delete Confirmation',
+            text: "Are you sure, you want to delete record?",
+            showConfirmButton: true,
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'No',
+        }).then(result => {
+            if (result.value) {
+                if (data && data.PartyID) {
+                    this.commonService.deleteParty(data.PartyID).subscribe(res => {
+                        let message = res.message;
+                    // ERROR MESSAGE
+                if (res.http_code != 200) {
+                    res.broken_rules.forEach(x => {
+                        message += '<br>' + x;
+                    });
+                }
+                Swal({
+                    title: (res.http_code == 200 ? 'Success Message' : 'Error Message'),
+                    html: message,
+                    type: (res.http_code == 200 ? 'success' : 'error'),
+                }).then(result => {
+                    this.loadData();
+                });
+                        });
+                    }
+            }
+        });
+    }
+  
+
+   
+
+    onSortColumn(column) {
+        if (this.sortColumn != column) {
+            this.sortColumn = column;
+            this.sortOrder = 'asc';
+        } else if (this.sortOrder == 'asc') {
+            this.sortOrder = 'desc';
+        } else {
+            this.sortOrder = 'asc';
+        }
+        this.loadData();
+    }
+
+    onSearchClick() {
+        this.loadData();
+    }
+
+    onPrintClick(id) {
+        var reportViewer = new ReportViewer();
+        if (this.loginInfo.ImpersonateCompany.CompanyID == 60) {
+            reportViewer.ReportID = 139;
+        } else {
+            reportViewer.ReportID = 138;
+        }
+        reportViewer.DeliveryChallanID = id;
+        reportViewer.ExportFormat = 'pdf';
+
+        this.commonService.downloadReport(reportViewer)
+        .pipe(catchError(error => of(error)))
+        .subscribe(res => {
+        });
+    }
+}
+

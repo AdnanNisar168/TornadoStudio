@@ -1,0 +1,1774 @@
+using Dapper;
+using QuickErp.Areas.HR.Models.ViewModels;
+using QuickErp.Areas.Inventory.Models.ViewModels;
+using QuickErp.Models.Attributes;
+using QuickErp.Models.DTO;
+using QuickErp.Models.EF;
+using QuickErp.Models.Helpers;
+using QuickErp.Models.ViewModels;
+using QuickErpLibrary;
+using QuickErpLibrary.DTO;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity.Core.Objects;
+using System.Data.Entity.SqlServer;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Net;
+using System.Web;
+using System.Web.Mvc;
+
+
+namespace QuickErp.Controllers
+{
+    [Authorize, MenuSecurity(MenuID = 10018)]
+    public class PartyController : QuickErpMvcController
+    {
+        public log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        public ActionResult Index()
+        {
+            return View("IndexParty");
+        }
+
+        public ActionResult ListNG(DataTableAjaxPostModel dataTableModel, string sortColumn, string sortOrder, int pageLength, int pageNumber, string PartyCode,int PartyTypeID,
+            string PartyName, string Phone, string City, string ManagerName, bool? ActiveCustomers)
+
+
+        {
+            var datatablesNetList = new DataTablesNetList<PartyViewModel>();
+            var spParams = new DynamicParameters();
+            var take = dataTableModel.length;
+            var skip = dataTableModel.start;
+            var totalRecords = 0;
+
+            log.Debug("Started");
+
+            try
+             {
+                //Apply Sorting
+                //var sortColumn = dataTableModel.columns[dataTableModel.order[0].column].data;
+                //var sortOrder = dataTableModel.order[0].dir;
+                //var pageNumber = skip / take + 1;
+
+                spParams.Add("@CompanyID", CurrentCompanyID);
+                spParams.Add("@SearchCode", PartyCode);
+                spParams.Add("@SearchName", PartyName);
+                spParams.Add("@Phone", Phone);
+                spParams.Add("@City", City);
+                spParams.Add("@Manager", ManagerName);
+                spParams.Add("@ActiveCustomers", ActiveCustomers);
+                spParams.Add("@PartyTypeID", PartyTypeID);
+
+                spParams.Add("@sortColumn", sortColumn);
+                spParams.Add("@sortOrder", sortOrder);
+                spParams.Add("@PageNumber", pageNumber);
+                spParams.Add("@RecordsPerPage", pageLength);
+                spParams.Add("@totalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    var data = DapperQuery.GetListBySP<PartyViewModel>(DapperQuery.StoredProcedures.spPartyGetByCompanyIDSortingPaging, spParams);
+
+                    totalRecords = spParams.Get<int>("@totalRecords");
+                    datatablesNetList.data = data.ToList();
+                }
+
+                datatablesNetList.draw = dataTableModel.draw;
+                datatablesNetList.recordsTotal = totalRecords;
+                datatablesNetList.recordsFiltered = totalRecords;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+            }
+
+            return Content(Newtonsoft.Json.JsonConvert.SerializeObject(datatablesNetList), "application/json");
+        }
+
+        [HttpPost]
+        public ActionResult List(DataTableAjaxPostModel dataTableModel, string SearchCode, string SearchName, string Phone, string City, string Manager, bool? ActiveCustomers)
+        {
+            var datatablesNetList = new DataTablesNetList<PartyViewModel>();
+            var spParams = new DynamicParameters();
+            var take = dataTableModel.length;
+            var skip = dataTableModel.start;
+            var totalRecords = 0;
+
+            log.Debug("Started");
+
+            try
+            {
+                //Apply Sorting
+                var sortColumn = dataTableModel.columns[dataTableModel.order[0].column].data;
+                var sortOrder = dataTableModel.order[0].dir;
+                var pageNumber = skip / take + 1;
+
+                spParams.Add("@CompanyID", CurrentCompanyID);
+                spParams.Add("@SearchCode", SearchCode);
+                spParams.Add("@SearchName", SearchName);
+                spParams.Add("@Phone", Phone);
+                spParams.Add("@City", City);
+                spParams.Add("@Manager", Manager);
+                spParams.Add("@ActiveCustomers", ActiveCustomers);
+
+                spParams.Add("@sortColumn", sortColumn);
+                spParams.Add("@sortOrder", sortOrder);
+                spParams.Add("@PageNumber", pageNumber);
+                spParams.Add("@RecordsPerPage", take);
+                spParams.Add("@totalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    var data = DapperQuery.GetListBySP<PartyViewModel>(DapperQuery.StoredProcedures.spPartyGetByCompanyIDSortingPaging, spParams);
+
+                    totalRecords = spParams.Get<int>("@totalRecords");
+                    datatablesNetList.data = data.ToList();
+                }
+
+                datatablesNetList.draw = dataTableModel.draw;
+                datatablesNetList.recordsTotal = totalRecords;
+                datatablesNetList.recordsFiltered = totalRecords;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+            }
+
+            return Content(Newtonsoft.Json.JsonConvert.SerializeObject(datatablesNetList), "application/json");
+        }
+
+        [Authorize()]
+        public ActionResult Create(Guid? id)
+        {
+            //var db = new QuickErpEF();
+            PartyViewModel partyViewModel = null;
+
+            try
+            {
+                log.Info("Started");
+
+                if (id.GetValueOrDefault() != Guid.Empty)
+                {
+                    var parms = new DynamicParameters();
+                    parms.Add("@CompanyID", CurrentCompanyID);
+                    parms.Add("@PartyKey", id);
+                    partyViewModel = DapperQuery.Select<PartyViewModel>(DapperQuery.DBTables.CommonParty, parms).FirstOrDefault();
+                }
+
+                if (partyViewModel == null)
+                {
+                    partyViewModel = new PartyViewModel();
+                    partyViewModel.AutoNumber = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode");
+                    partyViewModel.IsActive = true;
+                }
+
+                var spParams = new DynamicParameters();
+                spParams.Add("@CompanyID", CurrentCompanyID);
+                spParams.Add("@PartyKey", id);
+                partyViewModel.Manufacturers = DapperQuery.GetListBySP<ManufacturerPartyAssociation>(DapperQuery.StoredProcedures.spInvManufacturerPartyAssociationGetAssigned, spParams);
+
+                var employeeParams = new List<KeyValuePair<string, object>>();
+                employeeParams.Add(new KeyValuePair<string, object>("CompanyID", CurrentCompanyID));
+                partyViewModel.Managers = new SelectList(DapperQuery.Select<EmployeeViewModel>(DapperQuery.DBTables.HREmployee, employeeParams)
+                    .Select(s => new SelectListItem() { Value = s.EmployeeID.ToString(), Text = s.EmployeeCode + " - " + s.EmployeeName }).ToList(), "Value", "Text", partyViewModel.ManagerID);
+
+                // warehouses
+                var spWarehouseParms = new DynamicParameters();
+                spWarehouseParms.Add("@CompanyID", CurrentCompanyID);
+                spWarehouseParms.Add("@PartyKey", id);
+                partyViewModel.PartyShops = DapperQuery.GetListBySP<CommonPartyShopAssociationWithStatusViewModel>(DapperQuery.StoredProcedures.spCommonPartyShopAssociationWithStatus, spWarehouseParms);
+                var IsCommonPartyAllShops = AppSetting.GetSetting(Common.LoginData.ImpersonateCompany.CompanyID, 0, SystemSettings.General_IsCommonPartyAllShops.ToString(), false);
+                partyViewModel.IsCommonPartyAllShops =  IsCommonPartyAllShops;
+                //
+
+                log.Debug("Complete");
+
+                return View("CreateParty", partyViewModel);
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return View("CreateParty", partyViewModel);
+            }
+        }
+
+        [HttpGet]
+        [Authorize()]
+        public ActionResult CreateNG(Guid? id)
+        {
+            //var db = new QuickErpEF();
+            PartyViewModel partyViewModel = null;
+
+            try
+            {
+                log.Info("Started");
+
+                if (id.GetValueOrDefault() != Guid.Empty)
+                {
+                    var parms = new DynamicParameters();
+                    parms.Add("@CompanyID", CurrentCompanyID);
+                    parms.Add("@PartyKey", id);
+                    partyViewModel = DapperQuery.Select<PartyViewModel>(DapperQuery.DBTables.CommonParty, parms).FirstOrDefault();
+
+                    //var user = db.SecUsers.Where(w => w.CompanyID == CurrentCompanyID && w.UserID == storeIssueNote.UpdatedBy).FirstOrDefault();
+                    var user = DapperQuery.GetUserByCompanyIDUserID(CurrentCompanyID, partyViewModel.UpdatedBy);
+                    if (user != null)
+                    {
+                        partyViewModel.UpdatedByName= user.UserName;
+                    }
+                }
+
+                if (partyViewModel == null)
+                {
+                    partyViewModel = new PartyViewModel();
+                    partyViewModel.AutoNumber = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode", CurrentCompanyID,null);
+                    partyViewModel.IsActive = true;
+                }
+
+                //var spParams = new DynamicParameters();
+                //spParams.Add("@CompanyID", CurrentCompanyID);
+                //spParams.Add("@PartyID", partyViewModel.PartyID);
+                //partyViewModel.Manufacturers = DapperQuery.GetListBySP<ManufacturerPartyAssociation>(DapperQuery.StoredProcedures.spInvManufacturerPartyAssociationGetAssigned, spParams);
+
+                //var employeeParams = new List<KeyValuePair<string, object>>();
+                //employeeParams.Add(new KeyValuePair<string, object>("CompanyID", CurrentCompanyID));
+                //partyViewModel.Managers = new SelectList(DapperQuery.Select<EmployeeViewModel>(DapperQuery.DBTables.HREmployee, employeeParams)
+                //    .Select(s => new SelectListItem() { Value = s.EmployeeID.ToString(), Text = s.EmployeeCode + " - " + s.EmployeeName }).ToList(), "Value", "Text", partyViewModel.ManagerID);
+
+                // warehouses
+                //var spWarehouseParms = new DynamicParameters();
+                //spWarehouseParms.Add("@CompanyID", CurrentCompanyID);
+                //spWarehouseParms.Add("@PartyID", partyViewModel.PartyID);
+                //partyViewModel.PartyShops = DapperQuery.GetListBySP<CommonPartyShopAssociationWithStatusViewModel>(DapperQuery.StoredProcedures.spCommonPartyShopAssociationWithStatus, spWarehouseParms);
+                //var IsCommonPartyAllShops = AppSetting.GetSetting(Common.LoginData.ImpersonateCompany.CompanyID, 0, SystemSettings.General_IsCommonPartyAllShops.ToString(), false);
+                //partyViewModel.IsCommonPartyAllShops = true;// IsCommonPartyAllShops;
+                ////
+
+                log.Debug("Complete");
+
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(partyViewModel), "application/json");
+                //return View("CreateParty", partyViewModel);
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(partyViewModel), "application/json");
+                //return View("CreateParty", partyViewModel);
+            }
+        }
+
+        [HttpGet]
+        [Authorize()]
+        public ActionResult CreateNewNG(Guid? id)
+        {
+            //var db = new QuickErpEF();
+            //PartyViewModel partyViewModel = null;
+            var partyViewModel = new PartyViewModel();
+            var spParams = new DynamicParameters();
+            spParams.Add("@CompanyID", CurrentCompanyID);
+            spParams.Add("@PartyKey", id);
+            log.Info("Started");
+            if (id.HasValue)
+            {
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    var model = cn.QueryMultiple(DapperQuery.StoredProcedures.spCommonPartyGetByCompanyIDPartyKey.ToString(), spParams, commandType: CommandType.StoredProcedure);
+
+                    partyViewModel = model.Read<PartyViewModel>().FirstOrDefault();
+                    if (partyViewModel == null)
+                    {
+                        partyViewModel = new PartyViewModel();
+                        var parms = new DynamicParameters();
+                        partyViewModel.AutoNumber = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode");
+                        partyViewModel.IsActive = true;
+                    }
+                }
+            }
+            else
+            {
+                partyViewModel.UpdatedOn = DateTime.Now;
+                partyViewModel.UpdatedOn = DateTime.Now;
+                partyViewModel.UpdatedOn = DateTime.Now;
+                partyViewModel.UpdatedOn = DateTime.Now;
+            }
+                //try
+                //{
+               // log.Info("Started");
+
+                //if (id.GetValueOrDefault() != Guid.Empty)
+                //{
+                //    var parms = new DynamicParameters();
+                //    parms.Add("@CompanyID", CurrentCompanyID);
+                //    parms.Add("@PartyKey", id);
+                //    partyViewModel = DapperQuery.Select<PartyViewModel>(DapperQuery.DBTables.CommonParty, parms).FirstOrDefault();
+
+                //    //var user = db.SecUsers.Where(w => w.CompanyID == CurrentCompanyID && w.UserID == storeIssueNote.UpdatedBy).FirstOrDefault();
+                //    var user = DapperQuery.GetUserByCompanyIDUserID(CurrentCompanyID, partyViewModel.UpdatedBy);
+                //    if (user != null)
+                //    {
+                //        partyViewModel.UpdatedByName = user.UserName;
+                //    }
+                //}
+
+                //if (partyViewModel == null)
+                //{
+                //    partyViewModel = new PartyViewModel();
+                //    partyViewModel.AutoNumber = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode");
+                //    partyViewModel.IsActive = true;
+                //}
+
+                //old commented
+                //var spParams = new DynamicParameters();
+                //spParams.Add("@CompanyID", CurrentCompanyID);
+                //spParams.Add("@PartyID", partyViewModel.PartyID);
+                //partyViewModel.Manufacturers = DapperQuery.GetListBySP<ManufacturerPartyAssociation>(DapperQuery.StoredProcedures.spInvManufacturerPartyAssociationGetAssigned, spParams);
+
+                //var employeeParams = new List<KeyValuePair<string, object>>();
+                //employeeParams.Add(new KeyValuePair<string, object>("CompanyID", CurrentCompanyID));
+                //partyViewModel.Managers = new SelectList(DapperQuery.Select<EmployeeViewModel>(DapperQuery.DBTables.HREmployee, employeeParams)
+                //    .Select(s => new SelectListItem() { Value = s.EmployeeID.ToString(), Text = s.EmployeeCode + " - " + s.EmployeeName }).ToList(), "Value", "Text", partyViewModel.ManagerID);
+
+                // warehouses
+                //var spWarehouseParms = new DynamicParameters();
+                //spWarehouseParms.Add("@CompanyID", CurrentCompanyID);
+                //spWarehouseParms.Add("@PartyID", partyViewModel.PartyID);
+                //partyViewModel.PartyShops = DapperQuery.GetListBySP<CommonPartyShopAssociationWithStatusViewModel>(DapperQuery.StoredProcedures.spCommonPartyShopAssociationWithStatus, spWarehouseParms);
+                //var IsCommonPartyAllShops = AppSetting.GetSetting(Common.LoginData.ImpersonateCompany.CompanyID, 0, SystemSettings.General_IsCommonPartyAllShops.ToString(), false);
+                //partyViewModel.IsCommonPartyAllShops = true;// IsCommonPartyAllShops;
+                ////
+                //old commented
+
+                log.Debug("Complete");
+
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(partyViewModel), "application/json");
+                //return View("CreateParty", partyViewModel);
+
+            //}
+            //catch (Exception ex)
+            //{
+            //    log.Error(ex);
+            //    return Content(Newtonsoft.Json.JsonConvert.SerializeObject(partyViewModel), "application/json");
+            //    //return View("CreateParty", partyViewModel);
+            //}
+        }
+
+
+        [HttpGet]
+        public ActionResult GetPartyShops(Guid? id)
+        {
+            List<CommonPartyShopAssociationWithStatusViewModel> PartyShops = new List<CommonPartyShopAssociationWithStatusViewModel>();
+            try
+            {
+                var spWarehouseParms = new DynamicParameters();
+                spWarehouseParms.Add("@CompanyID", CurrentCompanyID);
+                spWarehouseParms.Add("@PartyKey", id);
+                PartyShops = DapperQuery.GetListBySP<CommonPartyShopAssociationWithStatusViewModel>(DapperQuery.StoredProcedures.spCommonPartyShopAssociationWithStatus, spWarehouseParms);
+                //var IsCommonPartyAllShops = AppSetting.GetSetting(Common.LoginData.ImpersonateCompany.CompanyID, 0, SystemSettings.General_IsCommonPartyAllShops.ToString(), false);
+
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(PartyShops),"application/json");
+                //partyViewModel.IsCommonPartyAllShops = true;// IsCommonPartyAllShops;
+                //
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(PartyShops), "application/json");
+            }
+        }
+
+        [HttpGet]
+        public ActionResult GetManufacturers(Guid? id)
+        {
+            List<ManufacturerPartyAssociation> Manufacturers = new List<ManufacturerPartyAssociation>();
+            try {
+                var spParams = new DynamicParameters();
+                spParams.Add("@CompanyID", CurrentCompanyID);
+                spParams.Add("@PartyKey", id);
+                Manufacturers = DapperQuery.GetListBySP<ManufacturerPartyAssociation>(DapperQuery.StoredProcedures.spInvManufacturerPartyAssociationGetAssigned, spParams);
+
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(Manufacturers),"application/json");
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(Manufacturers));
+            }
+        }
+
+        //[HttpGet]
+        //public ActionResult NewNumber()
+        //{
+        //    var parms = new DynamicParameters();
+        //    parms.Add("@CompanyID", CurrentCompanyID);
+        //    var number = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode", parms);
+
+        //    return Content(Newtonsoft.Json.JsonConvert.SerializeObject(number), "application/json");
+        //}
+
+        [HttpGet]
+        public ActionResult NewNumber1(int partyTypeID)
+        {
+            string NextPartyNumber = string.Empty;
+            var parms1 = new DynamicParameters();
+            parms1.Add("@CompanyID", CurrentCompanyID);
+            //parms1.Add("@ShopID", CurrentShopID);
+            parms1.Add("@PartyTypeID", partyTypeID);
+            NextPartyNumber = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode", parms1).ToString();
+
+            NextPartyNumber = Convert.ToString(NextPartyNumber);
+
+            return Content(Newtonsoft.Json.JsonConvert.SerializeObject(NextPartyNumber), "application/json");
+        }
+
+        //public ActionResult NewNumber()
+        //{
+        //    var actionResultJson = new ActionResultJson<PartyViewModel>();
+
+        //    try
+        //    {
+        //        log.Info("Started");
+
+        //        string NextPartyCode = string.Empty;
+        //        var parms = new DynamicParameters();
+        //        parms.Add("@CompanyID", CurrentCompanyID);
+        //        NextPartyCode = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode", parms);
+        //        NextPartyCode = Convert.ToString(NextPartyCode);
+
+        //        actionResultJson.message = "Next Party Code added successfully";
+        //        actionResultJson.http_code = HttpStatusCode.OK;
+        //        actionResultJson.data = new PartyViewModel() { PartyCode = NextPartyCode };
+
+        //        log.Debug("Completed");
+
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        log.Error(ex);
+
+        //        actionResultJson.message = "Error while next assembly no";
+        //        actionResultJson.http_code = HttpStatusCode.InternalServerError;
+        //    }
+
+        //    return Json(actionResultJson, JsonRequestBehavior.AllowGet);
+        //}
+
+
+        [HttpGet]
+        public ActionResult GetPartyManagers()
+        {
+            var parms = new DynamicParameters();
+            parms.Add("@CompanyID", CurrentCompanyID);
+            var managers = DapperQuery.Select<EmployeeViewModel>(DapperQuery.DBTables.HREmployee, parms).Select(x => new { id = x.EmployeeID, text = x.EmployeeCode + " - " + x.EmployeeName });
+
+            return Content(Newtonsoft.Json.JsonConvert.SerializeObject(managers), "application/json");
+        }
+
+
+        [Authorize(), HttpPost()]
+        public ActionResult Save(PartyViewModel model)
+        {
+            ActionResultJson<general_result> actionResultJson = new ActionResultJson<general_result>(10018);
+            actionResultJson.data = new general_result();
+
+            try
+            {
+                var db = new QuickErpEF();
+                CommonParty party = null;
+
+                log.Info("Started");
+
+                if (IsValid(model))
+                {
+                    MapValues(model, ref db, ref party);
+
+                    db.SaveChanges();
+
+                    CacheManager.Remove(CacheManager.CacheKey.Customers, CurrentCompanyID);
+                    CacheManager.Remove(CacheManager.CacheKey.Suppliers, CurrentCompanyID);
+                    CacheManager.Remove(CacheManager.CacheKey.CustomersAndSuppliers, CurrentCompanyID);
+
+                    //model.PartyAutoID = party.PartyAutoID;
+
+                    if (model.Manufacturers != null)
+                    {
+                        foreach (var manufacturer in model.Manufacturers)
+                        {
+                            var dbManufacturer = db.InvManufacturerPartyAssociations.Where(w => w.CompanyID == CurrentCompanyID && w.ManufacturerID == manufacturer.ManufacturerID && w.PartyID == model.PartyID).FirstOrDefault();
+
+                            if (dbManufacturer == null && manufacturer.IsAssigned)
+                            {
+                                dbManufacturer = db.InvManufacturerPartyAssociations.Create();
+
+                                dbManufacturer.CompanyID = CurrentCompanyID;
+                                dbManufacturer.CreatedByUserAutoID = CurrentUserAutoID;
+                                dbManufacturer.CreatedOn = DateTime.UtcNow;
+                                dbManufacturer.IsActive = true;
+                                dbManufacturer.ManufacturerID = manufacturer.ManufacturerID;
+                                dbManufacturer.PartyID = party.PartyID;
+                                dbManufacturer.UpdatedByUserAutoID = CurrentUserAutoID;
+                                dbManufacturer.UpdatedOn = DateTime.UtcNow;
+
+                                db.InvManufacturerPartyAssociations.Add(dbManufacturer);
+                            }
+                            else if (dbManufacturer == null && !manufacturer.IsAssigned)
+                            {
+                                // nothing to do
+                            }
+                            else if (dbManufacturer != null && !manufacturer.IsAssigned)
+                            {
+                                db.InvManufacturerPartyAssociations.Remove(dbManufacturer);
+                            }
+                            else if (dbManufacturer != null && manufacturer.IsAssigned)
+                            {
+                                // already assigned so don't do anything
+                            }
+
+                            db.SaveChanges();
+                        }
+                    }
+
+                    #region "Warehouses"
+
+                    if (model.PartyShops != null)
+                    {
+                        var spWarehouseParms = new DynamicParameters();
+                        spWarehouseParms.Add("@CompanyID", CurrentCompanyID);
+                        spWarehouseParms.Add("@PartyKey", party.PartyKey);
+                        var wareHouses = DapperQuery.GetListBySP<CommonPartyShopAssociationWithStatusViewModel>(DapperQuery.StoredProcedures.spCommonPartyShopAssociationWithStatus, spWarehouseParms);
+                        if (wareHouses != null)
+                        {
+                            foreach (var row in model.PartyShops)
+                            {
+                                var wareHouse = wareHouses.Where(w => w.ShopID == row.ShopID).FirstOrDefault();
+
+                                if ((wareHouse == null && row.IsAssigned == true) || wareHouse != null && wareHouse.IsAssigned == false && row.IsAssigned == true)  // not in db and marked checked OR in db and not assigned and marked checked
+                                {
+                                    // insert
+                                    var parms1 = new DynamicParameters();
+                                    parms1.Add("@CompanyID", CurrentCompanyID);
+                                    parms1.Add("@ShopID", row.ShopID);
+                                    parms1.Add("@PartyID", party.PartyID);
+                                    parms1.Add("@CreatedByUserAutoID", CurrentUserAutoID);
+                                    parms1.Add("@CreatedOn", DateTime.UtcNow);
+                                    DapperQuery.Insert(DapperQuery.DBTables.CommonPartyShopAssociation, parms1);
+                                }
+                                else if (wareHouse != null && wareHouse.IsAssigned == true && row.IsAssigned == true) // in db and assigned and marked checked
+                                {
+                                    // do nothing
+                                }
+                                else if (wareHouse == null && row.IsAssigned == false)   // not in db and not marked uncheck
+                                {
+                                    // do nothing
+                                }
+                                else if (wareHouse != null && wareHouse.IsAssigned == true && row.IsAssigned == false) // in db and assigned and marked uncheck
+                                {
+                                    // delete
+                                    DapperQuery.Delete(DapperQuery.DBTables.CommonPartyShopAssociation, "CommonPartyShopAssociationID", wareHouse.CommonPartyShopAssociationID);
+                                }
+
+                            }
+                        }
+                    }
+
+                    #endregion
+
+                    if (!string.IsNullOrEmpty(model.PartyImageRelativePath))
+                    {
+                        var imagePath = Common.SaveTempImage(model.PartyImageRelativePath, party.PartyID);
+                        if (!string.IsNullOrEmpty(imagePath))
+                        {
+                            party.PartyImageRelativePath = imagePath;
+                            db.SaveChanges();
+                        }
+                    }
+
+                    actionResultJson.data.id = party.PartyID;
+                    actionResultJson.data.number = party.PartyCode;
+                    actionResultJson.http_code = HttpStatusCode.OK;
+                    actionResultJson.message = "Party is saved successfully";
+
+                    log.UserActionFormat("Company {0}-{1}: Pary {2}-{3} saved.", Common.LoginData.ImpersonateCompany.CompanyID, Common.LoginData.ImpersonateCompany.CompanyName, party.PartyID, party.PartyName);
+
+                }
+                else
+                {
+                    actionResultJson.broken_rules = this.BrokenRules;
+                    actionResultJson.http_code = HttpStatusCode.BadRequest;
+                    actionResultJson.message = "Please correct following errors:";
+
+                }
+
+                log.Debug("Completed");
+
+            }
+            catch (System.Data.SqlClient.SqlException exSql)
+            {
+                log.Error(exSql);
+                if (exSql.Number == 2601)
+                {
+                    //unique key error
+                    return Json(new ActionResultJson<string>
+                    {
+                        http_code = HttpStatusCode.BadRequest,
+                        message = "Party code already exists for another party"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return Json(new ActionResultJson<string>
+                {
+                    http_code = HttpStatusCode.InternalServerError,
+                    message = ex.Message,
+                    broken_rules = this.BrokenRules
+                });
+            }
+
+            return Json(actionResultJson);
+        }
+
+        [Authorize(), HttpPost()]
+        public ActionResult SaveNG(PartyViewModel model)
+        {
+            ActionResultJson<general_result> actionResultJson = new ActionResultJson<general_result>(10018);
+            actionResultJson.data = new general_result();
+
+            try
+            {
+                var db = new QuickErpEF();
+                //                CommonParty party = null;
+
+                log.Info("Started");
+
+                var party = new PartyViewModel();
+                var manufacturers = new List<ManufacturerPartyAssociation>();
+                var partyShops = new List<CommonPartyShopAssociationWithStatusViewModel>();
+
+                if (IsValid(model))
+                {
+                    //MapValuesNG(model, ref db,ref party, ref manufacturers, ref partyShops);
+                    MapValuesNewNG(model, ref party, ref manufacturers, ref partyShops);
+
+                    party = DapperQuery.SaveChanges(DapperQuery.DBTables.CommonParty, party);
+
+                    manufacturers.ForEach(x => { x.PartyID = party.PartyID; });
+
+                    if (manufacturers != null && manufacturers.Count > 0)
+                        DapperQuery.SaveChanges(DapperQuery.DBTables.InvManufacturerPartyAssociation, manufacturers);
+
+                    partyShops.ForEach(x => {x.PartyID = party.PartyID; });
+                    if (partyShops != null && partyShops.Count > 0)
+                        DapperQuery.SaveChanges(DapperQuery.DBTables.CommonPartyShopAssociation, partyShops);
+
+                    CacheManager.Remove(CacheManager.CacheKey.Customers, CurrentCompanyID);
+                    CacheManager.Remove(CacheManager.CacheKey.Suppliers, CurrentCompanyID);
+                    CacheManager.Remove(CacheManager.CacheKey.CustomersAndSuppliers, CurrentCompanyID);
+
+                    //using (System.Transactions.TransactionScope transaction = new System.Transactions.TransactionScope())
+                    //{
+                    //    db.SaveChanges();
+
+                    //    transaction.Complete();
+                    //    CacheManager.Remove(CacheManager.CacheKey.Customers, CurrentCompanyID);
+                    //    CacheManager.Remove(CacheManager.CacheKey.Suppliers, CurrentCompanyID);
+                    //    CacheManager.Remove(CacheManager.CacheKey.CustomersAndSuppliers, CurrentCompanyID);
+                    //}
+
+                    //model.PartyAutoID = party.PartyAutoID;
+
+                    //if (model.Manufacturers != null)
+                    //{
+                    //    foreach (var manufacturer in model.Manufacturers)
+                    //    {
+                    //        var dbManufacturer = db.InvManufacturerPartyAssociations.Where(w => w.CompanyID == CurrentCompanyID && w.ManufacturerID == manufacturer.ManufacturerID && w.PartyID == model.PartyID).FirstOrDefault();
+
+                    //        if (dbManufacturer == null && manufacturer.IsAssigned)
+                    //        {
+                    //            dbManufacturer = db.InvManufacturerPartyAssociations.Create();
+
+                    //            dbManufacturer.CompanyID = CurrentCompanyID;
+                    //            dbManufacturer.CreatedByUserAutoID = CurrentUserAutoID;
+                    //            dbManufacturer.CreatedOn = DateTime.UtcNow;
+                    //            dbManufacturer.IsActive = true;
+                    //            dbManufacturer.ManufacturerID = manufacturer.ManufacturerID;
+                    //            dbManufacturer.PartyID = party.PartyID;
+                    //            dbManufacturer.UpdatedByUserAutoID = CurrentUserAutoID;
+                    //            dbManufacturer.UpdatedOn = DateTime.UtcNow;
+
+                    //            db.InvManufacturerPartyAssociations.Add(dbManufacturer);
+                    //        }
+                    //        else if (dbManufacturer == null && !manufacturer.IsAssigned)
+                    //        {
+                    //            // nothing to do
+                    //        }
+                    //        else if (dbManufacturer != null && !manufacturer.IsAssigned)
+                    //        {
+                    //            db.InvManufacturerPartyAssociations.Remove(dbManufacturer);
+                    //        }
+                    //        else if (dbManufacturer != null && manufacturer.IsAssigned)
+                    //        {
+                    //            // already assigned so don't do anything
+                    //        }
+
+                    //        db.SaveChanges();
+                    //    }
+                    //}
+
+                    //#region "Warehouses"
+
+                    //if (model.PartyShops != null)
+                    //{
+                    //    var spWarehouseParms = new DynamicParameters();
+                    //    spWarehouseParms.Add("@CompanyID", CurrentCompanyID);
+                    //    spWarehouseParms.Add("@PartyID", party.PartyID);
+                    //    var wareHouses = DapperQuery.GetListBySP<CommonPartyShopAssociationWithStatusViewModel>(DapperQuery.StoredProcedures.spCommonPartyShopAssociationWithStatus, spWarehouseParms);
+                    //    if (wareHouses != null)
+                    //    {
+                    //        foreach (var row in model.PartyShops)
+                    //        {
+                    //            var wareHouse = wareHouses.Where(w => w.ShopID == row.ShopID).FirstOrDefault();
+
+                    //            if ((wareHouse == null && row.IsAssigned == true) || wareHouse != null && wareHouse.IsAssigned == false && row.IsAssigned == true)  // not in db and marked checked OR in db and not assigned and marked checked
+                    //            {
+                    //                // insert
+                    //                var parms1 = new DynamicParameters();
+                    //                parms1.Add("@CompanyID", CurrentCompanyID);
+                    //                parms1.Add("@ShopID", row.ShopID);
+                    //                parms1.Add("@PartyID", party.PartyID);
+                    //                parms1.Add("@CreatedByUserAutoID", CurrentUserAutoID);
+                    //                parms1.Add("@CreatedOn", DateTime.UtcNow);
+                    //                DapperQuery.Insert(DapperQuery.DBTables.CommonPartyShopAssociation, parms1);
+                    //            }
+                    //            else if (wareHouse != null && wareHouse.IsAssigned == true && row.IsAssigned == true) // in db and assigned and marked checked
+                    //            {
+                    //                // do nothing
+                    //            }
+                    //            else if (wareHouse == null && row.IsAssigned == false)   // not in db and not marked uncheck
+                    //            {
+                    //                // do nothing
+                    //            }
+                    //            else if (wareHouse != null && wareHouse.IsAssigned == true && row.IsAssigned == false) // in db and assigned and marked uncheck
+                    //            {
+                    //                // delete
+                    //                DapperQuery.Delete(DapperQuery.DBTables.CommonPartyShopAssociation, "CommonPartyShopAssociationID", wareHouse.CommonPartyShopAssociationID);
+                    //            }
+
+                    //        }
+                    //    }
+                    //}
+
+                    //#endregion
+
+                    if (!string.IsNullOrEmpty(model.PartyImageRelativePath))
+                    {
+                        var imagePath = Common.SaveTempImage(model.PartyImageRelativePath, party.PartyID);
+                        if (!string.IsNullOrEmpty(imagePath))
+                        {
+                            party.PartyImageRelativePath = imagePath;
+                            party = DapperQuery.SaveChanges(DapperQuery.DBTables.CommonParty, party);
+                        }
+                    }
+
+                    actionResultJson.data.id = party.PartyID;
+                    actionResultJson.data.number = party.PartyCode;
+                    actionResultJson.http_code = HttpStatusCode.OK;
+                    if(model.PartyTypeID == 1)actionResultJson.message = "Customer is saved successfully";
+                    if (model.PartyTypeID == 2) actionResultJson.message = "Supplier is saved successfully";
+
+                    log.UserActionFormat("Company {0}-{1}: Pary {2}-{3} saved.", Common.LoginData.ImpersonateCompany.CompanyID, Common.LoginData.ImpersonateCompany.CompanyName, party.PartyID, party.PartyName);
+
+                }
+                else
+                {
+                    actionResultJson.broken_rules = this.BrokenRules;
+                    actionResultJson.http_code = HttpStatusCode.BadRequest;
+                    actionResultJson.message = "Please correct following errors:";
+
+                }
+
+                log.Debug("Completed");
+
+            }
+            catch (System.Data.SqlClient.SqlException exSql)
+            {
+                log.Error(exSql);
+                if (exSql.Number == 2601)
+                {
+                    //unique key error
+                    return Json(new ActionResultJson<string>
+                    {
+                        http_code = HttpStatusCode.BadRequest,
+                        message = "Party code already exists for another party"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return Json(new ActionResultJson<string>
+                {
+                    http_code = HttpStatusCode.InternalServerError,
+                    message = ex.Message,
+                    broken_rules = this.BrokenRules
+                });
+            }
+            return Json(actionResultJson);
+            //var json = Newtonsoft.Json.JsonConvert.SerializeObject(actionResultJson);
+            //return Content(json, "application/json");
+            //return Content(Newtonsoft.Json.JsonConvert.SerializeObject(actionResultJson), "application/json");
+            //return Json(actionResultJson);
+        }
+
+        [HttpPost]
+        public ActionResult SaveSupplier(CodeNameViewModel model)
+        {
+            log.Info("Started");
+
+            var partyViewModel = new PartyViewModel()
+            {
+                PartyCode = model.Code,
+                PartyName = model.Name,
+                IsSupplier = true
+            };
+
+            return Save(partyViewModel);
+        }
+
+        [Authorize(), HttpPost()]
+        public JsonResult Delete(Int32 id)
+        {
+            ActionResultJson<general_result> actionResult = new ActionResultJson<general_result>();
+
+            try
+            {
+                log.Info("Started");
+
+                var columns1 = new DynamicParameters();
+                columns1.Add("@CompanyID", CurrentCompanyID);
+                columns1.Add("@PartyID", id);
+                var sales = DapperQuery.Select<SaleViewModel>(DapperQuery.DBTables.InvSale, columns1);
+                if (sales.Count() > 0)
+                {
+                    var sale = sales.FirstOrDefault();
+                    BrokenRules.Add(string.Format("This party is used in sale #{0}, sale date={1} and {2} other sales", sale.SaleNumber, sale.SaleDate.ToString("dd-MMM-yy"), sales.Count() - 1));
+                }
+
+                if (BrokenRules.Count() == 0)
+                {
+                    DapperQuery.Delete(DapperQuery.DBTables.InvPartyRate, "PartyID", id);
+                    DapperQuery.Delete(DapperQuery.DBTables.CommonPartySummary, "PartyID", id);
+                    DapperQuery.Delete(DapperQuery.DBTables.CommonPartyShopAssociation, "PartyID", id);
+                    DapperQuery.Delete(DapperQuery.DBTables.CommonParty, "PartyID", id);
+
+                    actionResult.http_code = HttpStatusCode.OK;
+                    actionResult.message = "Record deleted successfully";
+                }
+                else
+                {
+                    actionResult.http_code = HttpStatusCode.BadRequest;
+                    actionResult.broken_rules = BrokenRules;
+                    actionResult.message = "Could not delete party";
+                }
+
+                log.Debug("Completed");
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                actionResult.http_code = HttpStatusCode.InternalServerError;
+                actionResult.message = "There was some server error";
+            }
+
+            return Json(actionResult);
+        }
+
+        public JsonResult DeleteAllCompanyCustomers()
+        {
+            ActionResultJson<general_result> actionResult = new ActionResultJson<general_result>();
+
+            try
+            {
+                log.Info("Started");
+
+                var columns1 = new DynamicParameters();
+                columns1.Add("@CompanyID", CurrentCompanyID);
+                var sales = DapperQuery.Select<SaleViewModel>(DapperQuery.DBTables.InvSale, columns1);
+                if (sales.Count() > 0)
+                {
+                    var sale = sales.FirstOrDefault();
+                    BrokenRules.Add(string.Format("This party is used in sale #{0}, sale date={1} and {2} other sales", sale.SaleNumber, sale.SaleDate.ToString("dd-MMM-yy"), sales.Count() - 1));
+                }
+
+                if (BrokenRules.Count() == 0)
+                {
+
+                    var columns = new List<KeyValuePair<string, object>>();
+                    columns.Add(new KeyValuePair<string, object>("CompanyID", CurrentCompanyID));
+                    columns.Add(new KeyValuePair<string, object>("IsCustomer", 1));
+                    DapperQuery.Delete(DapperQuery.DBTables.CommonParty, columns);
+
+                    actionResult.http_code = HttpStatusCode.OK;
+                    actionResult.message = "Record deleted successfully";
+                }
+                else
+                {
+                    actionResult.http_code = HttpStatusCode.BadRequest;
+                    actionResult.broken_rules = BrokenRules;
+                    actionResult.message = "Could not delete party";
+                }
+
+                log.Debug("Completed");
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                actionResult.http_code = HttpStatusCode.InternalServerError;
+                actionResult.message = "There was some server error";
+            }
+
+            return Json(actionResult);
+        }
+        [HttpPost()]
+        public JsonResult DeleteAllCompanySuppliers()
+        {
+            ActionResultJson<general_result> actionResult = new ActionResultJson<general_result>();
+
+            try
+            {
+                log.Info("Started");
+
+                var columns1 = new DynamicParameters();
+                columns1.Add("@CompanyID", CurrentCompanyID);
+                var sales = DapperQuery.Select<SaleViewModel>(DapperQuery.DBTables.InvSale, columns1);
+                if (sales.Count() > 0)
+                {
+                    var sale = sales.FirstOrDefault();
+                    BrokenRules.Add(string.Format("This party is used in sale #{0}, sale date={1} and {2} other sales", sale.SaleNumber, sale.SaleDate.ToString("dd-MMM-yy"), sales.Count() - 1));
+                }
+
+                if (BrokenRules.Count() == 0)
+                {
+                
+                    var columns = new List<KeyValuePair<string, object>>();
+                    columns.Add(new KeyValuePair<string, object>("CompanyID", CurrentCompanyID));
+                    columns.Add(new KeyValuePair<string, object>("IsSupplier", 1));
+                    DapperQuery.Delete(DapperQuery.DBTables.CommonParty, columns);
+
+                    actionResult.http_code = HttpStatusCode.OK;
+                    actionResult.message = "Record deleted successfully";
+                }
+                else
+                {
+                    actionResult.http_code = HttpStatusCode.BadRequest;
+                    actionResult.broken_rules = BrokenRules;
+                    actionResult.message = "Could not delete party";
+                }
+
+                log.Debug("Completed");
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                actionResult.http_code = HttpStatusCode.InternalServerError;
+                actionResult.message = "There was some server error";
+            }
+
+            return Json(actionResult);
+        }
+
+        private void MapValues(PartyViewModel partyViewModel, ref QuickErpEF db, ref CommonParty party)
+        {
+            try
+            {
+                //var db = new QuickErpEF();
+
+                log.Debug("Started");
+
+                if (partyViewModel.PartyID <= 0)
+                {
+                    //Insert logic
+                    party = db.CommonParties.Create();
+
+                    party.CompanyID = Common.LoginData.ImpersonateCompany.CompanyID;
+                    //party.PartyID = party.NewID();
+                    party.PartyKey = Guid.NewGuid();
+                    party.RecordStatusID = (int)RecordStatuses.Posted;
+                    party.CreatedBy = CurrentUserID;
+                    party.CreatedOn = DateTime.UtcNow;
+                    if (string.IsNullOrEmpty(partyViewModel.PartyCode))
+                    {
+                        partyViewModel.PartyCode = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode");
+                    }
+                }
+                else
+                {
+                    //Update logic
+                    party = db.CommonParties.Where(w => w.CompanyID == Common.LoginData.ImpersonateCompany.CompanyID && w.PartyID == partyViewModel.PartyID).FirstOrDefault();
+
+                    if (party != null)
+                    {
+                        party.RecordStatusID = (int)RecordStatuses.Posted;
+                    }
+
+                }
+
+                party.PartyImageFileID = partyViewModel.PartyImageFileID;
+                party.PartyCode = partyViewModel.PartyCode;
+                party.PartyName = partyViewModel.PartyName;
+                party.Address = partyViewModel.Address ?? "";
+                party.City = partyViewModel.City ?? "";
+                party.Country = partyViewModel.Country ?? "";
+                party.Email = partyViewModel.Email ?? "";
+                party.URL = "";
+                party.IsCustomer = partyViewModel.IsCustomer;
+                party.IsSupplier = partyViewModel.IsSupplier;
+                party.IsSalesMan = partyViewModel.IsSalesMan;
+                party.IsActive = partyViewModel.IsActive;
+                party.IsInternal = partyViewModel.IsInternal;
+                party.Fax = "";
+                party.OpeningCreditAmount = partyViewModel.OpeningCreditAmount;
+                party.OpeningDebitAmount = partyViewModel.OpeningDebitAmount;
+                party.CreditLimit = partyViewModel.CreditLimit;
+                if (partyViewModel.IsFromDialogBox)
+                {
+                    party.Phone = partyViewModel.PartyCode;
+                }
+                else
+                {
+                    party.Phone = partyViewModel.Phone ?? "";
+                }
+                party.State = partyViewModel.State ?? "";
+                party.ZipCode = partyViewModel.ZipCode ?? "";
+                party.ManagerID = partyViewModel.ManagerID;
+                party.UpdatedBy = Common.LoginData.ImpersonateUser.UserID;
+                party.UpdatedOn = DateTime.UtcNow;
+
+                if (db.Entry(party).State == System.Data.Entity.EntityState.Detached)
+                {
+                    db.CommonParties.Add(party);
+                }
+                else
+                {
+                    db.CommonParties.Attach(party);
+                    db.Entry(party).State = System.Data.Entity.EntityState.Modified;
+                }
+
+                log.Debug("Completed");
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw ex;
+            }
+        }
+
+        private void MapValuesNG(PartyViewModel model, ref QuickErpEF db, ref PartyViewModel party, ref List<ManufacturerPartyAssociation> manufacturers, ref List<CommonPartyShopAssociationWithStatusViewModel> partyShops)
+        {
+            try
+            {
+                //var db = new QuickErpEF();
+                manufacturers = new List<ManufacturerPartyAssociation>();
+                partyShops = new List<CommonPartyShopAssociationWithStatusViewModel>();
+
+                log.Debug("Started");
+
+                if (model.PartyID <= 0)
+                {
+                    //Insert logic
+                    //party = db.CommonParties.Create();
+                    party = new PartyViewModel();
+
+                    party.CompanyID = Common.LoginData.ImpersonateCompany.CompanyID;
+                    //party.PartyID = ;
+                    party.PartyKey = Guid.NewGuid();
+                    party.RecordStatusID = (int)RecordStatuses.Posted;
+                    party.CreatedBy = CurrentUserID;
+                    party.CreatedOn = DateTime.UtcNow;
+                    if (string.IsNullOrEmpty(model.PartyCode))
+                    {
+                        model.PartyCode = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode");
+                    }
+                }
+                else
+                {
+                    //Update logic
+                    var parms = new DynamicParameters();
+                    parms.Add("@CompanyID", CurrentCompanyID);
+                    parms.Add("@PartyKey", model.PartyKey);
+                    party = DapperQuery.Select<PartyViewModel>(DapperQuery.DBTables.CommonParty, parms).FirstOrDefault();
+                    //party = db.CommonParties.Where(w => w.CompanyID == Common.LoginData.ImpersonateCompany.CompanyID && w.PartyID == model.PartyID).FirstOrDefault();
+
+                    if (party != null)
+                    {
+                        party.RecordStatusID = (int)RecordStatuses.Posted;
+                    }
+
+                }
+
+                party.PartyImageFileID = model.PartyImageFileID;
+                party.PartyCode = model.PartyCode;
+                party.PartyName = model.PartyName;
+                party.Address = model.Address ?? "";
+                party.DeliveryAddress = model.DeliveryAddress ?? "";
+                party.City = model.City ?? "";
+                party.PartyImageRelativePath = model.PartyImageRelativePath;
+                //if (!string.IsNullOrEmpty(model.PartyImageRelativePath))
+                //{
+                //    var imagePath = Common.SaveTempImage(model.PartyImageRelativePath, party.PartyID);
+                //    if (!string.IsNullOrEmpty(imagePath))
+                //    {
+                //        party.PartyImageRelativePath = imagePath;
+                //       // db.SaveChanges();
+                //    }
+                //}
+                party.Country = model.Country ?? "";
+                party.Email = model.Email ?? "";
+                party.URL = "";
+                party.IsCustomer = model.IsCustomer;
+                party.IsSupplier = model.IsSupplier;
+                party.IsSalesMan = model.IsSalesMan;
+                party.IsActive = model.IsActive;
+                party.IsInternal = model.IsInternal;
+                party.Fax = "";
+                party.OpeningCreditAmount = model.OpeningCreditAmount;
+                party.OpeningDebitAmount = model.OpeningDebitAmount;
+                party.CreditLimit = model.CreditLimit;
+                if (model.IsFromDialogBox)
+                {
+                    party.Phone = model.PartyCode;
+                }
+                else
+                {
+                    party.Phone = model.Phone ?? "";
+                }
+                party.State = model.State ?? "";
+                party.ZipCode = model.ZipCode ?? "";
+                party.ManagerID = model.ManagerID;
+                party.UpdatedBy = Common.LoginData.ImpersonateUser.UserID;
+                party.UpdatedOn = DateTime.UtcNow;
+
+
+                if (model.Manufacturers != null)
+                {
+                    foreach (var manufacturer in model.Manufacturers)
+                    {
+                        var parms = new DynamicParameters();
+                        parms.Add("@CompanyID", CurrentCompanyID);
+                        parms.Add("@PartyID", model.PartyID);
+                        parms.Add("@ManufacturerID", manufacturer.ManufacturerID);
+
+                        var dbManufacturer = DapperQuery.Select<ManufacturerPartyAssociation>(DapperQuery.DBTables.InvManufacturerPartyAssociation, parms).FirstOrDefault();
+                        //var dbManufacturer = db.InvManufacturerPartyAssociations.Where(w => w.CompanyID == CurrentCompanyID && w.ManufacturerID == manufacturer.ManufacturerID && w.PartyID == model.PartyID).FirstOrDefault();
+                        if (dbManufacturer == null && manufacturer.IsAssigned)
+                        {
+                            dbManufacturer = new ManufacturerPartyAssociation();
+                            //dbManufacturer = db.InvManufacturerPartyAssociations.Create();
+
+                            dbManufacturer.CompanyID = CurrentCompanyID;
+                            dbManufacturer.CreatedByUserAutoID = CurrentUserAutoID;
+                            dbManufacturer.CreatedOn = DateTime.UtcNow;
+                            dbManufacturer.IsActive = true;
+                            dbManufacturer.ManufacturerID = manufacturer.ManufacturerID;
+                            dbManufacturer.PartyID = model.PartyID;
+                            dbManufacturer.UpdatedByUserAutoID = CurrentUserAutoID;
+                            dbManufacturer.UpdatedOn = DateTime.UtcNow;
+
+                            manufacturers.Add(dbManufacturer);
+                            //db.InvManufacturerPartyAssociations.Add(dbManufacturer);
+                        }
+                        else if (dbManufacturer == null && !manufacturer.IsAssigned)
+                        {
+                            // nothing to do
+                        }
+                        else if (dbManufacturer != null && !manufacturer.IsAssigned)
+                        {
+                            var delparms = new DynamicParameters();
+                            parms.Add("@ManufacturerPartyAssociationID", dbManufacturer.ManufacturerPartyAssociationID);
+                            DapperQuery.Delete(DapperQuery.DBTables.InvManufacturerPartyAssociation, "ManufacturerPartyAssociationID", dbManufacturer.ManufacturerPartyAssociationID);
+                            //db.InvManufacturerPartyAssociations.Remove(delparms);
+                        }
+                        else if (dbManufacturer != null && manufacturer.IsAssigned)
+                        {
+                            // already assigned so don't do anything
+                        }
+                    }
+                }
+                #region "Warehouses"
+
+                if (model.PartyShops != null)
+                {
+                    var spWarehouseParms = new DynamicParameters();
+                    spWarehouseParms.Add("@CompanyID", CurrentCompanyID);
+                    spWarehouseParms.Add("@PartyKey", party.PartyKey);
+                    var wareHouses = DapperQuery.GetListBySP<CommonPartyShopAssociationWithStatusViewModel>(DapperQuery.StoredProcedures.spCommonPartyShopAssociationWithStatus, spWarehouseParms);
+                    if (wareHouses != null)
+                    {
+                        foreach (var row in model.PartyShops)
+                        {
+                            var wareHouse = wareHouses.Where(w => w.ShopID == row.ShopID).FirstOrDefault();
+
+                            if ((wareHouse == null && row.IsAssigned == true) || wareHouse != null && wareHouse.IsAssigned == false && row.IsAssigned == true)  // not in db and marked checked OR in db and not assigned and marked checked
+                            {
+                                // insert
+                                var dbShop = new CommonPartyShopAssociationWithStatusViewModel();
+                                dbShop.CompanyID = CurrentCompanyID;
+                                dbShop.ShopID = row.ShopID;
+                                dbShop.PartyID = party.PartyID;
+                                dbShop.CreatedByUserAutoID = CurrentUserAutoID;
+                                dbShop.CreatedOn = DateTime.UtcNow;
+                                dbShop.IsAssigned = true;
+                                partyShops.Add(dbShop);
+                                //var parms1 = new DynamicParameters();
+                                //parms1.Add("@CompanyID", CurrentCompanyID);
+                                //parms1.Add("@ShopID", row.ShopID);
+                                //parms1.Add("@PartyID", party.PartyID);
+                                //parms1.Add("@CreatedByUserAutoID", CurrentUserAutoID);
+                                //parms1.Add("@CreatedOn", DateTime.UtcNow);
+                                //DapperQuery.Insert(DapperQuery.DBTables.CommonPartyShopAssociation, parms1);
+                            }
+                            else if (wareHouse != null && wareHouse.IsAssigned == true && row.IsAssigned == true) // in db and assigned and marked checked
+                            {
+                                // do nothing
+                            }
+                            else if (wareHouse == null && row.IsAssigned == false)   // not in db and not marked uncheck
+                            {
+                                // do nothing
+                            }
+                            else if (wareHouse != null && wareHouse.IsAssigned == true && row.IsAssigned == false) // in db and assigned and marked uncheck
+                            {
+                                // delete
+                                DapperQuery.Delete(DapperQuery.DBTables.CommonPartyShopAssociation, "CommonPartyShopAssociationID", wareHouse.CommonPartyShopAssociationID);
+                            }
+
+                        }
+                    }
+                }
+
+                #endregion
+
+                //db.SaveChanges();
+
+                //if (db.Entry(party).State == System.Data.Entity.EntityState.Detached)
+                //{
+                //    db.CommonParties.Add(party);
+                //}
+                //else
+                //{
+                //    db.CommonParties.Attach(party);
+                //    db.Entry(party).State = System.Data.Entity.EntityState.Modified;
+                //}
+
+                log.Debug("Completed");
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw ex;
+            }
+        }
+
+        private void MapValuesNewNG(PartyViewModel model, ref PartyViewModel party, ref List<ManufacturerPartyAssociation> manufacturers, ref List<CommonPartyShopAssociationWithStatusViewModel> partyShops)
+        {
+            try
+            {
+                //var db = new QuickErpEF();
+                manufacturers = new List<ManufacturerPartyAssociation>();
+                partyShops = new List<CommonPartyShopAssociationWithStatusViewModel>();
+
+                log.Debug("Started");
+
+                if (model.PartyKey == Guid.Empty)
+                {
+                    //Insert logic
+                    //party = db.CommonParties.Create();
+                    party = new PartyViewModel();
+
+                    party.CompanyID = CurrentCompanyID;
+                    //party.PartyID = ;
+                    party.PartyKey = Guid.NewGuid();
+                    party.PartyTypeID = model.PartyTypeID;
+                    party.RecordStatusID = (int)RecordStatuses.Posted;
+                    party.CreatedBy = CurrentUserID;
+                    party.CreatedOn = DateTime.UtcNow;
+                    //if (string.IsNullOrEmpty(model.PartyCode))
+                    //{
+                    //    //model.PartyCode = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode");
+                    //    var whereParams = new DynamicParameters();
+                    //    whereParams.Add("@CompanyID", CurrentCompanyID);
+                    //    whereParams.Add("@PartyTypeID", model.PartyTypeID);
+                    //    party.PartyCode = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode", whereParams).ToString();
+                    //}
+                }
+                else
+                {
+                    //Update logic
+                    var parms = new DynamicParameters();
+                    parms.Add("@CompanyID", CurrentCompanyID);
+                    parms.Add("@PartyKey", model.PartyKey);
+                    party = DapperQuery.Select<PartyViewModel>(DapperQuery.DBTables.CommonParty, parms).FirstOrDefault();
+                    //party = db.CommonParties.Where(w => w.CompanyID == Common.LoginData.ImpersonateCompany.CompanyID && w.PartyID == model.PartyID).FirstOrDefault();
+
+                    if (party != null)
+                    {
+                        party.RecordStatusID = (int)RecordStatuses.Posted;
+                    }
+
+                }
+
+                if (string.IsNullOrEmpty(model.PartyCode))
+                {
+                    //model.PartyCode = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode");
+                    var whereParams = new DynamicParameters();
+                    whereParams.Add("@CompanyID", CurrentCompanyID);
+                    whereParams.Add("@PartyTypeID", model.PartyTypeID);
+                    party.PartyCode = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode", whereParams).ToString();
+                }
+                else
+                {
+                    party.PartyCode = model.PartyCode;
+                }
+                party.PartyImageFileID = model.PartyImageFileID;
+                party.UpdatedBy = CurrentUserAutoID;
+                //party.PartyCode = model.PartyCode;
+                party.PartyName = model.PartyName;
+                party.Address = model.Address ?? "";
+                party.DeliveryAddress = model.DeliveryAddress ?? "";
+                party.City = model.City ?? "";
+                party.PartyImageRelativePath = model.PartyImageRelativePath;
+                //if (!string.IsNullOrEmpty(model.PartyImageRelativePath))
+                //{
+                //    var imagePath = Common.SaveTempImage(model.PartyImageRelativePath, party.PartyID);
+                //    if (!string.IsNullOrEmpty(imagePath))
+                //    {
+                //        party.PartyImageRelativePath = imagePath;
+                //       // db.SaveChanges();
+                //    }
+                //}
+                party.Country = model.Country ?? "";
+                party.Email = model.Email ?? "";
+                party.URL = "";
+                party.IsCustomer = model.IsCustomer;
+                party.IsSupplier = model.IsSupplier;
+                party.IsSalesMan = model.IsSalesMan;
+                party.IsActive = model.IsActive;
+                party.IsInternal = model.IsInternal;
+                party.Fax = "";
+                party.OpeningCreditAmount = model.OpeningCreditAmount;
+                party.OpeningDebitAmount = model.OpeningDebitAmount;
+                party.CreditLimit = model.CreditLimit;
+                if (model.IsFromDialogBox)
+                {
+                    party.Phone = model.PartyCode;
+                }
+                else
+                {
+                    party.Phone = model.Phone ?? "";
+                }
+                party.State = model.State ?? "";
+                party.ZipCode = model.ZipCode ?? "";
+                party.ManagerID = model.ManagerID;
+                party.UpdatedBy = Common.LoginData.ImpersonateUser.UserID;
+                party.UpdatedOn = DateTime.UtcNow;
+
+
+                if (model.Manufacturers != null)
+                {
+                    foreach (var manufacturer in model.Manufacturers)
+                    {
+                        var parms = new DynamicParameters();
+                        parms.Add("@CompanyID", CurrentCompanyID);
+                        parms.Add("@PartyID", model.PartyID);
+                        parms.Add("@ManufacturerID", manufacturer.ManufacturerID);
+
+                        var dbManufacturer = DapperQuery.Select<ManufacturerPartyAssociation>(DapperQuery.DBTables.InvManufacturerPartyAssociation, parms).FirstOrDefault();
+                        //var dbManufacturer = db.InvManufacturerPartyAssociations.Where(w => w.CompanyID == CurrentCompanyID && w.ManufacturerID == manufacturer.ManufacturerID && w.PartyID == model.PartyID).FirstOrDefault();
+                        if (dbManufacturer == null && manufacturer.IsAssigned)
+                        {
+                            dbManufacturer = new ManufacturerPartyAssociation();
+                            //dbManufacturer = db.InvManufacturerPartyAssociations.Create();
+
+                            dbManufacturer.CompanyID = CurrentCompanyID;
+                            dbManufacturer.CreatedByUserAutoID = CurrentUserAutoID;
+                            dbManufacturer.CreatedOn = DateTime.UtcNow;
+                            dbManufacturer.IsActive = true;
+                            dbManufacturer.ManufacturerID = manufacturer.ManufacturerID;
+                            dbManufacturer.PartyID = model.PartyID;
+                            dbManufacturer.UpdatedByUserAutoID = CurrentUserAutoID;
+                            dbManufacturer.UpdatedOn = DateTime.UtcNow;
+
+                            manufacturers.Add(dbManufacturer);
+                            //db.InvManufacturerPartyAssociations.Add(dbManufacturer);
+                        }
+                        else if (dbManufacturer == null && !manufacturer.IsAssigned)
+                        {
+                            // nothing to do
+                        }
+                        else if (dbManufacturer != null && !manufacturer.IsAssigned)
+                        {
+                            var delparms = new DynamicParameters();
+                            parms.Add("@ManufacturerPartyAssociationID", dbManufacturer.ManufacturerPartyAssociationID);
+                            DapperQuery.Delete(DapperQuery.DBTables.InvManufacturerPartyAssociation, "ManufacturerPartyAssociationID", dbManufacturer.ManufacturerPartyAssociationID);
+                            //db.InvManufacturerPartyAssociations.Remove(delparms);
+                        }
+                        else if (dbManufacturer != null && manufacturer.IsAssigned)
+                        {
+                            // already assigned so don't do anything
+                        }
+                    }
+                }
+                #region "Warehouses"
+
+                if (model.PartyShops != null)
+                {
+                    var spWarehouseParms = new DynamicParameters();
+                    spWarehouseParms.Add("@CompanyID", CurrentCompanyID);
+                    spWarehouseParms.Add("@PartyKey", party.PartyKey);
+                    var wareHouses = DapperQuery.GetListBySP<CommonPartyShopAssociationWithStatusViewModel>(DapperQuery.StoredProcedures.spCommonPartyShopAssociationWithStatus, spWarehouseParms);
+                    if (wareHouses != null)
+                    {
+                        foreach (var row in model.PartyShops)
+                        {
+                            var wareHouse = wareHouses.Where(w => w.ShopID == row.ShopID).FirstOrDefault();
+
+                            if ((wareHouse == null && row.IsAssigned == true) || wareHouse != null && wareHouse.IsAssigned == false && row.IsAssigned == true)  // not in db and marked checked OR in db and not assigned and marked checked
+                            {
+                                // insert
+                                var dbShop = new CommonPartyShopAssociationWithStatusViewModel();
+                                dbShop.CompanyID = CurrentCompanyID;
+                                dbShop.ShopID = row.ShopID;
+                                dbShop.PartyID = party.PartyID;
+                                dbShop.CreatedByUserAutoID = CurrentUserAutoID;
+                                dbShop.CreatedOn = DateTime.UtcNow;
+                                dbShop.IsAssigned = true;
+                                partyShops.Add(dbShop);
+                                //var parms1 = new DynamicParameters();
+                                //parms1.Add("@CompanyID", CurrentCompanyID);
+                                //parms1.Add("@ShopID", row.ShopID);
+                                //parms1.Add("@PartyID", party.PartyID);
+                                //parms1.Add("@CreatedByUserAutoID", CurrentUserAutoID);
+                                //parms1.Add("@CreatedOn", DateTime.UtcNow);
+                                //DapperQuery.Insert(DapperQuery.DBTables.CommonPartyShopAssociation, parms1);
+                            }
+                            else if (wareHouse != null && wareHouse.IsAssigned == true && row.IsAssigned == true) // in db and assigned and marked checked
+                            {
+                                // do nothing
+                            }
+                            else if (wareHouse == null && row.IsAssigned == false)   // not in db and not marked uncheck
+                            {
+                                // do nothing
+                            }
+                            else if (wareHouse != null && wareHouse.IsAssigned == true && row.IsAssigned == false) // in db and assigned and marked uncheck
+                            {
+                                // delete
+                                DapperQuery.Delete(DapperQuery.DBTables.CommonPartyShopAssociation, "CommonPartyShopAssociationID", wareHouse.CommonPartyShopAssociationID);
+                            }
+
+                        }
+                    }
+                }
+
+                #endregion
+
+                //db.SaveChanges();
+
+                //if (db.Entry(party).State == System.Data.Entity.EntityState.Detached)
+                //{
+                //    db.CommonParties.Add(party);
+                //}
+                //else
+                //{
+                //    db.CommonParties.Attach(party);
+                //    db.Entry(party).State = System.Data.Entity.EntityState.Modified;
+                //}
+
+                log.Debug("Completed");
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw ex;
+            }
+        }
+
+        private bool IsValid(PartyViewModel request)
+        {
+            try
+            {
+                log.Debug("Started");
+                var db = new QuickErpEF();
+
+                if (request == null)
+                {
+                    this.BrokenRules.Add("Invalid data format");
+
+                }
+                else
+                {
+                    if (Common.LoginData.ImpersonateCompany.CompanyID <= 0)
+                        this.BrokenRules.Add("Invalid company, maybe you are not signed in");
+
+                    if (string.IsNullOrEmpty(request.PartyCode) && request.PartyID > 0)
+                    {
+                        this.BrokenRules.Add("Invalid party code");
+                    }
+
+                    if (string.IsNullOrEmpty(request.PartyName))
+                        this.BrokenRules.Add("Party Name cannot be empty");
+
+                    if (request.OpeningCreditAmount > 0 && request.OpeningDebitAmount > 0)
+                        this.BrokenRules.Add("You cannot specify value for both debit and credit amounts");
+
+                    if (request.IsSupplier == false && request.IsCustomer == false)
+                        this.BrokenRules.Add("You should select at lease a customer or a supplier. ");
+
+                    //if (!request.IsCustomer && !request.IsSupplier)
+                    //{
+                    //    this.BrokenRules.Add("Select customer or supplier checkbox");
+                    //}
+
+                    var parms = new DynamicParameters();
+                    parms.Add("@CompanyID", CurrentCompanyID);
+                    parms.Add("@PartyID", request.PartyID);
+                    parms.Add("@IsSupplier", request.IsSupplier);
+                    parms.Add("@IsCustomer", request.IsCustomer);
+                    parms.Add("@PartyCode", request.PartyCode);
+
+                    var qry = "SELECT * FROM commonParty WHERE CompanyID=@CompanyID AND PartyID != @PartyID AND IsSupplier = @IsSupplier AND IsCustomer = @IsCustomer AND PartyCode =@PartyCode";
+
+                    //var count = DapperQuery.ExecuteScalarQuery<int>(qry, parms, 60);
+                    var parties = DapperQuery.Select<PartyViewModel>(qry, parms);
+                    //var parties = db.CommonParties
+                    //    .Where(w => w.CompanyID == Common.LoginData.ImpersonateCompany.CompanyID && w.PartyID != request.PartyID && w.IsSupplier == request.IsSupplier && w.IsCustomer == request.IsCustomer && w.PartyCode.Trim() == request.PartyCode.Trim());
+
+                    if (parties.Count() > 0)
+                    {
+                        if (request.IsFromDialogBox)
+                        {
+                            this.BrokenRules.Add(string.Format("This mobile number is already assigned to another customer. {0}", parties.FirstOrDefault().PartyName));
+                        }
+                        //else
+                        //{
+                        //    this.BrokenRules.Add(string.Format("Duplicate code choose some different. Already assigned to {0}", parties.FirstOrDefault().PartyName));
+                        //}
+
+                        //else
+                        //{
+                        //    this.BrokenRules.Add(string.Format("Duplicate code choose some different. Already assigned to {0}", parties.FirstOrDefault().PartyName));
+                        //}
+                    }
+                    if (request.IsSupplier)
+                    {
+                        parms.Add("@PartyTypeID", request.PartyTypeID);
+                        qry = "SELECT * FROM commonParty WHERE CompanyID=@CompanyID AND PartyID != @PartyID AND PartyCode =@PartyCode AND PartyTypeID=@PartyTypeID";
+                        parties = DapperQuery.Select<PartyViewModel>(qry, parms);
+                        if (parties.Count() > 0)
+                        {
+                            this.BrokenRules.Add(string.Format("A Supplier with the same code already exists"));
+                        }
+                    }
+
+                    if (request.IsCustomer)
+                    {
+                        //IsCustomer = @IsCustomer
+                        //parms.Add("@IsCustomer", true);
+                        parms.Add("@PartyTypeID", request.PartyTypeID);
+                        qry = "SELECT * FROM commonParty WHERE CompanyID=@CompanyID AND PartyID != @PartyID AND PartyCode =@PartyCode AND PartyTypeID=@PartyTypeID";
+                        //if(request.IsCustomer && request.IsSupplier)
+                        //{
+                        //    qry = "SELECT * FROM commonParty WHERE CompanyID=@CompanyID AND PartyID != @PartyID AND IsCustomer = @IsCustomer AND IsSupplier = @IsSupplier";
+                        //}
+                        //else
+                        //{
+                        //    qry = "SELECT * FROM commonParty WHERE CompanyID=@CompanyID AND PartyID != @PartyID AND PartyTypeID=@PartyTypeID";
+                        //}
+
+                        parties = DapperQuery.Select<PartyViewModel>(qry, parms);
+                        if (parties.Count() > 0)
+                        {
+                            this.BrokenRules.Add(string.Format("A Customer with the same code already exists"));
+                        }
+                    }
+
+                }
+
+                log.Debug("Completed");
+
+                return this.BrokenRules.Count == 0;
+                //will return true if no rules broken
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return false;
+            }
+        }
+
+        public JsonResult GetParties()
+        {
+            var db = new QuickErpEF();
+            //List<PartyViewModel> partiesViewModel = new List<PartyViewModel>();
+            //PartyViewModel partyViewModel = default(PartyViewModel);
+            log.Debug("Started");
+
+            var parties = db.CommonParties
+                .Where(w => w.CompanyID == Common.LoginData.ImpersonateCompany.CompanyID && w.IsActive)
+                .Select(s => new PartyViewModel() { PartyID = s.PartyID, PartyName = s.PartyName });
+
+            //foreach (var party in parties)
+            //{
+            //    partyViewModel = new PartyViewModel();
+
+            //    partyViewModel.PartyID = party.PartyID;
+            //    partyViewModel.PartyDescription = party.PartyDescription;
+
+            //    partiesViewModel.Add(partyViewModel);
+            //}
+
+            return Json(parties, JsonRequestBehavior.AllowGet);
+        }
+
+        public JsonResult GetPartyAddress(int id)
+        {
+            log.Debug("Started");
+            try
+            {
+                var parms = new DynamicParameters();
+                parms.Add("@CompanyID", CurrentCompanyID);
+                parms.Add("@PartyID", id);
+                parms.Add("@IsActive", 1);
+                var party = DapperQuery.Select<PartyViewModel>(DapperQuery.DBTables.CommonParty, parms).FirstOrDefault();
+
+                return Json(party.Address, JsonRequestBehavior.AllowGet);
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return Json(0, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public JsonResult GetPartiesForSelect2(string q, bool? customers, bool? suppliers)
+        {
+            try
+             {
+                List<PartySelect2> select2List = new List<PartySelect2>();
+                var select2Response = new Select2Response<PartySelect2>();
+                CacheManager.CacheKey sessionKey;
+
+                log.Debug("Started");
+
+                customers = customers.GetValueOrDefault();
+                suppliers = suppliers.GetValueOrDefault();
+
+                if (customers.GetValueOrDefault() && suppliers.GetValueOrDefault())
+                {
+                    sessionKey = CacheManager.CacheKey.CustomersAndSuppliers;
+                }
+                else if (customers.GetValueOrDefault())
+                {
+                    sessionKey = CacheManager.CacheKey.Customers; 
+                }
+                else
+                {
+                    sessionKey = CacheManager.CacheKey.Suppliers;
+                }
+
+                if (CacheManager.Get<List<PartySelect2>>(sessionKey) == null)
+                {
+                    select2List = (new QuickErpEF()).CommonParties
+                        .Where(w => w.CompanyID == Common.LoginData.ImpersonateCompany.CompanyID && (w.IsCustomer == customers || w.IsSupplier == suppliers))
+                        .OrderBy(o => o.PartyCode)
+                        .Select(s => new PartySelect2
+                        {
+                            id = s.PartyID,
+                            text = s.PartyCode + " - " + s.PartyName.Replace("  ", "-"),
+                            //autoId = s.PartyAutoID,
+                            mobile = s.Phone,
+                            email = s.Email
+                        }).ToList();
+
+                    CacheManager.Set(sessionKey, select2List);
+                }
+                else
+                {
+                    select2List = CacheManager.Get<List<PartySelect2>>(sessionKey);
+                }
+
+                if (select2List.Count > 0 && select2List[select2List.Count - 1].id == -1)
+                {
+                    select2List[select2List.Count - 1].text = "<new> " + q;
+                }
+                else
+                {
+                    select2List.Add(new PartySelect2() { id = -1, text = "<new> " + q });
+                }
+
+                select2Response.results = select2List
+                    .Where(w => q == null || w.text.ToLower().Contains(q.ToLower()))
+                    .ToList();
+                log.Debug("Completed");
+
+                return Json(select2Response, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public JsonResult GetByPartyCode(string partyCode)
+        {
+            PartyViewModel party = null;
+            log.Debug("Started");
+
+            try
+            {
+                var db = new QuickErpEF();
+
+                party = db.CommonParties
+                    .Where(w => w.CompanyID == Common.LoginData.ImpersonateCompany.CompanyID && w.PartyCode == partyCode)
+                    .Select(s => new PartyViewModel() { PartyID = s.PartyID, PartyCode = s.PartyCode, PartyName = s.PartyName, Phone = s.Phone, Address = s.Address })
+                    .FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+            }
+
+            return Json(party, JsonRequestBehavior.AllowGet);
+        }
+
+        public JsonResult GetBalance(int id)
+        {
+            try
+            {
+                var columns = new DynamicParameters();
+                columns.Add("@CompanyID", CurrentCompanyID);
+                columns.Add("@PartyID", id);
+
+                var balance = DapperQuery.ExecuteSP(DapperQuery.StoredProcedures.spPartyGetClosingBalance.ToString(), columns);
+
+                return Json(balance, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return Json(0, JsonRequestBehavior.AllowGet);
+            }
+        }
+    }
+}

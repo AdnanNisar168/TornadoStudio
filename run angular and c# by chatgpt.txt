@@ -1,0 +1,40 @@
+To run an ASP.NET C# project and an Angular TypeScript project on the same port, you typically need to set up a reverse proxy. The reverse proxy acts as an intermediary, forwarding requests to the appropriate server based on the URL path.
+
+Here's a general outline of the steps you can follow:
+
+1. Make sure both projects are set up and running independently on different ports. Ensure that your ASP.NET C# project is running on one port (e.g., 5000), and your Angular TypeScript project is running on another port (e.g., 4200).
+
+2. Install and configure a reverse proxy server, such as Nginx or IIS (Internet Information Services). This server will act as the entry point and forward requests to the appropriate project based on the URL path.
+
+   - **Nginx**: If you choose Nginx, you can install it and configure it as follows:
+
+     - Install Nginx: Follow the instructions provided for your specific operating system.
+     - Open the Nginx configuration file (`nginx.conf` or `default.conf`) and add a new location block for your API backend and Angular frontend.
+     - Example configuration for Nginx:
+
+       ```nginx
+       http {
+         server {
+           listen 80;
+           server_name localhost;
+
+           location /api {
+             proxy_pass http://localhost:5000;   # Replace with your ASP.NET backend URL
+           }
+
+           location / {
+             proxy_pass http://localhost:4200;   # Replace with your Angular frontend URL
+           }
+         }
+       }
+       ```
+
+   - **IIS**: If you prefer to use IIS, you can set up a reverse proxy by installing the URL Rewrite module and configuring the `web.config` file.
+
+3. Start the reverse proxy server. If you're using Nginx, start the Nginx server. If you're using IIS, make sure IIS is running.
+
+4. Access your application through the reverse proxy URL. The reverse proxy will forward requests to the appropriate project based on the URL path.
+
+   - For example, if you set up Nginx to forward `/api` to the ASP.NET C# project and `/` to the Angular TypeScript project, you can access the ASP.NET API at `http://localhost/api` and the Angular frontend at `http://localhost/`.
+
+By following these steps, you should be able to run your ASP.NET C# project and Angular TypeScript project on the same port, making them accessible through a reverse proxy server.

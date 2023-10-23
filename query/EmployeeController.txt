@@ -1,0 +1,603 @@
+using QuickErp.Areas.Accounting.Models.ViewModels;
+using QuickErp.Controllers;
+using QuickErp.Models.Attributes;
+using QuickErp.Models.DTO;
+using QuickErp.Models.EF;
+using QuickErp.Models.Helpers;
+using QuickErp.Areas.HR.Models.ViewModels;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity.Core.Objects;
+using System.Data.Entity.SqlServer;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Net;
+using System.Web;
+using System.Web.Mvc;
+using QuickErpLibrary.DTO;
+using Dapper;
+using QuickErp.Models.ViewModels;
+using QuickErpLibrary;
+
+namespace QuickErp.Areas.HR.Controllers
+{
+    [Authorize]
+    [MenuSecurity(MenuID = (int)Menus.Employee)]
+    public class EmployeeController : QuickErpMvcController
+    {
+        #region "Declaration"
+
+        public log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        #endregion
+
+        #region "Action Results"
+
+      
+        [HttpPost]
+        public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string SearchCode, string SearchName, int EmployeeType, string Phone, string City, int? DepartmentID, string EmployeeTypeName, bool? IsActive)
+
+        {
+            var datatablesNetList = new DataTablesNetList<EmployeeViewModel>();
+            var totalRecords = 0;
+
+            try
+            {
+                //using (var db = new SqlConnection(Common.ConnectionString))
+                //{
+                    var spParams = new DynamicParameters();
+                    spParams.Add("@CompanyID", CurrentCompanyID);
+                    spParams.Add("@SearchCode", SearchCode);
+                    spParams.Add("@SearchName", SearchName);
+                    spParams.Add("@EmployeeType", EmployeeType);
+                    spParams.Add("@Phone", Phone);
+                    spParams.Add("@City", City);
+                    spParams.Add("@DepartmentID", DepartmentID);
+                    spParams.Add("@IsActive", IsActive);
+                    spParams.Add("@sortColumn", sortColumn);
+                    spParams.Add("@sortOrder", sortOrder);
+                    spParams.Add("@pageNumber", pageNumber);
+                    spParams.Add("@recordsPerPage", pageLength);
+                    spParams.Add("@totalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+                // var data = db.Query<EmployeeViewModel>("spHREmployeeGetByCompanyIDSortingPaging", spParams, commandType: CommandType.StoredProcedure);
+                var model = DapperQuery.GetListBySP<EmployeeViewModel>(DapperQuery.StoredProcedures.spHREmployeeGetByCompanyIDSortingPaging, spParams);
+                totalRecords = spParams.Get<int?>("@totalRecords").GetValueOrDefault();
+
+                //totalRecords = spParams.Get<int>("@totalRecords");
+                //    datatablesNetList.data = data.ToList();
+
+                //}
+                datatablesNetList.data = model;
+
+                datatablesNetList.recordsTotal = totalRecords;
+                datatablesNetList.recordsFiltered = totalRecords;
+
+             //   return Content(Newtonsoft.Json.JsonConvert.SerializeObject(datatablesNetList), "application/json");
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+            }
+
+            //  return Content(Newtonsoft.Json.JsonConvert.SerializeObject(null), "application/json");
+            return Content(Newtonsoft.Json.JsonConvert.SerializeObject(datatablesNetList), "application/json");
+        }
+     
+        public ActionResult Index(int? id)
+        {
+            var model = new EmployeeViewModel2();
+            var spParams = new DynamicParameters();
+            try
+            {
+                log.Info("Started");
+
+
+                if (id.HasValue)
+                {
+                    spParams.Add("@CompanyID", CurrentCompanyID);
+                    spParams.Add("@EmployeeID", id.GetValueOrDefault());
+
+                    model = DapperQuery.GetListBySP<EmployeeViewModel2>(DapperQuery.StoredProcedures.spHrEmployeeGetByEmployeeID, spParams).FirstOrDefault();
+
+                }
+                else
+                {
+                    model.UpdatedOn = DateTime.Now;
+                    // for new number
+                    model.EmployeeCode = DapperQuery.NewNumber(DapperQuery.DBTables.HREmployee, "EmployeeCode");//automatic code
+
+                }
+
+                log.Debug("Complete");
+
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(model), "application/json");
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(model), "application/json");
+            }
+        }
+
+        public ActionResult Save(EmployeeViewModel2 model)
+        { 
+            log.Info("Started");
+
+            try
+            {
+                var actionResultJson = new ActionResultJson<general_result>((int)Menus.Employee);
+                actionResultJson.data = new general_result();
+                var employees = new List<EmployeeViewModel2>();
+                var employee = new EmployeeViewModel2();
+
+                if (IsValid(model))
+                {
+                    MapValues(model, ref employee);
+                    employees.Add(employee);
+                    employees = DapperQuery.SaveChanges(DapperQuery.DBTables.HREmployee, employees);
+                    CacheManager.Remove(CacheManager.CacheKey.HREmployee, CurrentCompanyID);
+
+
+                    actionResultJson.data.id = employees[0].EmployeeID;
+                    actionResultJson.data.number = employees[0].EmployeeCode;
+                    actionResultJson.http_code = HttpStatusCode.OK;
+                    //actionResultJson.message = "Employee is saved successfully";
+                    if (model.EmployeeType == 1) actionResultJson.message = "Salesman is saved successfully";
+                    if (model.EmployeeType == 2) actionResultJson.message = "Order Booker is saved successfully";
+                    if (model.EmployeeType == 3) actionResultJson.message = "Party Manager is saved successfully";
+
+                }
+                else
+                {
+                    actionResultJson.broken_rules = this.BrokenRules;
+                    actionResultJson.http_code = HttpStatusCode.BadRequest;
+                    actionResultJson.message = "Please correct following errors:";
+
+                }
+                log.Debug("Completed");
+
+                return Json(actionResultJson);
+
+            }
+            catch (Exception ex)
+            {
+
+                log.Error(ex);
+                return Json(new ActionResultJson<string>
+                {
+                    http_code = HttpStatusCode.InternalServerError,
+                    message = ex.Message,
+                    broken_rules = this.BrokenRules
+                });
+            }
+        }
+
+        //public ActionResult NewNumber()
+        //{
+        //    var parms = new DynamicParameters();
+        //    parms.Add("@CompanyID", CurrentCompanyID);
+        //    var number = DapperQuery.NewNumber(DapperQuery.DBTables.HREmployee, "EmployeeCode", parms);
+        //    return Content(Newtonsoft.Json.JsonConvert.SerializeObject(number), "application/json");
+        //}
+
+        [HttpGet]
+        public ActionResult NewNumber1(int employeeType)
+        {
+            string NextPartyNumber = string.Empty;
+            var parms1 = new DynamicParameters();
+            parms1.Add("@CompanyID", CurrentCompanyID);
+            parms1.Add("@EmployeeType", employeeType);
+            NextPartyNumber = DapperQuery.NewNumber(DapperQuery.DBTables.HREmployee, "EmployeeCode", parms1).ToString();
+
+            NextPartyNumber = Convert.ToString(NextPartyNumber);
+
+            return Content(Newtonsoft.Json.JsonConvert.SerializeObject(NextPartyNumber), "application/json");
+        }
+
+
+        //public ActionResult SaveManager(EmployeeDialogViewModel employeeDialogViewModel)
+        //{
+        //    var employee = new EmployeeViewModel() { EmployeeCode = employeeDialogViewModel.Code, EmployeeName = employeeDialogViewModel.Name };
+
+        //    return this.Save(employee);
+        //}
+
+        [HttpPost]
+        public JsonResult Delete(Int32 id)
+        {
+            ActionResultJson<general_result> actionResult = new ActionResultJson<general_result>();
+
+            try
+            {
+                log.Info("Started");
+
+                DapperQuery.Delete(DapperQuery.DBTables.HREmployeeShopAssociation, "EmployeeID", id);
+                DapperQuery.Delete(DapperQuery.DBTables.HREmployee, "EmployeeID", id);
+
+                actionResult.http_code = HttpStatusCode.OK;
+                actionResult.message = "Record deleted successfully";
+
+                log.Debug("Completed");
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                actionResult.http_code = HttpStatusCode.InternalServerError;
+                actionResult.message = "There was some server error";
+
+            }
+
+            return Json(actionResult);
+        }
+
+        [HttpPost]
+        public JsonResult DeleteAllCompanySalesmen()
+        {
+            ActionResultJson<general_result> actionResult = new ActionResultJson<general_result>();
+
+            try
+            {
+                log.Info("Started");
+
+                var columns = new List<KeyValuePair<string, object>>();
+                columns.Add(new KeyValuePair<string, object>("CompanyID", CurrentCompanyID));
+                columns.Add(new KeyValuePair<string, object>("EmployeeType", 1));
+
+         //       DapperQuery.Delete(DapperQuery.DBTables.HREmployeeShopAssociation, columns);
+                DapperQuery.Delete(DapperQuery.DBTables.HREmployee, columns);
+
+                actionResult.http_code = HttpStatusCode.OK;
+                actionResult.message = "Record deleted successfully";
+
+                // log.Info("Completed");
+                log.Debug("Completed");
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                actionResult.http_code = HttpStatusCode.InternalServerError;
+                actionResult.message = "There was some server error";
+
+            }
+
+            return Json(actionResult);
+        }
+
+        [HttpPost]
+        public JsonResult DeleteAllCompanyOrderBooker()
+        {
+            ActionResultJson<general_result> actionResult = new ActionResultJson<general_result>();
+
+            try
+            {
+                log.Info("Started");
+
+                var columns = new List<KeyValuePair<string, object>>();
+                columns.Add(new KeyValuePair<string, object>("CompanyID", CurrentCompanyID));
+                columns.Add(new KeyValuePair<string, object>("EmployeeType", 2));
+
+                //       DapperQuery.Delete(DapperQuery.DBTables.HREmployeeShopAssociation, columns);
+                DapperQuery.Delete(DapperQuery.DBTables.HREmployee, columns);
+
+                actionResult.http_code = HttpStatusCode.OK;
+                actionResult.message = "Record deleted successfully";
+
+                // log.Info("Completed");
+                log.Debug("Completed");
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                actionResult.http_code = HttpStatusCode.InternalServerError;
+                actionResult.message = "There was some server error";
+
+            }
+
+            return Json(actionResult);
+        }
+
+        //[HttpGet()]
+        //public JsonResult GetForSelect22()
+        //{
+        //    try
+        //    {
+        //        //var select2List = new Select2Response<Select2>();
+        //        var columns = new DynamicParameters();
+        //        columns.Add("@CompanyID", CurrentCompanyID);
+        //        var model = DapperQuery.Select<EmployeeViewModel>(DapperQuery.DBTables.HREmployee, columns)
+        //            .Select(s => new Select2 { id = s.EmployeeID, text = s.EmployeeName })
+        //            .ToList();
+
+        //        //select2List.results = model;
+
+        //        return Json(model, JsonRequestBehavior.AllowGet);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        log.Error(ex);
+        //        throw;
+        //    }
+        //}
+
+        [HttpGet()]
+        public JsonResult GetForSelect2(string q, int? type)
+        {
+            try
+            {
+                var select2List = new Select2Response<Select2>();
+                var columns = new DynamicParameters();
+
+                columns.Add("@CompanyID", CurrentCompanyID);
+                columns.Add("@EmployeeType", type.GetValueOrDefault(1));
+
+                var model = DapperQuery.Select<EmployeeViewModel>(DapperQuery.DBTables.HREmployee, columns)
+                    //.Where(w => w.EmployeeType == type.GetValueOrDefault(1) || !type.HasValue)
+                    .Select(s => new Select2 { id = s.EmployeeID, text = s.EmployeeName })
+                    .ToList();
+
+                select2List.results = model;
+
+                 return Json(select2List, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region "Methods"
+        private void MapValues(EmployeeViewModel2 source, ref EmployeeViewModel2 employeeViewModel2)
+        {
+            try
+            {
+
+                log.Debug("Started");
+
+                if (source.EmployeeID <= 0) //going to save case for new id
+                {
+                    //Gender = new InvGender();
+                    employeeViewModel2.CompanyID = CurrentCompanyID;
+                    employeeViewModel2.CreatedBy = CurrentUserID;
+                    employeeViewModel2.CreatedOn = DateTime.UtcNow;
+
+                    //if (string.IsNullOrEmpty(source.EmployeeCode))
+                    //{
+                    //    //model.PartyCode = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode");
+                    //    var whereParams = new DynamicParameters();
+                    //    whereParams.Add("@CompanyID", CurrentCompanyID);
+                    //    whereParams.Add("@EmployeeType", source.EmployeeType);
+                    //    employeeViewModel2.EmployeeCode = DapperQuery.NewNumber(DapperQuery.DBTables.HREmployee, "EmployeeCode", whereParams).ToString();
+                    //}
+                }
+                else
+                {
+                    // case for update 
+                    var parms = new DynamicParameters();
+                    parms.Add("@CompanyID", CurrentCompanyID);
+                    parms.Add("@EmployeeID", source.EmployeeID);
+                    //genderViewModel will save in db
+                    employeeViewModel2 = DapperQuery.Select<EmployeeViewModel2>(DapperQuery.DBTables.HREmployee, parms).FirstOrDefault();//for first record or null
+
+                }
+                if (string.IsNullOrEmpty(source.EmployeeCode))
+                {
+                    //model.PartyCode = DapperQuery.NewNumber(DapperQuery.DBTables.CommonParty, "PartyCode");
+                    var whereParams = new DynamicParameters();
+                    whereParams.Add("@CompanyID", CurrentCompanyID);
+                    whereParams.Add("@EmployeeType", source.EmployeeType);
+                    employeeViewModel2.EmployeeCode = DapperQuery.NewNumber(DapperQuery.DBTables.HREmployee, "EmployeeCode", whereParams).ToString();
+                }
+                else
+                {
+                    employeeViewModel2.EmployeeCode = source.EmployeeCode;
+                }
+                // common for both update and new cases
+                //employeeViewModel2.EmployeeCode = source.EmployeeCode;
+                employeeViewModel2.EmployeeName = source.EmployeeName;
+                employeeViewModel2.SalesComission = source.SalesComission;
+                employeeViewModel2.UpdatedBy = CurrentUserID;
+                employeeViewModel2.EmployeeType = source.EmployeeType;
+
+                //to change
+                employeeViewModel2.EmployeeDescription = source.EmployeeDescription ?? "";
+                employeeViewModel2.Phone = source.Phone ?? "";
+                employeeViewModel2.DepartmentID = source.DepartmentID;
+                employeeViewModel2.DepartmentName = source.DepartmentName ?? "";
+                employeeViewModel2.City = source.City ?? "";
+                //employeeViewModel2.IsActive = true;
+                employeeViewModel2.IsActive = source.IsActive;
+                employeeViewModel2.Address = source.Address ?? "";
+                employeeViewModel2.EmployeeType = source.EmployeeType;
+                employeeViewModel2.Email = source.Email ?? "";
+                employeeViewModel2.StampDateTime = DateTime.UtcNow;
+                employeeViewModel2.StampUserID = CurrentUserID;
+                //employeeViewModel2.ZipCode = source.ZipCode;
+                employeeViewModel2.ZipCode = "";
+                employeeViewModel2.ChartOfAccountID = source.ChartOfAccountID;
+                employeeViewModel2.Fax = "";
+                employeeViewModel2.Country = "";
+                employeeViewModel2.State = "";
+                employeeViewModel2.OpeningCreditAmount = source.OpeningCreditAmount;
+                employeeViewModel2.OpeningDebitAmount = source.OpeningDebitAmount;
+                // RecordStatusID value was null so set RecordStatusID 'posted'
+                employeeViewModel2.RecordStatusID = (int)RecordStatuses.Posted;
+                employeeViewModel2.UpdatedOn = DateTime.UtcNow;
+
+                log.Debug("Completed");
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw ex;
+            }
+        }
+        //
+        //
+
+        //private bool IsValid(EmployeeViewModel request)
+        //{
+        //    try
+        //    {
+        //        log.Debug("Started");
+
+        //        if (request == null)
+        //        {
+        //            this.BrokenRules.Add("Invalid data format");
+
+        //        }
+        //        else
+        //        {
+        //            if (Common.LoginData.ImpersonateCompany.CompanyID <= 0)
+        //                this.BrokenRules.Add("Invalid company, maybe you are not signed in");
+
+        //            //if (Request.EmployeeCode == null || Request.EmployeeCode.Trim().Length < 1)
+        //            //    this.BrokenRules.Add("Invalid Employee code");
+
+        //            if (string.IsNullOrEmpty(request.EmployeeName))
+        //                this.BrokenRules.Add("Invalid Employee Name");
+
+        //            if (request.OpeningCreditAmount > 0 && request.OpeningDebitAmount > 0)
+        //                this.BrokenRules.Add("You cannot specify value for both debit and credit amounts");
+
+        //            using (QuickErpEF db = new QuickErpEF())
+        //            {
+        //                var lst = db.HREmployees.Where(x => x.EmployeeID != request.EmployeeID && x.EmployeeCode == request.EmployeeCode && x.CompanyID == Common.LoginData.ImpersonateCompany.CompanyID).ToList();
+        //                //var lst = db.HREmployees.Where(x => x.EmployeeCode == request.EmployeeCode && x.CompanyID == Common.LoginData.ImpersonateCompany.CompanyID).ToList();
+        //                if (lst.Count > 0)
+        //                {
+        //                    this.BrokenRules.Add("Duplicate employee code is not allowed");
+        //                }
+        //            }
+        //        }
+
+        //        log.Debug("Completed");
+
+        //        return this.BrokenRules.Count == 0;
+        //        //will return true if no rules broken
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        log.Error(ex);
+        //        return false;
+        //    }
+        //}
+        //
+        //
+        private bool IsValid(EmployeeViewModel2 model)
+        {
+            try
+            {
+
+                log.Debug("Started");
+                var qry = "";
+                var parms = new DynamicParameters();
+
+                if (model == null)
+                {
+                    this.BrokenRules.Add("Invalid data format");
+
+                }
+                else
+                {
+                    if (Common.LoginData.ImpersonateCompany.CompanyID <= 0)
+                        this.BrokenRules.Add("Invalid company, maybe you are not signed in");
+
+                    //if (model.EmployeeCode == null || string.IsNullOrEmpty(model.EmployeeCode.Trim()) && model.EmployeeID > 0)
+                    if ((model.EmployeeCode == null || string.IsNullOrEmpty(model.EmployeeCode.Trim())) && model.EmployeeID > 0)
+                        this.BrokenRules.Add("You must enter code");
+
+                    if (model.EmployeeName == null || string.IsNullOrEmpty(model.EmployeeName.Trim()))
+                        this.BrokenRules.Add("Yout must enter name");
+                    // check if Gender Code is duplicate
+                    //qry = string.Format("select count(*) from {0} where CompanyID = @CompanyID and EmployeeID<>@EmployeeID AND EmployeeCode = @EmployeeCode and EmployeeType = @EmployeeType"
+                    //    , DapperQuery.DBTables.HREmployee.ToString());
+                    //parms.Add("@CompanyID", CurrentCompanyID);
+                    //parms.Add("@EmployeeCode", model.EmployeeCode);
+                    //parms.Add("@EmployeeID", model.EmployeeID);
+                    //parms.Add("@EmployeeType", model.EmployeeType);
+                    //var count = DapperQuery.ExecuteScalarQuery<int>(qry, parms, 60);
+                    //if (count > 0) //new case
+                    //{
+                    //    this.BrokenRules.Add("Duplicate Employee code is not allowed");
+                    //}
+
+                    // check if Gender Name is duplicate
+                    qry = string.Format("select count(*) from {0} where CompanyID = @CompanyID and EmployeeID<>@EmployeeID AND EmployeeName = @EmployeeName and EmployeeType = @EmployeeType"
+                        , DapperQuery.DBTables.HREmployee.ToString());
+                    parms.Add("@CompanyID", CurrentCompanyID);
+                    parms.Add("@EmployeeName", model.EmployeeName);
+                    parms.Add("@EmployeeID", model.EmployeeID);
+                    parms.Add("@EmployeeCode", model.EmployeeCode);
+                    parms.Add("@EmployeeType", model.EmployeeType);
+                    var count = DapperQuery.ExecuteScalarQuery<int>(qry, parms, 60);
+                    if (count > 0) //new case
+                    {
+                        //   this.BrokenRules.Add("Duplicate Employee name is not allowed");
+                        if (model.EmployeeType == 1)//Salesman
+                        {
+                            this.BrokenRules.Add(string.Format("A Salesman with the same name already exists"));
+
+                        }
+                        if (model.EmployeeType == 2)//Order Booker
+                        {
+                            this.BrokenRules.Add(string.Format("A Order Booker with the same name already exists"));
+                        }
+
+                        if (model.EmployeeType == 3)//Party Manager
+                        {
+                            this.BrokenRules.Add(string.Format("A Party Manager with the same name already exists"));
+                        }
+                    }
+
+                    qry = "SELECT * FROM HREmployee WHERE CompanyID=@CompanyID AND EmployeeID != @EmployeeID AND EmployeeCode =@EmployeeCode AND EmployeeType=@EmployeeType";
+                    count = DapperQuery.ExecuteScalarQuery<int>(qry, parms, 60);
+                    if (count > 0)
+                    {
+                        if (model.EmployeeType == 1)//Salesman
+                        {
+                            this.BrokenRules.Add(string.Format("A Salesman with the same code already exists"));
+
+                        }
+                        if (model.EmployeeType == 2)//Order Booker
+                        {
+                            this.BrokenRules.Add(string.Format("A Order Booker with the same code already exists"));
+                        }
+
+                        if (model.EmployeeType == 3)//Party Manager
+                        {
+                            this.BrokenRules.Add(string.Format("A Party Manager with the same code already exists"));
+                        } 
+                    }
+
+                    
+
+                    
+
+                }
+
+                log.Debug("Completed");
+
+                return this.BrokenRules.Count == 0;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                this.BrokenRules.Add("There was a server error");
+                return false;
+            }
+        }
+
+        //
+        //
+        #endregion
+    }
+}
