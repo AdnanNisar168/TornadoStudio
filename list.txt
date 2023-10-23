@@ -1,0 +1,32 @@
+
+//sp call
+var data = DapperQuery.GetListBySP<spAccountingVoucherGetByCompanyIDSortingPaging>(DapperQuery.StoredProcedures.spAccountingVoucherGetByCompanyIDSortingPaging, spParams);
+
+//inside dapper
+  public static List<T> GetListBySP<T>(StoredProcedures storedProcedure, DynamicParameters spParams)
+        {
+            return GetListBySP<T>(storedProcedure, spParams, 1 * 60);
+        }
+
+//method called by upper ,ethod
+public static List<T> GetListBySP<T>(StoredProcedures storedProcedure, DynamicParameters spParams, int timeout)
+        {
+            var result = new List<T>();
+
+            try
+            {
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    result = cn.Query<T>(Enum.GetName(typeof(StoredProcedures), storedProcedure), spParams, commandType: CommandType.StoredProcedure, commandTimeout: timeout).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                var paramString = " Parameters=" + string.Join(", ", from pn in spParams.ParameterNames select string.Format("@{0}={1}", pn, (spParams as SqlMapper.IParameterLookup)[pn]));
+                var ex1 = new Exception(storedProcedure.ToString() + paramString, ex);
+                log.Error(ex1);
+                throw ex;
+            }
+
+            return result;
+        }
