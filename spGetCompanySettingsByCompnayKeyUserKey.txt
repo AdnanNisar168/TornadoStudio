@@ -1,0 +1,52 @@
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spGetCompanySettingsByCompnayKeyUserKey')
+	DROP PROC spGetCompanySettingsByCompnayKeyUserKey
+go
+-- ==========================================================================================
+-- Author:		Adnan Nisar
+-- Create date: 5-Sep-2023
+-- Description:	
+-- ==========================================================================================
+-- ------------ Modification History --------------------------------------------------------
+-- Author	Date		Details
+-- ------   ----        -------
+-- ------------------------------------------------------------------------------------------
+
+CREATE PROCEDURE spGetCompanySettingsByCompnayKeyUserKey
+	(@CompanyKey uniqueidentifier
+	, @UserKey uniqueidentifier
+	) WITH ENCRYPTION
+AS
+BEGIN
+
+		select * 
+
+		from BaseSetting b
+	INNER JOIN BaseCompany c
+		ON b.CompanyID = c.CompanyID
+	left JOIN SecUser u
+		ON b.UserID = u.UserID
+
+	where c.CompanyKey = @CompanyKey
+	--	and u.UserKey = @UserKey
+
+END
+go
+/*
+
+DECLARE @TotalPages INT
+exec spGetCompanySettingsByCompnayKeyUserKey
+	@CompanyKey='02FF43F3-B3D3-461F-832B-0AB0F8932070', @UserKey='5D4AFE21-CE39-4607-B131-6E8F238CDD22'
+PRINT @TotalPages
+select * from BaseSetting where SettingID like '%Inv_SR_IsAutoNumberEnabled%' and CompanyID = 60
+select * from BaseSetting where SettingID like '%VoucherNumberEditable%' and CompanyID = 60
+select * from BaseSetting where SettingID like '%VOU_IsAutoPrintEnabled%' and CompanyID = 60
+select * from BaseSetting where SettingID like '%VOU_PrintSize%' and CompanyID = 60
+select * from BaseSetting where SettingValue like '%A5%' and CompanyID = 60
+
+
+update 
+*/
+
+
+
+

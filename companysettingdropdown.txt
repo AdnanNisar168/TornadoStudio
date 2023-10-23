@@ -1,0 +1,9 @@
+<ul class="dropdown-menu dropdown-menu-right">
+                <li *ngIf="loginInfo.OriginalUser.IsSuperAdmin">
+                  <a (click)="onShowImpersonate()"><i class="fa fa-cog"></i>Impersonate</a>
+                </li>
+                <li><a href="/QuickSecurity/User/ChangePassword"><i class="fa fa-cog"></i>Change Password</a></li>
+                <li><a href="/Base/Company/ChangeSetting"><i class="fa fa-cog"></i>Company Settings</a></li>
+
+                <li><a href="/Account/LogOff"><i class="fa fa-power-off"></i>Logout</a></li>
+              </ul>
