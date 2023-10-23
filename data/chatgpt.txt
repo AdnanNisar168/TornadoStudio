@@ -1,0 +1,31 @@
+getListBYsp method from listNG
+
+using Dapper;
+using System;
+using System.Data;
+using System.Data.SqlClient;
+
+public static class DapperQuery
+{
+    public static List<T> GetListBySP<T>(string storedProcedureName, DynamicParameters parameters)
+    {
+        try
+        {
+            using (var connection = new SqlConnection(Common.ConnectionString))
+            {
+                connection.Open();
+
+                // Execute the stored procedure using Dapper and return the result as a list
+                var result = connection.Query<T>(storedProcedureName, parameters, commandType: CommandType.StoredProcedure);
+
+                return result.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions as needed, such as logging the error
+            log.Error(ex);
+            return new List<T>(); // Return an empty list or handle the error gracefully
+        }
+    }
+}

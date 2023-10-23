@@ -1,0 +1,85 @@
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spAccountingVoucherGetByCompanyIDVoucherID')
+	DROP PROC spAccountingVoucherGetByCompanyIDVoucherID
+
+go
+-- ==========================================================================================
+-- Author:		Imran Amin
+-- Create date: 9-Jan-2023
+-- Description:	This stored procedure returns vouchers voucherdetails by company ID, voucher ID
+-- ==========================================================================================
+-- ------------ Modification History --------------------------------------------------------
+-- Author	Date		Details
+-- ------   ----        -------
+-- ------------------------------------------------------------------------------------------
+
+CREATE PROCEDURE spAccountingVoucherGetByCompanyIDVoucherID
+	(@VoucherKey uniqueidentifier
+	) WITH ENCRYPTION
+AS
+BEGIN
+
+	SELECT v.CompanyID
+		,v.VoucherID
+		,v.VoucherNo
+		,v.VoucherKey 
+		,v.VoucherDate
+		,v.VoucherTypeID
+		,v.Remarks
+		,v.AutoVoucherSource
+		,v.AutoVoucherSourceID
+		,v.TotalAmount
+		,v.StampDateTime
+		,v.StampUserID
+		,v.RecordStatusID
+		,v.DocumentStatus_ID
+		,v.UploadDateTime
+		,v.IsPosted
+		,v.FinancialYearID
+		,v.WarehouseID
+		,u.UserName 'UpdatedBy'
+		,v.StampDateTime 'UpdatedAt'
+		,v.IsPosted
+	FROM AccountingVoucher v
+		INNER JOIN SecUser u ON v.CompanyID = u.CompanyID AND v.StampUserID = u.UserID
+	WHERE 
+		v.VoucherKey = @VoucherKey
+
+
+	SELECT CompanyID
+		,VoucherID
+		,VoucherDetailID 
+		,VoucherNo 
+		,VoucherDate
+		,VoucherKey 
+		,VoucherDetailKey 
+		,VoucherDate
+		,VoucherTypeID 
+		,ChartOfAccountID 
+		,ChartOfAccountCode
+		,ChartOfAccountName 
+		,DebitAmount 
+		,CreditAmount 
+		,Narration
+		,CostCenterID
+		,SubCostCenterID
+		,StampDateTime
+		,ItemCode
+		,ItemDescription
+		,PartyCode
+		,PartyName
+		,AutoVoucherSource
+
+	FROM AccountingVoucherDetail
+	WHERE 
+		VoucherKey = @VoucherKey
+END
+GO
+/*
+exec spAccountingVoucherGetByCompanyIDVoucherID @VoucherKey='8BAA2574-654F-4F1B-8471-DA7F69EE81C3'
+select * from AccountingVoucher Where VoucherKey='8BAA2574-654F-4F1B-8471-DA7F69EE81C3'-- VoucherID = 6438
+select * from AccountingVoucherDetail AccountingVoucher Where VoucherKey='8BAA2574-654F-4F1B-8471-DA7F69EE81C3'-- VoucherID = 6438
+*/
+/*
+SELECT *  FROM AccountingVoucher WHERE VoucherKey='a024afa7-9a03-423a-82a0-49821d800890'
+SELECT *  FROM AccountingVoucherDetail WHERE VoucherKey='a024afa7-9a03-423a-82a0-49821d800890'
+*/

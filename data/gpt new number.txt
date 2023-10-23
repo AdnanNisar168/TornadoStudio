@@ -1,0 +1,41 @@
+using System;
+using System.Data.SqlClient;
+using Dapper;
+
+public static class DapperQuery
+{
+    public static int GetLargestCode(DBTables table, string columnName)
+    {
+        using (var connection = new SqlConnection(Common.ConnectionString))
+        {
+            connection.Open();
+
+            string tableName = GetTableName(table); // A method to map the table enum to the actual table name
+
+            // Execute a query to get the largest value in the specified column
+            string query = $"SELECT MAX({columnName}) FROM {tableName}";
+            int largestCode = connection.ExecuteScalar<int>(query);
+
+            return largestCode;
+        }
+    }
+
+    private static string GetTableName(DBTables table)
+    {
+        // Map the DBTables enum to the actual table name based on your application's naming conventions
+        switch (table)
+        {
+            case DBTables.HREmployee:
+                return "HREmployee";
+            // Add more cases for other tables as needed
+            default:
+                throw new ArgumentException("Unknown table type");
+        }
+    }
+
+    public enum DBTables
+    {
+        HREmployee,
+        // Add other database tables as needed
+    }
+}
