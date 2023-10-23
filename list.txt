@@ -33,3 +33,21 @@ public static List<T> GetListBySP<T>(StoredProcedures storedProcedure, DynamicPa
 
 //vieo link
 https://www.youtube.com/watch?v=DboyInxNgXc
+
+//connection sting
+    public static string ConnectionString
+        {
+            get
+            {
+                try
+                {
+                    return ConfigurationManager.ConnectionStrings["QuickErpAdoNet"].ConnectionString;
+
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex);
+                    throw;
+                }
+            }
+        }
