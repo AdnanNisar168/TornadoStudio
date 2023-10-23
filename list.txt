@@ -30,3 +30,6 @@ public static List<T> GetListBySP<T>(StoredProcedures storedProcedure, DynamicPa
 
             return result;
         }
+
+//vieo link
+https://www.youtube.com/watch?v=DboyInxNgXc
