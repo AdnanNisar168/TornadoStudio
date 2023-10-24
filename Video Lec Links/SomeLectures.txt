@@ -31,3 +31,35 @@ https://www.youtube.com/watch?v=GGh3zngbW_c
 
 good for Using StoreProcedures in Asp.net c#
 https://www.youtube.com/watch?v=tqUpGo8KwDA
+
+// search keyWord for Action Method (yt link)
+https://www.youtube.com/results?search_query=make+asp+.net+backend+method+with+actionResults+not+IActionResults
+
+//Search KeyWord for StoreProcedure with dapper
+https://www.youtube.com/results?search_query=how+to+make+storedprocedure+enum+to+execute+with+dapper+in+asp.net
+
+// some playlist
+https://www.youtube.com/@Csharp-video-tutorialsBlogspot
+
+// yt search keyword for moving sql server dbs from c to
+https://www.youtube.com/results?search_query=how+to+change+the+location+of+sql+server+database+from+to+c+to+any+other+drive
+
+
+// some dapper packages
+https://www.youtube.com/watch?v=n0zkkoL8eNs
+
+//enums
+https://www.youtube.com/watch?v=eV3WQxvKk0g
+
+//Authenticationi and Authorization in asp.net
+https://www.youtube.com/watch?v=ApSERLzbA9g&list=PLc2Ziv7051bZhBeJlJaqq5lrQuVmBJL6A&index=5
+
+//dapper by junai shahid
+https://www.youtube.com/watch?v=teATIDzpZZk
+
+//library Management system(cors error)
+https://www.youtube.com/watch?v=Mh_pnH0x_fI
+
+//Learn FULL STACK Web Development in 2 HOURS! ASP.NET & Angular
+https://www.youtube.com/watch?v=lXYLTTPM5x4
+https://www.youtube.com/watch?v=lXYLTTPM5x4

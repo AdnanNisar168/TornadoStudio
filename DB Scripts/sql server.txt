@@ -1,0 +1,26 @@
+ssms
+https://www.youtube.com/watch?v=LIytfaWH_10
+
+https://www.youtube.com/watch?v=N6cOBg9hLIY
+
+git: https://www.youtube.com/watch?v=2j7fD92g-gE
+
+sql
+https://www.youtube.com/watch?v=iXiJbUnnD08
+chnging sql server name for remote connection
+https://www.youtube.com/watch?v=EqI77fd_1kU good
+
+set password in sql server
+https://www.youtube.com/watch?v=dJ6c3OgIVDM
+
+port 1433
+server name : DESKTOP-S1RBGFI\SQLEXPRESSCUSTOM
+server name: 192.168.1.10.1433
+192.168.137.1
+
+server name: 192.168.137.1
+name: madian
+pasword: 1234567890
+
+//ConnectionString
+Server=localhost\SQLEXPRESS;Database=master;Trusted_Connection=True;
