@@ -24,3 +24,6 @@ pasword: 1234567890
 
 //ConnectionString
 Server=localhost\SQLEXPRESS;Database=master;Trusted_Connection=True;
+
+//local db
+(localdb)\tornadoStudio
