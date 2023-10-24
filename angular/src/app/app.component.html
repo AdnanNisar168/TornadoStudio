@@ -12,11 +12,13 @@
       <a class="nav-item nav-link disabled" href="#">Disabled</a>
       <a class="nav-item nav-link disabled" href="#">Disabled 2</a>
        <!-- Your login form -->
-    <form action="/action_page.php" class="form-inline">
+    <!-- <form action="/action_page.php" class="form-inline">
       <input type="text" class="form-control mr-2" placeholder="Username" name="username">
       <input type="password" class="form-control mr-2" placeholder="Password" name="psw">
       <button type="submit" class="btn btn-primary">Login</button>
-    </form>
+    </form> -->
+    <a routerLink="/login" class="btn btn-warning"><i class="fa fa-plus"></i> Log In</a>
+    
     </div>
   </div>
 </nav>    
@@ -106,12 +108,36 @@
     </div>
     <div class="col py-3">
       Content area...
+      <router-outlet></router-outlet>
     </div>
   </div>
 </div>
 <!-- Side   NaveBar -->
+<!-- user left menu -->
+<!-- <li class="dropdown profile-dropdown" [ngClass]="{'open': showUserProfileMenu}">
+  <a class="dropdown-toggle" data-toggle="dropdown" tabindex="-1" (click)="onUserProfileClick()">
+    <img src="{{loginInfo.OriginalCompany.CompanyLogoPath}}" alt="">
+    <img src="/favicon.ico" alt="">
+    <span class="hidden-xs">
+      {{loginInfo.ImpersonateUser.UserName}}
+    </span>
+    <b class="caret"></b>
+  </a>
+  <ul class="dropdown-menu dropdown-menu-right">
+    <li *ngIf="loginInfo.OriginalUser.IsSuperAdmin">
+      <a (click)="onShowImpersonate()"><i class="fa fa-cog"></i>Impersonate</a>
+    </li>
+    <li><a href="/QuickSecurity/User/ChangePassword"><i class="fa fa-cog"></i>Change Password</a></li>
+    <li><a href="/Base/Company/ChangeSetting"><i class="fa fa-cog"></i>Company Settings</a></li>
+
+    <li><a href="/Account/LogOff"><i class="fa fa-power-off"></i>Logout</a></li>
+  </ul>
+
+
+</li> -->
+<!-- user left menu -->
 <div class="container">
   <!-- <app-dashboard></app-dashboard> -->
   <!-- <app-home></app-home> -->
-  <router-outlet></router-outlet>
+  <!-- <router-outlet></router-outlet> -->
 </div>          
