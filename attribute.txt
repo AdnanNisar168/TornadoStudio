@@ -1,0 +1,35 @@
+using System;
+[SuperAdmin]
+
+
+
+
+/////////////////////
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using QuickErp.Models.Helpers;
+using QuickErpLibrary;
+
+namespace QuickErp.Models.Attributes
+{
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+	public class SuperAdminAttribute : System.Web.Mvc.AuthorizeAttribute
+    {
+        public log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        public override void OnAuthorization(AuthorizationContext filterContext)
+        {
+            base.OnAuthorization(filterContext);
+
+            log.Info("super admin");
+
+            if (!Common.LoginData.OriginalUser.IsSuperAdmin)
+            {
+                log.Warn("User is not super admin so stopped access " + filterContext.RouteData.Route.ToString());
+                throw new HttpException(403, "Forbidden");
+            }
+        }
+    }
+}
