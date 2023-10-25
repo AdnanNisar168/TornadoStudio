@@ -1,65 +1,33 @@
-<div id="login-box">
-    <div id="login-box-holder">
-      <div class="row">
-        <div class="col-xs-12">
-          <header id="login-header">
-            <div id="login-logo" style="text-transform: none;">
-              <!-- Replace with your logo or brand name -->
-              {{ brandName }}
-            </div>
-          </header>
-          <div id="login-box-inner">
-            <!-- [formGroup]="loginForm" -->
-            <form  (ngSubmit)="onLogin()">
-              <fieldset>
-                <div class="input-group">
-                  <span class="input-group-addon"><i class="fa fa-user"></i></span>
-                  <input type="text" class="form-control" formControlName="UserName" placeholder="User Name" autofocus>
-                </div>
-                <!-- <div *ngIf="loginForm.controls.userName.invalid && loginForm.controls.userName.touched"
-                  class="input-group">
-                  <div class="red">Please enter a valid username.</div>
-                </div> -->
-                <div class="input-group">
-                  <span class="input-group-addon"><i class="fa fa-key"></i></span>
-                  <input type="password" class="form-control" formControlName="Password" placeholder="Password">
-                </div>
-                <!-- <div *ngIf="loginForm.controls.password.invalid && loginForm.controls.password.touched"
-                  class="input-group">
-                  <div class="red">Please enter a valid password.</div>
-                </div> -->
-                <div id="remember-me-wrapper">
-                  <div class="row">
-                    <div class="col-xs-6">
-                      <div class="checkbox-nice">
-                        <input type="checkbox" id="terms-cond" formControlName="RememberMe" name="RememberMe" checked="checked" value="true">
-                          <label for="terms-cond">
-                            Remember me
-                      </label>
-                      </div>
-                    </div>
-                    <a href="/Account/ForgotPassword" id="login-forget-link" class="col-xs-6">
-                      Forgot password?
-                    </a>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col-xs-12">
-                    <button type="submit" class="btn btn-primary col-xs-12">Login</button>
-                  </div>
-                </div>
-              </fieldset>
-            </form>
-          </div>
-        </div>
-      </div>
+<form class="border p-3 rounded-3" (ngSubmit)="onSubmit()">
+  <!-- 1st row -->
+  <div class="row">
+    <div class="col text-center p-2 mb-3 bg-light">
+      <span class="fs-3">LogIn</span>
     </div>
-    <div id="login-box-footer">
-      <div class="row">
-        <div class="col-xs-12">
-          <a href="/Account/Register">Register</a> if you don't have an account.
-        </div>
+  </div>
+  <!-- 2nd row -->
+  <div class="row">
+    <div class="col mb-3" style="width: 20px;">
+      <label for="firstname" class="form-label">User Name</label>
+      <input type="text" class="form-control " id="firstname" formControlName="firstname">
+    </div>
+
+  </div>
+  <!-- 3rd row -->
+  <div class="row">
+    <div class="col mb-3">
+      <label for="email" class="form-label">Password</label>
+      <input type="text" class="form-control " id="Password" formControlName="email">
+    </div>
+  </div>
+ 
+
+  <!-- 6th row -->
+  <div class="row">
+    <div class="col-6 offset-3">
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Submit</button>
       </div>
     </div>
   </div>
-  
+</form>

@@ -9,9 +9,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 })
 export class AppComponent {
   title = 'angular';
+  IsloggedIn: boolean = false;
+  BrandName: string = 'TornadoStudio';
 
     constructor(private fb: FormBuilder, private router: Router, private route: ActivatedRoute, @Inject(LOCALE_ID) private locale: string) {
 
       }
 
+      ngOnInit(){
+         this.IsloggedIn = false;
       }
+}
