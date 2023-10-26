@@ -1,6 +1,6 @@
 export class Login {
-    UserName: string = ''; 
-    Password: string = '';
+    StudentId: number = 0; 
+    StudentName: string = '';
     RememberMe: boolean = false; 
 
 }

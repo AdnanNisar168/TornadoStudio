@@ -2,21 +2,17 @@ import { Component, Inject, LOCALE_ID, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormControl, Validators, FormArray } from '@angular/forms';
 import { Login } from './model/login';
 import { Router } from '@angular/router';
+import { InventoryService } from '../inventory.service';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  //styleUrls: ['./login.component.css']
+  styleUrls: ['./login.component.css']
 })
-// @Component({
-//   selector: 'app-login',
-//   templateUrl: './login.component.html',
-//   //styleUrls: ['./register.component.css']
-// })
 export class LoginComponent  implements OnInit {
   brandName: string = "Tornado Studio";
   public listData: Login = new Login();
-  
+  loginForm: FormGroup;
 
   // public mask = ['(', /[1-9]/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/];
   // numberMask = createNumberMask({
@@ -27,15 +23,14 @@ export class LoginComponent  implements OnInit {
   // });
 
 
-  constructor(private fb: FormBuilder, private router: Router, @Inject(LOCALE_ID) private locale: string) {
+  constructor(private fb: FormBuilder, private router: Router, @Inject(LOCALE_ID) private locale: string,private inventory:InventoryService) {
       //super();
-      // this.loginForm = this.fb.group({
+      this.loginForm = this.fb.group({
 
-      //     UserName: [''],
-      //     Password: [''],
-      //     RememberMe: [1]
-      // });
-
+          UserName: [''],
+          Password: [''],
+          RememberMe: [1]
+      });
 
   }
 
@@ -55,19 +50,20 @@ export class LoginComponent  implements OnInit {
     //   rpwd: new FormControl(""),
       
     // })
-    loginForm = this.fb.group({
-      firstname: ['', [Validators.required]],
-      lastname: [''],
-      email: [''],
-      mobile: [''],
-      gender: [''],
-      pwd: [''],
-      rpwd: [''],
+    // loginForm = this.fb.group({
+    //   firstname: ['', [Validators.required]],
+    //   lastname: [''],
+    //   email: [''],
+    //   mobile: [''],
+    //   gender: [''],
+    //   pwd: [''],
+    //   rpwd: [''],
 
-    });
+    // });
     onSubmit(){
-      
-    };
+      this.inventory.saveLogin(this.loginForm.value).subscribe(res => {
+      });
+    }
   generateToken(payload: any, secretKey: string): string {
       const currentTime = Math.floor(Date.now() / 1000); // Get the current time in seconds
       const expirationTime = currentTime + 1800; // Set the token expiration time to 30 minutes (1800 seconds)

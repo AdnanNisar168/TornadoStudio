@@ -63,3 +63,6 @@ https://www.youtube.com/watch?v=Mh_pnH0x_fI
 //Learn FULL STACK Web Development in 2 HOURS! ASP.NET & Angular
 https://www.youtube.com/watch?v=lXYLTTPM5x4
 https://www.youtube.com/watch?v=lXYLTTPM5x4
+
+to generate model
+ng generate class models/User
