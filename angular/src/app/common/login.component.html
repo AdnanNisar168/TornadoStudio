@@ -11,7 +11,7 @@
           <!-- <h1>Please Enter Email And Password to continue</h1> -->
         </div>
         <!-- [formGroup]="loginForm" -->
-        <form class="search-form form-horizontal" (ngSubmit)="onSubmit()">
+        <form class="search-form form-horizontal" (ngSubmit)="onSubmit()" [formGroup]="loginForm">
           <div class="mb-3 form-group">
             <!-- <label for="exampleInputEmail1" class="form-label">User Name</label>
             <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp"> -->
