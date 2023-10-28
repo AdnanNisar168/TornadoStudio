@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { Login } from './models/login';
+import { ResponseMessage } from './models/responseMessage';
 
 @Injectable({
   providedIn: 'root'
@@ -23,4 +24,50 @@ export class InventoryService {
             tap(res => console.log('saved'))
             );
     }
+
+    //role
+    getroles(data): Observable<RoleList> {
+      var url = '/QuickSecurity/Role/ListNG';
+
+      return this.http.post<RoleList>(url, data)
+          .pipe(
+              tap(res => console.log('fetched Role list'))
+          );
+  }
+
+  deleteRole(id): Observable<ResponseMessage> {
+      var url = '/QuickSecurity/Role/Delete?key=' + id;
+      return this.http.get<ResponseMessage>(url)
+          .pipe(
+              tap(res => console.log('deleted User Role'))
+          );
+  }
+
+  getRole(data): Observable<Role> {
+      var url = '/QuickSecurity/Role/CreateNG/' + data; 
+      return this.http.get<Role>(url)
+          .pipe(
+              tap(res => console.log('fetched Role'))
+          );
+  }
+  saveUser(data): Observable<ResponseMessage> {
+      var url = '/QuickSecurity/User/SaveNG';
+
+      return this.http.post<ResponseMessage>(url, data)
+          .pipe(
+              tap(res => console.log('saved'))
+          );
+  }
+
+  saveRole(data): Observable<ResponseMessage> {
+      var url = '/QuickSecurity/Role/SaveNG';
+
+      return this.http.post<ResponseMessage>(url, data)
+          .pipe(
+              tap(res => console.log('saved'))
+          );
+  }
+
+    //role
+
 }
