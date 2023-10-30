@@ -1,0 +1,1303 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using log4net;
+using System.Text.RegularExpressions;
+using System.Data.SqlClient;
+using Dapper;
+using System.Data;
+using QuickErpLibrary.ViewModels;
+using System.Net.Http;
+using System.Text;
+using System.IO;
+using System.Configuration;
+using System.Drawing;
+using System.Management;
+using System.Web;
+
+namespace QuickErpLibrary
+{
+    //Author: Faisal Saleem
+    //Date Created(DD-MMM-YY): 08-Jul-13
+    //***** Modification History *****
+    //                 Date      Description
+    //Name          (DD-MMM-YY) 
+    //--------------------------------------------------------------------------------
+    //
+    /// <summary>
+    /// This class contains common functions / properties.
+    /// </summary>
+    public partial class Common
+    {
+
+        #region "Declarations"
+
+        private static ILog log = LogManager.GetLogger(typeof(Common));
+
+        Dictionary<string, string> operatingSystemsList = new Dictionary<string, string>
+        {
+            {"Windows NT 6.3", "Windows 8.1"},
+            {"Windows NT 6.2", "Windows 8"},
+            {"Windows NT 6.1", "Windows 7"},
+            {"Windows NT 6.0", "Windows Vista"},
+            {"Windows NT 5.2", "Windows Server 2003"},
+            {"Windows NT 5.1", "Windows XP"},
+            {"Windows NT 5.0", "Windows 2000"}
+        };
+
+        public enum AutoVoucherSources
+        {
+            grn,
+            grn_return,
+            sales_invoice,
+            sales_invoice_return,
+            receipt,
+            payment,
+            simple_voucher
+        }
+
+        //private static PerformanceCounter cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+        //private static PerformanceCounter ramCounter = new PerformanceCounter("Memory", "Available MBytes");
+
+        #endregion
+
+        #region "Properties"
+
+        public static SoftwareVersions SoftwareVersion
+        {
+            get
+            {
+#if (RETAIL == true)
+                return SoftwareVersions.Retail;
+#elif (RESTAURANT == true)
+                return SoftwareVersions.Restaurant;
+#else
+                return SoftwareVersions.Web;
+#endif
+            }
+        }
+
+        public static string PHRASE
+        {
+            get
+            {
+                if (Common.SoftwareVersion == SoftwareVersions.Web)
+                {
+                    return ConfigurationManager.AppSettings["EncryptionPhrase"];
+                }
+                else
+                {
+                    return "V11zNmeJ0IAT";
+                }
+            }
+        }
+
+        public static string ConnectionString
+        {
+            get
+            {
+                try
+                {
+                    return ConfigurationManager.ConnectionStrings["QuickErpAdoNet"].ConnectionString;
+
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex);
+                    throw;
+                }
+            }
+        }
+
+        public static string CacheStore
+        {
+            get
+            {
+                try
+                {
+                    return ConfigurationManager.AppSettings["CacheStore"] ?? "local";
+
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex);
+                    throw;
+                }
+            }
+        }
+
+        public static bool IsAuthenticated
+        {
+
+            get
+            {
+                if (System.Web.HttpContext.Current != null && System.Web.HttpContext.Current.User != null)
+                {
+                    return System.Web.HttpContext.Current.User.Identity.IsAuthenticated;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        public static SignInData LoginData
+        {
+            get
+            {
+                try
+                {
+                    SignInData signInData = null;
+
+                    if (IsAuthenticated)
+                    {
+                        if (HttpContext.Current.Session != null && HttpContext.Current.Session["SignInData"] == null)
+                        {
+                            signInData = new SignInData();
+
+                            LoadSignInData(HttpContext.Current.User.Identity.Name, ref signInData);
+
+                            HttpContext.Current.Session["SignInData"] = signInData;
+                        }
+
+                    }
+                    else
+                    {
+                        signInData = new SignInData();
+
+                        signInData.ImpersonateCompany.CompanyName = "Quick Erp";
+                        signInData.OriginalCompany.CompanyName = "Quick Erp";
+                        signInData.ImpersonateUser.UserID = -1;
+                        signInData.ImpersonateUser.UserAutoID = -1;
+
+                        if (HttpContext.Current != null && HttpContext.Current.Session != null)
+                        {
+                            HttpContext.Current.Session["SignInData"] = signInData;
+                        }
+
+                    }
+
+                    if (HttpContext.Current != null && HttpContext.Current.Session != null)
+                    {
+                        signInData = (SignInData)HttpContext.Current.Session["SignInData"];
+                    }
+
+                    return signInData;
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex);
+                    throw;
+                }
+            }
+        }
+
+        public static bool IsDebug
+        {
+            get
+            {
+#if (DEBUG == true)
+                return true;
+#else
+                return false;
+#endif
+            }
+        }
+
+        public static SoftwareBrandViewModel Brand
+        {
+            get
+            {
+                try
+                {
+                    SoftwareBrandViewModel brand = null;
+
+                    if (HttpContext.Current.Session["Brand"] != null)
+                    {
+                        try
+                        {
+                            brand = (SoftwareBrandViewModel)HttpContext.Current.Session["Brand"];
+                        }
+                        catch (Exception ex)
+                        {
+                            log.Error(ex);
+                        }
+                    }
+
+                    if (brand == null)
+                    {
+                        brand = new SoftwareBrandViewModel();
+
+                        if (SoftwareVersion == SoftwareVersions.Retail)
+                        {
+                            brand.Name = "QT Retail";
+
+                        }
+                        else if (Common.SoftwareVersion == SoftwareVersions.Restaurant)
+                        {
+                            brand.Name = "QuickTijarat";
+                        }
+                        else
+                        {
+                            brand.Name = "QuickTijarat";
+                        }
+                        brand.Phone = "0332-4815525";
+                        brand.Email = "mail@quicktijarat.com";
+                        brand.Theme = "cube";
+                        brand.Color = "theme-whbl";    //theme-whbl, theme-white, theme-blue, theme-turquoise, theme-amethyst, theme-red, theme-blue-gradient
+                        brand.Address = "103 Trade Center, Lahore";
+                    }
+
+                    return brand;
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex);
+                    throw;
+                }
+            }
+        }
+
+        public static bool IsPaymentOverdue
+        {
+            get
+            {
+                try
+                {
+                    if (CacheManager.Get<string>(CacheManager.CacheKey.PaymentOverdue) == null)
+                    {
+                        var isPaymentsOverdue = DapperQuery.spBaseCompanyPaymentGetOverduePayments(Common.LoginData.ImpersonateCompany.CompanyID).Count() > 0;
+                        CacheManager.Set(CacheManager.CacheKey.PaymentOverdue, isPaymentsOverdue.ToString());
+
+                        return isPaymentsOverdue;
+                    }
+                    else
+                    {
+                        return CacheManager.Get<string>(CacheManager.CacheKey.PaymentOverdue).ToLower() == "true";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex);
+                    throw;
+                }
+            }
+        }
+        
+        //public static List<short> CompanyAndChildsArray()
+        //{
+        //    try
+        //    {
+        //        List<short> companies;
+
+        //        if (HttpContext.Current.Session["CompanyAndChildsArray"] == null)
+        //        {
+        //            var db = new QuickErpEF();
+        //            companies = new List<short>();
+
+        //            companies.Add(Common.LoginData.ImpersonateCompany.CompanyID);
+
+        //            for (int i = 0; i < companies.Count; i++)
+        //            {
+        //                companies.AddRange(db.BaseCompanies.Where(x => x.ParentCompanyID == companies[i]).Select(x => x.CompanyID).ToList());
+        //            }
+
+        //            HttpContext.Current.Session["CompanyAndChildsArray"] = companies;
+        //        }
+
+        //        companies = (List<short>)HttpContext.Current.Session["CompanyAndChildsArray"];
+
+        //        return companies;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        log.Error(ex);
+        //        throw;
+        //    }
+        //}
+        
+        public static bool IsInternetConnected()
+        {
+            try
+            {
+                using (var client = new System.Net.WebClient())
+                using (client.OpenRead("http://google.com"))
+                    return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region "Methods"
+        
+        private static void LoadSignInData(string UserName, ref SignInData signInData)
+        {
+            try
+            {
+                //var db = new QuickErpEF();
+                Int32 companyID;
+
+                log.Debug("Started");
+
+                var parms = new DynamicParameters();
+                parms.Add("@UserName", UserName);
+                var user = DapperQuery.ExecuteQuery<UserViewModel>(DapperQuery.SecUser_SelectByUserName, parms, 60).FirstOrDefault();
+
+                if (user != null)
+                {
+                    var shop = DapperQuery.GetShop(user.CompanyID, user.ShopID.GetValueOrDefault());
+                    companyID = user.CompanyID;
+
+                    signInData.OriginalUser.UserID = user.UserID;
+                    signInData.OriginalUser.UserAutoID = user.UserAutoID;
+                    signInData.OriginalUser.UserKey = user.UserKey;
+                    signInData.OriginalUser.UserName = user.UserName;
+                    signInData.OriginalUser.UserFullName = user.UserFullName;
+                    signInData.OriginalUser.IsCompanyAdmin = user.IsCompanyAdmin ?? false;
+                    signInData.OriginalUser.IsEmailVerified = user.IsEmailVerified ?? true;
+                    signInData.OriginalUser.IsSuperAdmin = user.IsSuperAdmin;
+                    signInData.OriginalUser.ShopID = user.ShopID;
+                    signInData.OriginalUser.WarehouseID = shop != null ? shop.WarehouseID : null;
+                    signInData.OriginalUser.SupportLevel = user.SupportLevel;
+                    signInData.OriginalUser.IsJustLoggedIn = true;
+
+                    signInData.ImpersonateUser.UserID = user.UserID;
+                    signInData.ImpersonateUser.UserAutoID = user.UserAutoID;
+                    signInData.ImpersonateUser.UserKey = user.UserKey;
+                    signInData.ImpersonateUser.UserName = user.UserName;
+                    signInData.ImpersonateUser.UserFullName = user.UserFullName;
+                    signInData.ImpersonateUser.IsCompanyAdmin = user.IsCompanyAdmin ?? false;
+                    signInData.ImpersonateUser.IsEmailVerified = user.IsEmailVerified ?? true;
+                    signInData.ImpersonateUser.IsSuperAdmin = user.IsSuperAdmin;
+                    signInData.ImpersonateUser.ShopID = user.ShopID;
+                    signInData.ImpersonateUser.WarehouseID = shop != null ? shop.WarehouseID : null;
+                    signInData.ImpersonateUser.SupportLevel = user.SupportLevel;
+                    signInData.OriginalUser.IsJustLoggedIn = true;
+
+                    parms = new DynamicParameters();
+                    parms.Add("@CompanyID", companyID);
+                    var company = DapperQuery.Select<CompanyViewModel>(DapperQuery.DBTables.BaseCompany, parms).FirstOrDefault();
+
+                    if (company != null)
+                    {
+                        signInData.OriginalCompany.CompanyKey = company.CompanyKey;
+                        signInData.OriginalCompany.CompanyID = (short)company.CompanyID;
+                        signInData.OriginalCompany.CompanyCode = company.CompanyCode;
+                        signInData.OriginalCompany.CompanyName = company.CompanyName;
+                        signInData.OriginalCompany.Address = company.Address ?? "";
+                        signInData.OriginalCompany.City = company.City ?? "";
+                        signInData.OriginalCompany.State = company.State ?? "";
+                        signInData.OriginalCompany.Country = company.Country ?? "";
+                        signInData.OriginalCompany.LandlineNumber = company.LandlineNumber;
+                        signInData.OriginalCompany.MobileNumber = company.MobileNumber;
+                        signInData.OriginalCompany.EmailAddress = company.EmailAddress;
+                        signInData.OriginalCompany.CompanyLogoPath = company.CompanyLogoRelativePath;
+                        signInData.OriginalCompany.CompanyWebsiteUrl = company.WebsiteUrl;
+                        signInData.OriginalCompany.CompanyTypeID = company.CompanyTypeID;
+                        if (shop != null)
+                        {
+                            signInData.OriginalCompany.WarehouseName = shop.ShopName;
+                            signInData.OriginalCompany.Address = shop.Address;
+                            signInData.OriginalCompany.LandlineNumber = shop.PhoneNumber;
+                        }
+
+                        parms = new DynamicParameters();
+                        parms.Add("@ParentCompanyID", companyID);
+                        if (DapperQuery.Select<CompanyViewModel>(DapperQuery.DBTables.BaseCompany, parms).Count() > 0)
+                        //if (db.BaseCompanies.Where(w => w.ParentCompanyID == company.CompanyID).Count() > 0)
+                        {
+                            signInData.OriginalCompany.CompanyHasChildren = true;
+                        }
+                        else
+                        {
+                            signInData.OriginalCompany.CompanyHasChildren = false;
+                        }
+
+                        signInData.ImpersonateCompany.CompanyKey = company.CompanyKey;
+                        signInData.ImpersonateCompany.CompanyID = (short)company.CompanyID;
+                        signInData.ImpersonateCompany.CompanyCode = company.CompanyCode;
+                        signInData.ImpersonateCompany.CompanyName = company.CompanyName;
+                        signInData.ImpersonateCompany.Address = company.Address ?? "";
+                        signInData.ImpersonateCompany.City = company.City ?? "";
+                        signInData.ImpersonateCompany.State = company.State ?? "";
+                        signInData.ImpersonateCompany.Country = company.Country ?? "";
+                        signInData.ImpersonateCompany.LandlineNumber = company.LandlineNumber;
+                        signInData.ImpersonateCompany.MobileNumber = company.MobileNumber;
+                        signInData.ImpersonateCompany.EmailAddress = company.EmailAddress;
+                        signInData.ImpersonateCompany.CompanyLogoPath = company.CompanyLogoRelativePath;
+                        signInData.ImpersonateCompany.CompanyWebsiteUrl = company.WebsiteUrl;
+                        signInData.ImpersonateCompany.CompanyTypeID = company.CompanyTypeID;
+                        if (shop != null)
+                        {
+                            signInData.ImpersonateCompany.WarehouseName = shop.ShopName;
+                            signInData.ImpersonateCompany.Address = shop.Address;
+                            signInData.ImpersonateCompany.LandlineNumber = shop.PhoneNumber;
+                        }
+
+                        parms = new DynamicParameters();
+                        parms.Add("@ParentCompanyID", companyID);
+                        if (DapperQuery.Select<CompanyViewModel>(DapperQuery.DBTables.BaseCompany, parms).Count() > 0)
+                        //if (db.BaseCompanies.Where(w => w.ParentCompanyID == company.CompanyID).Count() > 0)
+                        {
+                            signInData.ImpersonateCompany.CompanyHasChildren = true;
+                        }
+                        else
+                        {
+                            signInData.ImpersonateCompany.CompanyHasChildren = false;
+                        }
+                    }
+                }
+                else
+                {
+                    log.Info("User not found");
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+            }
+        }
+
+        public static bool SendEmail(string ToAddress, string Subject, string Body, bool IsHtml)
+        {
+            try
+            {
+                System.Net.Mail.SmtpClient gmailSmtpClient = new System.Net.Mail.SmtpClient("smtp.gmail.com", 587);
+                System.Net.Mail.SmtpClient godaddySmtpClient = new System.Net.Mail.SmtpClient("relay-hosting.secureserver.net");
+                System.Net.Mail.SmtpClient smtpClient;
+                System.Net.Mail.MailMessage _MailMessage = new System.Net.Mail.MailMessage();
+
+                gmailSmtpClient.EnableSsl = true;
+                gmailSmtpClient.Credentials = new System.Net.NetworkCredential("quicktijarat@gmail.com", "fV8I4c8Cyyo6");
+
+                smtpClient = gmailSmtpClient;
+
+                _MailMessage.From = new System.Net.Mail.MailAddress("quicktijarat@gmail.com");
+                _MailMessage.To.Add(ToAddress);
+                _MailMessage.Bcc.Add("fysalsaleem@gmail.com");
+                _MailMessage.Subject = Subject;
+                _MailMessage.IsBodyHtml = IsHtml;
+                _MailMessage.Priority = System.Net.Mail.MailPriority.High;
+                _MailMessage.Body = Body;
+                smtpClient.Send(_MailMessage);
+
+                //_MailMessage.To.RemoveAt(0);
+                //_MailMessage.To.Add("faisalemail@msn.com");
+                //smtpClient.Send(_MailMessage);
+
+                smtpClient = null;
+                _MailMessage = null;
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+
+                return false;
+            }
+        }
+
+        public static Image ScaleImage(Image _Image, int maxWidth, int maxHeight)
+        {
+            dynamic ratioX = Convert.ToDouble(maxWidth) / _Image.Width;
+            dynamic ratioY = Convert.ToDouble(maxHeight) / _Image.Height;
+            dynamic ratio = Math.Min(ratioX, ratioY);
+
+            dynamic newWidth = Convert.ToInt32(_Image.Width * ratio);
+            dynamic newHeight = Convert.ToInt32(_Image.Height * ratio);
+
+            dynamic newImage = new Bitmap(newWidth, newHeight);
+
+            using (Graphics _graphics = Graphics.FromImage(newImage))
+            {
+                _graphics.DrawImage(_Image, 0, 0, newWidth, newHeight);
+            }
+
+            return newImage;
+        }
+
+        public static string GetMachineID()
+        {
+            try
+            {
+                ManagementObjectCollection mbsList = null;
+                ManagementObjectSearcher mbs = new ManagementObjectSearcher("Select * From Win32_processor");
+                mbsList = mbs.Get();
+                string id = "";
+                foreach (ManagementObject mo in mbsList)
+                {
+                    id = mo["ProcessorID"].ToString();
+                }
+
+                //System.Diagnostics.Debug.WriteLine("processor id=" + id);
+
+                return ComputeHash(id, 8);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static void SaveUrlAndGotoLogin()
+        {
+            try
+            {
+                var _with1 = HttpContext.Current;
+                System.Diagnostics.Debug.WriteLine(HttpContext.Current.Request.Url.AbsolutePath);
+                System.Diagnostics.Debug.WriteLine(HttpContext.Current.Request.Url.AbsoluteUri);
+
+                _with1.Session[Constants.SESSION_KEY_ReturnUrlAfterLogin] = HttpContext.Current.Request.Url.AbsoluteUri;
+
+                _with1.Response.Redirect(Constants.PAGE_SECURITY_LOGIN);
+
+            }
+            catch (Exception ex)
+            {
+                log.Error("Exception in SaveUrlAndGotoLogin()", ex);
+            }
+        }
+        
+        public static string GetVoucherUrl(int companyID, string autoVoucherSource, int autoVoucherSourceID)
+        {
+            //var db = new QuickErpEF();
+            //var voucher = db.AccountingVouchers.Where(w => w.CompanyID == companyID && w.AutoVoucherSource == autoVoucherSource && w.AutoVoucherSourceID == autoVoucherSourceID).FirstOrDefault();
+            var parms = new DynamicParameters();
+            parms.Add("@CompanyID", companyID);
+            parms.Add("@AutoVoucherSource", autoVoucherSource);
+            parms.Add("@AutoVoucherSourceID", autoVoucherSourceID);
+            var voucher = DapperQuery.Select<VoucherDBModel>(DapperQuery.DBTables.AccountingVoucher, parms).FirstOrDefault();
+
+            if (voucher != null)
+            {
+                return GetVoucherUrl(voucher);
+            }
+            else
+            {
+                return "";
+            }
+        }
+
+        public static string GetVoucherUrl(VoucherDBModel voucher)
+        {
+            switch (voucher.VoucherTypeID)
+            {
+                case (int)VoucherTypes.BankPaymentVoucher:
+                    return "/Voucher/BankPaymentVoucherCreate/" + voucher.VoucherID.ToString();
+
+                case (int)VoucherTypes.BankReceiptVoucher:
+                    return "/Voucher/BankReceiptVoucherCreate/" + voucher.VoucherID.ToString();
+
+                case (int)VoucherTypes.CashPaymentVoucher:
+                    return "/Voucher/CashPaymentVoucherCreate/" + voucher.VoucherID.ToString();
+
+                case (int)VoucherTypes.CashReceiptVoucher:
+                    return "/Voucher/CashReceiptVoucherCreate/" + voucher.VoucherID.ToString();
+
+                case (int)VoucherTypes.JournalVoucher:
+                    return "/Voucher/JournalVoucherCreate/" + voucher.VoucherID.ToString();
+
+                case (int)VoucherTypes.PurchaseReturnVoucher:
+                    return "/Voucher/PurchaseReturnVoucher/" + voucher.VoucherID.ToString();
+
+                case (int)VoucherTypes.PurchaseVoucher:
+                    return "/Voucher/PurchaseVoucherCreate/" + voucher.VoucherID.ToString();
+
+                case (int)VoucherTypes.SaleReturnVoucher:
+                    return "/Voucher/SaleReturnVoucher/" + voucher.VoucherID.ToString();
+
+                case (int)VoucherTypes.SaleVoucher:
+                    return "/Voucher/SaleVoucherCreate/" + voucher.VoucherID.ToString();
+
+            }
+
+            return "";
+        }
+
+        public static bool IsMobileDevice
+        {
+            get
+            {
+                Regex MobileCheck = new Regex(@"(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
+                Regex MobileVersionCheck = new Regex(@"1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
+
+                if (HttpContext.Current.Request != null && HttpContext.Current.Request.ServerVariables["HTTP_USER_AGENT"] != null)
+                {
+                    var u = HttpContext.Current.Request.ServerVariables["HTTP_USER_AGENT"].ToString();
+
+                    if (u.Length < 4)
+                        return false;
+
+                    if (MobileCheck.IsMatch(u) || MobileVersionCheck.IsMatch(u.Substring(0, 4)))
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        public static List<ShopViewModel> Shops()
+        {
+            try
+            {
+                var shops = new List<ShopViewModel>();
+
+                if (CacheManager.Get<List<ShopViewModel>>(CacheManager.CacheKey.BaseShop) == null)
+                {
+                    var parms = new DynamicParameters();
+                    parms.Add("@CompanyID", Common.LoginData.ImpersonateCompany.CompanyID);
+                    shops = DapperQuery.Select<ShopViewModel>(DapperQuery.DBTables.BaseShop, parms).ToList();
+
+                    if (shops == null) shops = new List<ShopViewModel>();
+                    shops.Insert(0, new ShopViewModel() { ShopCode = "WH", ShopName = "Warehouse" });
+
+                    CacheManager.Set(CacheManager.CacheKey.BaseShop, shops);
+                }
+                else
+                {
+                    shops = CacheManager.Get<List<ShopViewModel>>(CacheManager.CacheKey.BaseShop);
+                }
+
+                return shops;
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static List<CompanyProfileViewModel> CompanyProfiles()
+        {
+            try
+            {
+                var profiles = new List<CompanyProfileViewModel>();
+
+                if (CacheManager.Get<List<CompanyProfileViewModel>>(CacheManager.CacheKey.CompanyProfile) == null)
+                {
+                    var parms = new DynamicParameters();
+                    parms.Add("@CompanyID", LoginData.ImpersonateCompany.CompanyID);
+                    profiles = DapperQuery.Select<CompanyProfileViewModel>(DapperQuery.DBTables.BaseCompanyProfile, parms).ToList();
+                    var defaultProfile = new CompanyProfileViewModel();
+                    defaultProfile.CompanyName = LoginData.ImpersonateCompany.CompanyName;
+                    defaultProfile.CompanyAddress = LoginData.ImpersonateCompany.Address;
+                    defaultProfile.Email = LoginData.ImpersonateCompany.EmailAddress;
+                    defaultProfile.Phone = LoginData.ImpersonateCompany.LandlineNumber;
+                    defaultProfile.LogoPath = LoginData.ImpersonateCompany.CompanyLogoPath;
+
+                    profiles.Insert(0, defaultProfile);
+
+                    CacheManager.Set(CacheManager.CacheKey.CompanyProfile, profiles);
+                }
+                else
+                {
+                    profiles = CacheManager.Get<List<CompanyProfileViewModel>>(CacheManager.CacheKey.CompanyProfile);
+                }
+
+                return profiles;
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static bool IsRecordStatusAllowed(RecordStatuses recordStatus, int menuID)
+        {
+            try
+            {
+                var statusAllowed = new List<StatusRoleAssociationViewModel>();
+                var cacheValue = CacheManager.Get<List<StatusRoleAssociationViewModel>>(CacheManager.CacheKey.StatusAllowed);
+
+                if (cacheValue == null)
+                {
+                    var spParams = new DynamicParameters();
+                    spParams.Add("@UserAutoID", Common.LoginData.ImpersonateUser.UserAutoID);
+                    var model = DapperQuery.GetListBySP<StatusRoleAssociationViewModel>(DapperQuery.StoredProcedures.spSecStatusAllowed, spParams);
+                    if (model != null)
+                    {
+                        statusAllowed = model;
+                        CacheManager.Set(CacheManager.CacheKey.StatusAllowed, model);
+                    }
+                }
+                else
+                {
+                    statusAllowed = cacheValue;
+                }
+
+                return statusAllowed.Where(w => w.MenuID == menuID && w.RecordStatusID == (int)recordStatus).Count() > 0;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return false;
+            }
+        }
+
+        public static string SaveTempImage(string imagePath, int recID)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(imagePath))
+                {
+                    var fileName = imagePath.Substring(imagePath.LastIndexOf("/") + 1);
+                    if (fileName.ToLower().IndexOf("temp") == 0)
+                    {
+                        var newFileName = fileName.Replace("temp", recID.ToString());
+                        var newFilePath = System.Web.Hosting.HostingEnvironment.MapPath(imagePath.ToLower().Replace("temp", recID.ToString()));
+                        var fileInfo = new FileInfo(System.Web.Hosting.HostingEnvironment.MapPath(imagePath));
+                        var newFileInfo = new FileInfo(newFilePath);
+
+                        if (fileInfo.Exists)
+                        {
+                            if (newFileInfo.Exists)
+                            {
+                                newFileInfo.Delete();
+                            }
+                            fileInfo.MoveTo(newFilePath);
+                        }
+                        //fileInfo.MoveTo(fileInfo.Directory.FullName + "\\" + fileName.Replace("temp", recID.ToString()));
+
+                        imagePath = imagePath.ToLower().Replace("temp", recID.ToString());
+                    }
+                }
+
+                return imagePath;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return null;
+            }
+        }
+
+        public static string Base64Encode(string plainText)
+        {
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            return System.Convert.ToBase64String(plainTextBytes);
+        }
+
+        public static string Base64Decode(string base64EncodedData)
+        {
+            var base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
+            return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
+        }
+
+        #endregion
+
+        #region "Offline Version"
+
+        public static CompanyViewModel CrystalCompany()
+        {
+            var company = DapperQuery.Select<CompanyViewModel>(DapperQuery.DBTables.BaseCompany, new DynamicParameters()).FirstOrDefault();
+            return company;
+        }
+
+        #endregion
+
+        #region "Reports"
+
+        public static List<TreeViewViewModel> GetReportsAllowedAndVisibleByUserAutoID(int? parentReportID, int? userAutoID)
+        {
+            try
+            {
+                log.Debug("Started");
+
+                if (CacheManager.Get<List<TreeViewViewModel>>(CacheManager.CacheKey.VisibleReportsAllowed) == null)
+                {
+                    var spParams = new DynamicParameters();
+                    spParams.Add("@ParentID", parentReportID);
+                    spParams.Add("@UserAutoID", userAutoID);
+                    spParams.Add("@IsVisible", 1);
+
+                    var nodes = DapperQuery.GetListBySP<TreeViewViewModel>(DapperQuery.StoredProcedures.spBaseReportGetActiveByParentIDUserAutoID, spParams);
+
+                    foreach (var node in nodes)
+                    {
+                        node.nodes = GetReportsAllowedAndVisibleByUserAutoID(node.nodeId, userAutoID);
+                    }
+
+                    if (nodes.Count > 0)
+                    {
+                        if (parentReportID.GetValueOrDefault() == 0)
+                        {
+                            CacheManager.Set(CacheManager.CacheKey.VisibleReportsAllowed, nodes);
+                        }
+
+                        return nodes;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                else
+                {
+                    return CacheManager.Get<List<TreeViewViewModel>>(CacheManager.CacheKey.VisibleReportsAllowed);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static List<TreeViewViewModel> GetAllReportsAllowedByUserAutoID(int? parentReportID, int? userAutoID)
+        {
+            try
+            {
+                log.Debug("Started");
+
+                if (CacheManager.Get<List<TreeViewViewModel>>(CacheManager.CacheKey.ReportsAllowedWithHierarchy) == null)
+                {
+                    var spParams = new DynamicParameters();
+                    spParams.Add("@ParentID", parentReportID);
+                    spParams.Add("@UserAutoID", userAutoID);
+                    spParams.Add("@IsVisible", null);
+
+                    var nodes = DapperQuery.GetListBySP<TreeViewViewModel>(DapperQuery.StoredProcedures.spBaseReportGetActiveByParentIDUserAutoID, spParams);
+
+                    foreach (var node in nodes)
+                    {
+                        node.nodes = GetAllReportsAllowedByUserAutoID(node.nodeId, userAutoID);
+                    }
+
+                    if (nodes.Count > 0)
+                    {
+                        if (parentReportID.GetValueOrDefault() == 0)
+                        {
+                            CacheManager.Set(CacheManager.CacheKey.ReportsAllowedWithHierarchy, nodes);
+                        }
+
+                        return nodes;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                else
+                {
+                    return CacheManager.Get<List<TreeViewViewModel>>(CacheManager.CacheKey.ReportsAllowedWithHierarchy);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        public static bool IsReportAllowed(int reportID)
+        {
+            try
+            {
+                List<ReportViewModel> reports;
+
+                log.Debug("Started");
+
+                if (CacheManager.Get<List<ReportViewModel>>(CacheManager.CacheKey.ReportsAllowed) == null)
+                {
+                    var spParams = new DynamicParameters();
+                    spParams.Add("@UserAutoID", LoginData.ImpersonateUser.UserAutoID);
+
+                    reports = DapperQuery.GetListBySP<ReportViewModel>(DapperQuery.StoredProcedures.spBaseReportGetAllowedByUserAutoID, spParams);
+
+                    CacheManager.Set(CacheManager.CacheKey.ReportsAllowed, reports);
+                }
+                else
+                {
+                    reports = CacheManager.Get<List<ReportViewModel>>(CacheManager.CacheKey.ReportsAllowed);
+                }
+
+                return reports.Where(w => w.ReportID == reportID).Count() > 0;
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region "Offline Version"
+
+        public static bool ActivateSoftware(short companyID, string companyKey)
+        {
+            try
+            {
+                AppSetting.SaveSetting(companyID, 0, SystemSettings.General_SK.ToString(), companyKey, "");
+
+                return (IsSoftwareKeyValid(companyID));
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return false;
+            }
+        }
+
+        public static bool ActivateYear(int year, string yearKey)
+        {
+            try
+            {
+                var company = CrystalCompany();
+                //var key = company.CompanyID.ToString() + "-" + year.ToString() + "-" + Common.GetMachineID();
+
+                AppSetting.SaveSetting((short)company.CompanyID, 0, SystemSettings.General_SYK.ToString() + "-" + year.ToString(), yearKey, "");
+
+                if (company != null && GetKey(company.CompanyID, year, Common.GetMachineID()) == yearKey)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return false;
+            }
+        }
+
+        public static bool IsYearKeyValid(int companyID, int year, string yearKey)
+        {
+            //var key = companyID.ToString() + "-" + year.ToString() + "-" + Common.GetMachineID();
+
+            if (yearKey == GetKey(companyID, year, Common.GetMachineID()))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static bool IsSoftwareKeyValid(int companyID)
+        {
+            var key = GetKey(companyID, Common.GetMachineID()).ToLower();
+            var softwareKey = AppSetting.GetSetting((short)companyID, 0, SystemSettings.General_SK.ToString(), "");
+
+            if (softwareKey.ToLower() == key)
+            {
+                log.Info("Software key is valid");
+                return true;
+            }
+            else
+            {
+                log.Info("Software key is invalid");
+                return false;
+            }
+        }
+
+        public static bool IsCompanySetup()
+        {
+            var companies = DapperQuery.Select<CompanyViewModel>(DapperQuery.DBTables.BaseCompany, new DynamicParameters());
+            return (companies != null && companies.Count() > 0);
+        }
+
+        public static bool IsSoftwareActivated()
+        {
+            var company = CrystalCompany();
+
+            if (company != null)
+            {
+                log.Info("Calling IsSoftwareKeyValid() ...");
+                return IsSoftwareKeyValid(company.CompanyID);
+            }
+            else
+            {
+                log.Info("Company not found");
+                return false;
+            }
+        }
+
+        public static DateTime TrialEndDate()
+        {
+            var company = CrystalCompany();
+            var softwareYearDate = DateTime.Now;
+
+            if (company != null)
+            {
+                var startDate = EncryptionManager.Decrypt(AppSetting.GetSetting((short)company.CompanyID, 0, SystemSettings.General_SSD.ToString(), ""), PHRASE);
+                if (string.IsNullOrEmpty(startDate))
+                {
+                    startDate = EncryptionManager.Encrypt(softwareYearDate.ToString("dd-MMM-yyy"), PHRASE);
+                    AppSetting.SaveSetting((short)company.CompanyID, 0, SystemSettings.General_SSD.ToString(), startDate, "");
+                }
+
+                DateTime.TryParse(startDate, out softwareYearDate);
+                return softwareYearDate.AddMonths(1).AddDays(-1).Date;
+            }
+            else
+            {
+                return DateTime.Now.AddYears(-1);
+            }
+        }
+
+        public static bool IsSoftwareInTrial()
+        {
+            if (DateTime.Now.Date > TrialEndDate())
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+
+        }
+
+        public static DateTime SoftwareStartDate()
+        {
+            var company = CrystalCompany();
+            var softwareYearDate = DateTime.Now;
+
+            if (company != null)
+            {
+                var softwareYear = EncryptionManager.Decrypt(AppSetting.GetSetting((short)company.CompanyID, 0, SystemSettings.General_SSD.ToString(), ""), PHRASE);
+                DateTime.TryParse(softwareYear, out softwareYearDate);
+            }
+
+            return softwareYearDate;
+        }
+
+        public static List<SetupCompanyYear> CompanyYears(int id)
+        {
+            try
+            {
+                var query = "select * from " + DapperQuery.DBTables.BaseSetting.ToString() + " where CompanyID=" + id.ToString() + " AND SettingID LIKE '" + SystemSettings.General_SYK.ToString() + "%' order by SettingID";
+                var settings = DapperQuery.Select<BaseSettingViewModel>(query, new DynamicParameters());
+                var years = new List<SetupCompanyYear>();
+
+                if (settings != null && settings.Count() > 0)
+                {
+                    foreach (var row in settings)
+                    {
+                        int year = 0;
+                        Int32.TryParse(row.SettingID.Substring(SystemSettings.General_SYK.ToString().Length + 1), out year);
+
+                        years.Add(new SetupCompanyYear() { Year = year, SoftwareKey = row.SettingValue });
+                    }
+                }
+
+                return years;
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return new List<SetupCompanyYear>();
+            }
+
+        }
+
+        public static int SoftwareExpiryInDays()
+        {
+            return Common.SoftwareExpiryDate().Subtract((DateTime.Now.Date)).Days + 1;
+        }
+
+        public static DateTime SoftwareExpiryDate()
+        {
+            var company = CrystalCompany();
+            var trialEndDate = TrialEndDate();
+            var year = CurrentSoftwareYear();
+            var expiryDate = trialEndDate;
+
+            log.Info("SoftwareExpiryDate(), calling IsSoftwareActivated() ...");
+
+            if (company != null && IsSoftwareActivated())
+            {
+                expiryDate = expiryDate.Date.AddYears(100);
+            }
+
+
+
+            return expiryDate.Date;
+        }
+
+        public static int CurrentSoftwareYear()
+        {
+            var company = CrystalCompany();
+            var trialEndDate = TrialEndDate();
+            var year = DateTime.Now.Year;
+
+            if (company != null)
+            {
+                if (DateTime.Now.Date > trialEndDate.Date && DateTime.Now.Month <= trialEndDate.Month)   // first one month is trial
+                {
+                    year--;
+                }
+            }
+
+            return year;
+        }
+
+        public static bool DatabaseExists()
+        {
+            try
+            {
+                var conStrBldr = new SqlConnectionStringBuilder(Common.ConnectionString);
+                var dbName = conStrBldr.InitialCatalog;
+                conStrBldr.InitialCatalog = "master";
+                var constr = conStrBldr.ConnectionString;
+
+                var qry = "SELECT name FROM sys.databases where name=@name";
+                using (var cn = new SqlConnection(constr))
+                {
+                    var columns = new DynamicParameters();
+                    columns.Add("@name", dbName);
+                    var count = cn.Query<string>(qry, columns, commandTimeout: 120);
+                    if (count.Count() > 0)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return false;
+            }
+        }
+
+        public static async void VerifyKeysOnline()
+        {
+            try
+            {
+                var client = new HttpClient();
+                string baseUrl = "http://localhost:52000/api";
+
+                if (!Common.IsDebug)
+                {
+                    baseUrl = "https://quicktijarat.com/api";
+                }
+                var url = baseUrl + "/Crystal/VerifySoftwareKey?companyID={0}&computerCode={1}";
+                var model = new SetupCompany();
+                var company = CrystalCompany();
+
+                log.Info("Sarted");
+
+                if (company != null)
+                {
+                    model.CompanyID = company.CompanyID;
+                    model.ComputerCode = company.CompanyCode;
+                    model.CompanyName = company.CompanyName;
+                    url = string.Format(url, company.CompanyID, Common.GetMachineID());
+                    model.SoftwareKey = AppSetting.GetSetting(SystemSettings.General_SK, "");
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var dataReceived = await response.Content.ReadAsStringAsync();
+                        var data = (SetupCompany)Newtonsoft.Json.JsonConvert.DeserializeObject(dataReceived, typeof(SetupCompany));
+
+                        if (data.SoftwareKey != model.SoftwareKey && !string.IsNullOrEmpty(data.SoftwareKey))
+                        {
+                            AppSetting.SaveSetting((short)company.CompanyID, 0, SystemSettings.General_SK.ToString(), "", "");
+                        }
+                    }
+                    else
+                    {
+                        log.Error("Error in verifying software key");
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                //throw;
+            }
+        }
+
+        public static string GetKey(int companyID, string computerCode)
+        {
+            try
+            {
+                var key = companyID.ToString() + "-" + computerCode;
+
+                return ComputeHash(key, 8);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return "";
+            }
+        }
+
+        public static string GetKey(int companyID, int year, string computerCode)
+        {
+            try
+            {
+                var key = companyID.ToString() + "-" + year.ToString() + "-" + computerCode;
+
+                return ComputeHash(key, 8);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return "";
+            }
+        }
+
+        public static string ComputeHash(string input, int maxLength)
+        {
+            // Use input string to calculate MD5 hash
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                // Convert the byte array to hexadecimal string
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    sb.Append(hashBytes[i].ToString("X2"));
+                }
+                var hash = sb.ToString();
+                if (hash.Length > maxLength)
+                {
+                    return hash.Substring(0, maxLength);
+                }
+                else
+                {
+                    return hash;
+                }
+            }
+        }
+
+        #endregion
+
+    }
+
+    public class ServerPerformance
+    {
+        public string label { get; set; }
+        public float cpu { get; set; }
+        public float ram { get; set; }
+    }
+}
