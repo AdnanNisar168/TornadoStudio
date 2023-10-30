@@ -1,0 +1,53 @@
+Sure, you can create a partial class in ASP.NET with a method that uses Dapper to execute a query with a dynamic CommandType of Text. Here's an example of how to create such a class:
+
+1. **Create the Partial Class**:
+
+   Start by creating a partial class with a method to execute a query using Dapper:
+
+   ```csharp
+   // DapperQuery.cs
+   using Dapper;
+   using System.Collections.Generic;
+   using System.Data;
+   using System.Data.SqlClient;
+
+   public partial class DapperQuery
+   {
+       private string connectionString;
+
+       public DapperQuery(string connectionString)
+       {
+           this.connectionString = connectionString;
+       }
+
+       public IEnumerable<T> ExecuteQuery<T>(string query, object parameters = null)
+       {
+           using (IDbConnection dbConnection = new SqlConnection(connectionString))
+           {
+               dbConnection.Open();
+               return dbConnection.Query<T>(query, parameters, commandType: CommandType.Text);
+           }
+       }
+   }
+   ```
+
+2. **Usage**:
+
+   You can now use this class to execute dynamic SQL queries with Dapper:
+
+   ```csharp
+   // Somewhere in your code, create an instance of DapperQuery
+   string connectionString = "YourConnectionString";
+   DapperQuery dapperQuery = new DapperQuery(connectionString);
+
+   // Execute a dynamic SQL query
+   string selectQuery = "SELECT * FROM YourTable";
+   var results = dapperQuery.ExecuteQuery<YourModel>(selectQuery);
+
+   // Execute a dynamic SQL query with parameters
+   string parameterizedQuery = "SELECT * FROM YourTable WHERE ColumnName = @Value";
+   var parameters = new { Value = "SomeValue" };
+   var resultsWithParameters = dapperQuery.ExecuteQuery<YourModel>(parameterizedQuery, parameters);
+   ```
+
+This class, `DapperQuery`, allows you to execute dynamic SQL queries using Dapper with a CommandType of Text. You can use it to fetch data from your database without having to write repetitive connection and query execution code.

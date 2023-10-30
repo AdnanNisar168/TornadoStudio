@@ -1,0 +1,59 @@
+To declare a connection string in the `web.config` file for an ASP.NET application and access it in a controller, you can follow these steps:
+
+**1. Add Connection String to `web.config`:**
+
+Open your `web.config` file, and inside the `<configuration>` element, add a `<connectionStrings>` section if it doesn't already exist. Then, define your connection string. Here's an example:
+
+```xml
+<configuration>
+  <connectionStrings>
+    <add name="MyDatabaseConnection" 
+         connectionString="Data Source=YourServer;Initial Catalog=YourDatabase;User ID=YourUser;Password=YourPassword;" 
+         providerName="System.Data.SqlClient" />
+  </connectionStrings>
+</configuration>
+```
+
+Replace the placeholders with your actual database server, database name, user, and password.
+
+**2. Access Connection String in Controller:**
+
+You can access the connection string in your controller using the `ConfigurationManager.ConnectionStrings` property. Here's an example of how to access the connection string in a controller:
+
+```csharp
+using System.Configuration;
+using System.Data.SqlClient;
+using System.Web.Mvc; // Use the appropriate namespace for your controller type
+
+public class MyController : Controller
+{
+    public ActionResult MyAction()
+    {
+        // Access the connection string from web.config
+        string connectionString = ConfigurationManager.ConnectionStrings["MyDatabaseConnection"].ConnectionString;
+
+        // Use the connection string to create a SqlConnection
+        using (SqlConnection connection = new SqlConnection(connectionString))
+        {
+            try
+            {
+                connection.Open();
+                // You can use the connection to query your database here
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions
+            }
+        }
+
+        // Your controller logic here
+        return View();
+    }
+}
+```
+
+In this example, we access the connection string named "MyDatabaseConnection" from the `web.config` and use it to create a `SqlConnection` for database operations. You should replace `"MyController"` with the name of your actual controller and `"MyAction"` with the name of your controller action.
+
+Make sure to handle exceptions properly in the controller, as shown in the `try-catch` block. It's essential to handle errors that might occur when connecting to the database.
+
+Remember to adjust the namespaces according to the type of controller you are using in your ASP.NET application (e.g., `System.Web.Mvc` for a traditional ASP.NET MVC controller or `Microsoft.AspNetCore.Mvc` for an ASP.NET Core controller).

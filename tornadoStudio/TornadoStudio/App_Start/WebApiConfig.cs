@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
+using System.Web.Http.Cors;
 
 namespace TornadoStudio
 {
@@ -19,6 +20,18 @@ namespace TornadoStudio
                 routeTemplate: "api/{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
             );
+
+            //cors
+            // Enable CORS globally for all controllers
+            config.EnableCors();
+
+            // Configure CORS to allow requests from specific origins
+            var cors = new EnableCorsAttribute("http://localhost:4200", "*", "*");
+            config.EnableCors(cors);
+            //cors
+            //cors2
+            
+            //cors2
         }
     }
 }

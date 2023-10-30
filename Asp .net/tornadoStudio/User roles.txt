@@ -1,0 +1,125 @@
+Certainly, here's a detailed example of how to create a role table, check roles in an ASP.NET application using C#, and create a `SuperAdmin` attribute to control access to action methods.
+
+1. **Create Role Table in SQL Database**:
+
+   First, create a table in your SQL database to store user roles. This table will associate roles with user IDs.
+
+   ```sql
+   CREATE TABLE UserRoles (
+       UserId INT,
+       RoleName NVARCHAR(50)
+   );
+
+   -- Example role assignments:
+   INSERT INTO UserRoles (UserId, RoleName)
+   VALUES (1, 'SuperAdmin'),
+          (2, 'Admin'),
+          (3, 'User');
+   ```
+
+2. **Configure ASP.NET Authentication and Authorization**:
+
+   In your ASP.NET application, configure authentication and authorization in the `web.config` file. Here's an example:
+
+   ```xml
+   <system.web>
+       <authentication mode="Forms">
+           <forms loginUrl="~/Account/Login" defaultUrl="~/Home/Index" />
+       </authentication>
+       <authorization>
+           <deny users="?"/>
+       </authorization>
+   </system.web>
+   ```
+
+   This example sets up forms authentication and denies access to anonymous users.
+
+3. **Implement Custom Role Attribute**:
+
+   Create a custom attribute that allows access only to users with the 'SuperAdmin' role. This attribute extends the `AuthorizeAttribute`.
+
+   ```csharp
+   using System.Web.Mvc;
+   
+   public class SuperAdminOnlyAttribute : AuthorizeAttribute
+   {
+       protected override bool AuthorizeCore(System.Web.HttpContextBase httpContext)
+       {
+           var authorized = base.AuthorizeCore(httpContext);
+           if (!authorized)
+           {
+               return false; // Not authenticated, no need to check further.
+           }
+   
+           var user = httpContext.User;
+           if (user.IsInRole("SuperAdmin"))
+           {
+               return true; // User has the 'SuperAdmin' role.
+           }
+   
+           return false; // User is authenticated but doesn't have the 'SuperAdmin' role.
+       }
+   }
+   ```
+
+4. **Apply the SuperAdmin Attribute**:
+
+   Apply the `SuperAdminOnly` attribute to the controller action methods you want to restrict to 'SuperAdmin' users.
+
+   ```csharp
+   public class AdminController : Controller
+   {
+       [SuperAdminOnly]
+       public ActionResult SuperAdminAction()
+       {
+           return View();
+       }
+   }
+   ```
+
+5. **Check User Roles**:
+
+   You need a mechanism to load user roles when a user logs in. Here's a simplified example:
+
+   ```csharp
+   public class AccountController : Controller
+   {
+       // Authenticate the user and load roles from the database
+       public ActionResult Login(string username, string password)
+       {
+           // Authenticate user based on username and password
+           if (IsValidUser(username, password))
+           {
+               // Load user roles from the database
+               var roles = GetUserRolesFromDatabase(username);
+               var identity = new System.Security.Claims.ClaimsIdentity(System.Web.Security.FormsAuthentication.FormsCookieName);
+               identity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, username));
+               foreach (var role in roles)
+               {
+                   identity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role));
+               }
+               System.Web.Security.FormsAuthentication.SetAuthCookie(username, false);
+           }
+           // Redirect to the appropriate page
+           return RedirectToAction("Index", "Home");
+       }
+
+       // Authenticate user
+       private bool IsValidUser(string username, string password)
+       {
+           // Your authentication logic here
+           return true;
+       }
+
+       // Load user roles from the database
+       private string[] GetUserRolesFromDatabase(string username)
+       {
+           // Retrieve user roles from the database based on the username
+           // Implement your database access logic here
+           // Return an array of role names (e.g., 'SuperAdmin', 'Admin', 'User')
+           return new string[] { "SuperAdmin", "Admin" };
+       }
+   }
+   ```
+
+In this example, the `SuperAdminOnly` attribute restricts access to the "SuperAdminAction" method to users who have the "SuperAdmin" role. Users get roles assigned during the login process, and their roles are verified when they access actions with the `SuperAdminOnly` attribute. Roles are loaded from the database and associated with the user. You should implement a more secure authentication and authorization mechanism in a production application.

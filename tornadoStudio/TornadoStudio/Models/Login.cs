@@ -10,5 +10,7 @@ namespace TornadoStudio.Models
         public int StudentId { get; set; }
         public string StudentName { get; set; }
         public int Age { get; set; }
+        public string username { get; set; }
+        public string password { get; set; }
     }
 }
