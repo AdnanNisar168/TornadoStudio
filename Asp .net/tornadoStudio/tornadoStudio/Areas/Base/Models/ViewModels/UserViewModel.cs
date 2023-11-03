@@ -7,7 +7,10 @@ namespace tornadoStudio.Areas.Base.Models.ViewModels
 {
     public class UserViewModel
     {
+        public Guid UserKey { get; set; }
         public string UserName { get; set; }
         public string Password { get; set; }
+        public int CompanyID { get; set; }
+        public string CompanyName { get; set; }
     }
 }

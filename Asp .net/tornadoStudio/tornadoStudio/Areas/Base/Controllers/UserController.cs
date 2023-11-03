@@ -26,34 +26,65 @@ namespace tornadoStudio.Areas.Base.Controllers
         string connectionString = ConfigurationManager.ConnectionStrings["MyDatabaseConnection"].ConnectionString;
 
         // GET: Base/User
-        public ActionResult Index(UserViewModel model)
+        //public ActionResult Index(UserViewModel model)
+        //{
+
+        //    using (SqlConnection connection = new SqlConnection(connectionString))
+        //    {
+        //        //try
+        //        //{
+        //        //    connection.Open();
+        //        //    SqlCommand cmd = new SqlCommand();//("Select * from SecUser2");
+        //        //    cmd.CommandText = "SELECT * FROM SecUser2 ";
+        //        //    cmd.CommandTimeout = 15;
+        //        //    cmd.CommandType = CommandType.Text;
+        //        //    // You can use the connection to query your database here
+        //        //    //ExecuteCommand("Your command here");
+        //        //    cmd.ExecuteScalar();
+        //        //    return Json(cmd, JsonRequestBehavior.AllowGet);
+
+        //        //}
+        //        //catch (Exception ex)
+        //        //{
+        //        //    // Handle exceptions
+        //        //}
+        //        //by sp
+        //        //result = cn.Query<T>(Enum.GetName(typeof(StoredProcedures), storedProcedure), spParams, commandType: CommandType.StoredProcedure, commandTimeout: timeout).ToList();
+        //        //https://www.youtube.com/watch?v=DboyInxNgXc link
+
+        //        //SqlCommand cmd = new SqlCommand("spSecUser2GetByUserKey", connection);
+        //        var parameters = new DynamicParameters();
+        //        // Add any parameters if your stored procedure requires them
+        //        parameters.Add("@UserKey", "DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC");
+        //        var result = new List<UserViewModel>();
+        //        result = connection.Query<UserViewModel>("spSecUser2GetByUserKey", parameters, commandType: CommandType.StoredProcedure);
+
+        //    }
+
+        //    //return View();
+        //    var name = "Ali";
+
+        //    return Json(new { Name = name }, JsonRequestBehavior.AllowGet);
+        //}
+
+        public ActionResult  GetUserByUserKey()
         {
+            //List<UserViewModel>
+            //using IDbConnection connection = new SqlConnection("YourConnectionStringHere");
+            SqlConnection connection = new SqlConnection(connectionString);
+            //var result = new List<UserViewModel>();
+           // var result = new List<T>();
+            var parameters = new DynamicParameters();
+            parameters.Add("@UserKey", "DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC");
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                try
-                {
-                    connection.Open();
-                    SqlCommand cmd = new SqlCommand();//("Select * from SecUser2");
-                    cmd.CommandText = "SELECT * FROM SecUser2 ";
-                    cmd.CommandTimeout = 15;
-                    cmd.CommandType = CommandType.Text;
-                    // You can use the connection to query your database here
-                    //ExecuteCommand("Your command here");
-                    cmd.ExecuteScalar();
-                    return Json(cmd, JsonRequestBehavior.AllowGet);
+          var  result = connection.Query<UserViewModel>(
+                "spSecUser2GetByUserKey",
+                parameters,
+                commandType: CommandType.StoredProcedure
+            );
 
-                }
-                catch (Exception ex)
-                {
-                    // Handle exceptions
-                }
-            }
-
-            //return View();
-            var name = "Ali";
-
-            return Json(new { Name = name }, JsonRequestBehavior.AllowGet);
+            //  return result.ToList();
+            return Json(result, JsonRequestBehavior.AllowGet);
         }
     }
 }
