@@ -14,6 +14,7 @@ using Dapper;
 //cors
 using System.Web.Http;
 using System.Web.Http.Cors;
+using System.Data;
 //cors
 
 namespace tornadoStudio.Areas.Base.Controllers
@@ -33,7 +34,15 @@ namespace tornadoStudio.Areas.Base.Controllers
                 try
                 {
                     connection.Open();
+                    SqlCommand cmd = new SqlCommand();//("Select * from SecUser2");
+                    cmd.CommandText = "SELECT * FROM SecUser2 ";
+                    cmd.CommandTimeout = 15;
+                    cmd.CommandType = CommandType.Text;
                     // You can use the connection to query your database here
+                    //ExecuteCommand("Your command here");
+                    cmd.ExecuteScalar();
+                    return Json(cmd, JsonRequestBehavior.AllowGet);
+
                 }
                 catch (Exception ex)
                 {

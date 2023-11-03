@@ -1,0 +1,66 @@
+DESKTOP-A69E6H8\SQLEXPRESS (pc)
+
+To select all rows from a `User` table in ASP.NET and return the result, you can use ADO.NET to connect to your database and execute a SQL query. Here's a basic example of how you can do this:
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+
+public class UserRepository
+{
+    private string connectionString; // Your database connection string
+
+    public UserRepository(string connectionString)
+    {
+        this.connectionString = connectionString;
+    }
+
+    public List<User> GetAllUsers()
+    {
+        List<User> users = new List<User>();
+
+        using (SqlConnection connection = new SqlConnection(connectionString))
+        {
+            connection.Open();
+
+            string query = "SELECT * FROM User"; // Replace "User" with your actual table name
+
+            using (SqlCommand command = new SqlCommand(query, connection))
+            {
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        User user = new User
+                        {
+                            Id = Convert.ToInt32(reader["Id"]),
+                            Username = reader["Username"].ToString(),
+                            // Add more properties here based on your User table columns
+                        };
+                        users.Add(user);
+                    }
+                }
+            }
+        }
+
+        return users;
+    }
+}
+
+public class User
+{
+    public int Id { get; set; }
+    public string Username { get; set; }
+    // Add more properties here based on your User table columns
+}
+```
+
+In this example:
+
+1. The `UserRepository` class is responsible for connecting to the database and executing the query to fetch all users.
+2. Replace `"User"` with your actual table name in the SQL query.
+3. The `User` class represents the structure of a user row in your table.
+
+You will need to replace `connectionString` with your actual database connection string. After creating an instance of `UserRepository`, you can call the `GetAllUsers` method to retrieve all user records from the database. The result will be a list of `User` objects.

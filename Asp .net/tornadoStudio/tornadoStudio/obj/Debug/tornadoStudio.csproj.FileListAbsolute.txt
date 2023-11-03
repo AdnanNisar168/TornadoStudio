@@ -97,3 +97,4 @@ E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Numerics.Vector
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Runtime.CompilerServices.Unsafe.xml
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Threading.Tasks.Extensions.xml
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Web.Http.Cors.xml
+E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\obj\Debug\tornadoStudio.csprojAssemblyReference.cache
