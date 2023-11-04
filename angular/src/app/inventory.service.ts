@@ -9,7 +9,7 @@ import { ResponseMessage } from './models/responseMessage';
 })
 export class InventoryService {
   private apiUrl = 'http://localhost:56731/api'; // Replace with your ASP.NET MVC API URL
-  private apiUrl2 = 'http://localhost:57685/api'; // Replace with your ASP.NET MVC API URL
+  private apiUrl2 = 'http://localhost:57685/api'; // qt asp.net
   baseServerUrl = "http://localhost:4200/api/"
   constructor(private http: HttpClient) { }
    public getData(): Observable<any> {

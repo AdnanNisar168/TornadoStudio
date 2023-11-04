@@ -69,11 +69,8 @@ namespace tornadoStudio.Areas.Base.Controllers
 
         public ActionResult  GetUserByUserKey()
         {
-            //List<UserViewModel>
-            //using IDbConnection connection = new SqlConnection("YourConnectionStringHere");
+            
             SqlConnection connection = new SqlConnection(connectionString);
-            //var result = new List<UserViewModel>();
-           // var result = new List<T>();
             var parameters = new DynamicParameters();
             parameters.Add("@UserKey", "DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC");
 
@@ -86,5 +83,54 @@ namespace tornadoStudio.Areas.Base.Controllers
             //  return result.ToList();
             return Json(result, JsonRequestBehavior.AllowGet);
         }
-    }
+
+        public ActionResult GetUserByQuery()
+        {
+            SqlConnection connection = new SqlConnection(connectionString);
+            
+
+            //query
+            // without using model
+            var sql = "SELECT * FROM SecUser2";
+            var customers = connection.Query(sql);
+            //query
+
+            //query
+            // using model
+            var sql1 = "SELECT * FROM SecUser2";
+            var a1 = connection.Query<UserViewModel>(sql1);
+            //query
+
+            //query
+            // using QueryAsync
+            //var sql2 = "SELECT * FROM SecUser2";
+            //var a2 = await connection.QueryAsync<UserViewModel>(sql2);
+            //query
+
+
+
+
+            //  return result.ToList();
+            return Json(a1, JsonRequestBehavior.AllowGet);
+
+        }
+
+        public ActionResult Save(UserViewModel model)
+        {
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+
+                log.Error(ex);
+                return Json(new ActionResultJson<string>
+                {
+                    http_code = HttpStatusCode.InternalServerError,
+                    message = ex.Message,
+                    broken_rules = this.BrokenRules
+                });
+            }
+        }
 }
