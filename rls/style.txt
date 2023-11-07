@@ -1,0 +1,571 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import "~@ng-select/ng-select/themes/ant.design.theme.css";
+@import "~ag-grid-community/dist/styles/ag-grid.css";
+@import "~ag-grid-community/dist/styles/ag-theme-balham.css";
+@import "~node_modules/ngx-bootstrap/datepicker/bs-datepicker.css";
+
+.stock-table th {
+    text-align: center;
+}
+
+.stock-table td {
+    padding: 0px 5px;
+}
+
+.stock-table .number {
+    text-align: right;
+}
+
+.stock-table .total {
+    font-weight: bold;
+}
+
+.ag-cell.ag-red {
+    color: red;
+}
+
+.main-box-header .btn {
+    margin: 0px 1px;
+}
+
+ngb-datepicker.dropdown-menu.show {
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+}
+
+ngb-datepicker-navigation-select > .custom-select {
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    padding: 0 .5rem;
+    font-size: .875rem;
+    height: 1.85rem;
+}
+
+ngb-datepicker .ngb-dp-day {
+    width: 3rem!important;
+    height: 3rem!important;
+}
+
+ngb-datepicker .ngb-dp-arrow {
+    width: 0px!important;
+}
+
+.ngb-dp-day div {
+    width: 3rem;
+    height: 3rem;
+    text-align: center;
+    line-height: 3rem;
+}
+
+.ngb-dp-day div.bg-primary {
+    background-color: #337ab7;
+}
+
+.input-group .input-group-append .btn{
+    line-height: 18px;
+}
+
+table.list-table {
+    table-layout: fixed;
+}
+
+table.list-table .lg-code {
+    width: 150px;
+}
+
+table.list-table .lg-name {
+    width: 200px;
+}
+
+table.list-table th.amount {
+    width: 80px;
+}
+
+table.list-table th.actions,
+table.list-table th.action {
+    width: 80px;
+}
+
+table.list-table th.date-time,
+table.list-table td.date-time {
+    width: 160px;
+}
+
+table.list-table th.lg-action {
+    width: 100px;
+}
+
+table.list-table .btn {
+    /*margin-top: -4px;*/
+    padding: 0px 5px;
+    font-size: 14px;
+}
+
+table.list-table a.label.label-primary {
+    color: white;
+}
+
+table.list-table .no-records {
+    text-align: center;
+}
+
+.modal {
+    background-color: #00000087;
+}
+
+.modal.success .modal-header {
+    /*border-color: #689f38;
+    color: #689f38;
+    background-color: #d4edda;*/
+    border-color: #d4edda;
+    color: #d4edda;
+    background-color: #689f38;
+}
+
+.modal.success .modal-content {
+    border: 2px solid #689f38;
+}
+
+.modal.danger .modal-header {
+    border-color: #f8d7da;
+    color: #f8d7da;
+    background-color: #dd191d;
+}
+
+.modal.danger .modal-content {
+    border: 2px solid #dd191d;
+}
+
+.ng-select.ng-select-single .ng-select-container .ng-value-container, .ng-select.ng-select-single .ng-select-container .ng-value-container .ng-value {
+    font-size: 14px;
+}
+
+.save-spinner{
+    display:block;
+    left: 0;
+}
+
+.ng-select.ng-select-single .ng-select-container .ng-value-container .ng-input {
+    padding: 0 5px;
+}
+
+.auto-size-label {
+    float: left;
+    padding-left: 10px;
+}
+
+.ag-theme-balham {
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.ag-theme-balham .ag-cell
+,.ag-theme-balham .ag-header-cell {
+    padding: 0px;
+    border-right: 1px solid whitesmoke;
+}
+
+table th.sortable::after {
+    opacity: 0.2;
+    content: "\f0dc";
+    font-family: 'FontAwesome';
+    float: right;
+}
+
+table th.sortable.sort-desc::after {
+    opacity: 0.8;
+    content: "\f0dd";
+}
+
+table th.sortable.sort-asc::after {
+    opacity: 0.8;
+    content: "\f0de";
+}
+
+
+
+/* .touch-screen, .main-box .touch-screen {
+    padding: 0px;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+} */
+
+.touch-screen .order {
+    width: 150px;
+    height: 150px;
+    /* background-color: lime; */
+    border-radius: 5px;
+    /* padding: 5px; */
+    margin: 7px;
+    box-shadow: 0px 0px 20px #888888a1;
+    border: 2px solid lightgray;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.touch-screen .order.new {
+    background-color:  aqua;
+}
+
+.touch-screen .order.changed .order-title {
+    background-color: whitesmoke;
+}
+
+.touch-screen .order .order-title {
+    background-color: aquamarine;
+    border-bottom: 2px solid lightgray;
+    flex: 1;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.touch-screen .order .order-body {
+    flex: 5;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* font-size: 14px; */
+}
+
+.touch-screen .order .order-body i,
+.touch-screen .order .order-body label {
+    display: flex;
+}
+
+.touch-screen .order .order-body i {
+    font-size: 35px;
+}
+
+.touch-screen .order .order-time {
+    border-top: 2px solid lightgray;
+    flex: 1;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.touch-screen .order.ready i {
+    color: blueviolet;
+}
+
+.touch-screen .order.completed i {
+    color: forestgreen;
+}
+
+.touch-screen-menu .modal-dialog { 
+    width: 90vw;
+    height: 90vh;
+}
+
+.touch-screen-menu .modal-dialog .modal-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.touch-screen-menu .modal-dialog .modal-content .modal-body {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+}
+
+.touch-screen-menu .menu-categories {
+    /* display: flex;
+    flex-direction: column;
+    border-right: 1px solid whitesmoke;
+    overflow-y: scroll;
+    height: 90vh; */
+    flex: 1;
+    font-size: 20px;
+    font-weight: bolder;
+    overflow: auto;
+}
+
+.touch-screen-menu .menu-items {
+    display: flex;
+    flex-wrap: wrap;
+    overflow-y: auto;
+    /* max-height: 90vh; */
+    flex: 4;
+    align-content: flex-start;
+}
+
+.touch-screen-menu .menu-category {
+    border-bottom: 1px solid whitesmoke;
+    padding: 15px 0px 15px 5px;
+}
+
+.touch-screen-menu .menu-category.selected {
+    background-color: #03a9f4;
+}
+
+.touch-screen-menu .menu-item {
+    width: 150px;
+    height: 150px;
+    background-color: #03a9f440;
+    border: 2px solid #03a9f440;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 5px;
+    box-shadow: 2px 2px #888888;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    row-gap: 0;
+    grid-row-gap: 0;
+    font-size: 20px;
+    text-align:center;
+}
+
+.touch-screen-menu .menu-item img {
+    width: 100%;
+}
+
+.touch-screen-menu .menu-item-name {
+    display: block;
+    font-size: 17px;
+}
+
+.touch-screen-menu .menu-item-price {
+    display: block;
+    font-size: 20px;
+    font-weight: bold; 
+    text-align: right;
+}
+
+app-rst-order .modal-dialog {
+    margin: 20px auto;
+}
+
+app-rst-order .modal-dialog .modal-body {
+    padding: 10px;
+}
+
+/* .form-control {
+    border-color: #ccc;
+    color: black;
+} */
+
+.form-control:focus, .ng-select.ng-select-opened>.ng-select-container {
+    border: 2px solid #03a9f4;
+}
+
+.form-horizontal .table.table-condensed tbody > tr > td {
+    padding: 0px;
+}
+
+table .ng-select .ng-select-container, table .form-control {
+    border: none;
+}
+
+/* NG-Select */
+
+.input-group .ng-select {
+    width: 100%;
+}
+
+.input-group .ng-select .ng-select-container {
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+
+.ng-select .ng-select-container {
+    border: 1px solid #999;
+    /* color: black; */
+}
+
+.ng-select.ng-select-single .ng-select-container .ng-value-container, .ng-select.ng-select-single .ng-select-container .ng-value-container .ng-value {
+    font-size: 14px;
+    color: black;
+}
+
+.ng-select .ng-select-container {
+    padding-right: 5px;
+}
+
+.ng-select .ng-clear-wrapper:hover .ng-clear {
+    color: white;
+}
+
+.ng-select .ng-clear-wrapper {
+    opacity: 1;
+    right: 0px;
+    border-radius: 2px;
+    font-size: 20px;
+    font-weight: bold;
+    height: 18px;
+    background-color: transparent;
+}
+
+.ng-select .ng-clear-wrapper .ng-clear {
+    /* font-size: 16px; */
+    color: black;
+}
+
+.ng-select .ng-arrow-wrapper {
+    display: none;
+}
+
+/****** ng-dropdown start ******/
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+    padding: 2px 5px;
+}
+
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option.ng-option-marked {
+    background-color: #03a9f4;
+    color: white;
+}
+
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option .ng-option-label {
+    font-size: 14px!important;
+    color: black;
+}
+
+/****** ng-dropdown end ******/
+
+li.active {
+    background-color: aqua;
+}
+
+app-rst-order-print {
+    display: none;
+}
+
+@media print {
+    app-rst-order-print {
+        display: inline-block;
+    }
+
+    #theme-wrapper {
+        display: block;
+    }
+    app-rst-order {
+        display: none;
+    }
+    .payment-overdue .payment-overdue-message {
+        display: none;
+    }
+    .payment-overdue.fixed-header #page-wrapper {
+        padding: 0px;
+    }
+}
+
+.swal2-styled.swal2-confirm,
+.swal2-styled.swal2-cancel {
+    font-size: 1.5em!important;
+}
+
+.swal2-container .swal2-popup {
+    width: 80em;
+}
+
+.swal2-popup #swal2-content {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+table.sticky-header thead {
+    position: sticky;
+    top: 0;
+    /* background-color: white; */
+}
+
+.report-viewer {
+    display: flex;
+    flex: 1;
+}
+
+.report-viewer .rv-reports {
+    flex: 1;
+    border-radius: 1px;
+    border: 1px solid whitesmoke;
+    height: 85vh;
+    overflow: auto;
+    cursor: default;
+}
+
+.report-viewer .rv-reports ul li {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.report-viewer .rv-reports ul li ul li {
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.5s;
+}
+
+.report-viewer .rv-reports ul li ul li:hover {
+    background-color: gray;
+    color: white;
+    font-weight: bold;
+    padding: 0px 5px;
+    border-radius: 5px;
+}
+
+.report-viewer .rv-reports ul li ul li.active {
+    background-color: #03a9f4;
+    color: white;
+    font-weight: bold;
+    padding: 0px 5px;
+    border-radius: 5px;
+}
+
+.report-viewer .rv-reports h2 {
+    background-color: gray;
+    border-radius: 2px;
+    padding: 5px;
+    text-align: center;
+    color: white;
+    font-size: 26px;
+    font-weight: 500;
+}
+
+.report-viewer .rv-criteria {
+    flex: 2;
+    border-radius: 1px;
+    border: 1px solid whitesmoke;
+    margin-left: 5px;
+}
+
+.report-viewer .rv-criteria h2 {
+    background-color: gray;
+    border-radius: 2px;
+    padding: 5px;
+    text-align: center;
+    color: white;
+    font-size: 26px;
+    font-weight: 500;
+}
+
+.report-viewer .rv-criteria .form-group {
+    margin: 0px;
+    padding: 5px;
+}
+
+
+app-dashboard thead {
+    background-color: #00bcd4;
+    color: white;
+}
+
+app-dashboard table th,
+app-dashboard table td {
+    padding: 2px 3px!important;
+}
+
+btn-print {
+
+    
+}

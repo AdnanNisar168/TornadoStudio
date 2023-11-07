@@ -1,0 +1,49 @@
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spStatusRoleAssociationGetStatus')
+	DROP PROC spStatusRoleAssociationGetStatus
+go
+-- ===================================================================================
+-- Author:		Faisal Saleem
+-- Create date: 23-Sep-20
+-- Description:	This procedure will return all menus with status IsAssigned
+-- ===================================================================================
+-- ------------ Modification History -------------------------------------------------
+-- Author	Date		Details
+-- ------   ----        -------
+-- -----------------------------------------------------------------------------------
+CREATE PROCEDURE spStatusRoleAssociationGetStatus
+	(--@RoleAutoID INT
+	@RoleKey Uniqueidentifier
+	, @RecordStatusID INT
+	) WITH ENCRYPTION
+AS
+	SELECT
+		rsa.RoleStatusAssociationKey
+		, m.MenuID
+		, sf.RecordStatusID
+		--, @RoleAutoID 'RoleAutoID'
+		, @RoleKey 'RoleKey'
+		, m.MenuName
+		, CONVERT(BIT, CASE WHEN rsa.RoleStatusAssociationKey IS NULL THEN 0 ELSE 1 END) 'IsAllowed'
+
+	FROM CommonStatusFlow sf
+
+	inner join CommonRecordStatus rs on sf.RecordStatusID=rs.RecordStatusID
+
+	inner join BaseMenu m on sf.MenuID = m.MenuID
+
+	--left JOIN SecRoleStatusAssociation rsa ON sf.RecordStatusID = rsa.RecordStatusID and sf.MenuID = rsa.MenuID and rsa.RoleAutoID = @RoleAutoID
+left JOIN SecRoleStatusAssociation rsa ON sf.RecordStatusID = rsa.RecordStatusID and sf.MenuID = rsa.MenuID and rsa.RoleKey = @RoleKey
+
+	WHERE
+		(sf.RecordStatusID = @RecordStatusID OR @RecordStatusID IS NULL)
+go
+/*
+spStatusRoleAssociationGetStatus
+	@RoleKey='2D1768C8-6020-42B2-9619-EE8CEFF71F11', @RecordStatusID=1
+
+spStatusRoleAssociationGetStatus
+	@RoleAutoID=3421, @RecordStatusID=1
+
+spStatusRoleAssociationGetStatus
+	@RoleAutoID=3421, @RecordStatusID=2
+*/

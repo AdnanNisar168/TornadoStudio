@@ -15,6 +15,7 @@ using Dapper;
 using System.Web.Http;
 using System.Web.Http.Cors;
 using System.Data;
+using tornadoStudio.TornadoLibrary;
 //cors
 
 namespace tornadoStudio.Areas.Base.Controllers
@@ -22,6 +23,7 @@ namespace tornadoStudio.Areas.Base.Controllers
     [EnableCors(origins: "http://localhost:4200", headers: "*", methods: "*")]
     public class UserController : Controller
     {
+        public List<string> BrokenRules = new List<string>();
         // Access the connection string from web.config
         string connectionString = ConfigurationManager.ConnectionStrings["MyDatabaseConnection"].ConnectionString;
 
@@ -67,18 +69,18 @@ namespace tornadoStudio.Areas.Base.Controllers
         //    return Json(new { Name = name }, JsonRequestBehavior.AllowGet);
         //}
 
-        public ActionResult  GetUserByUserKey()
+        public ActionResult GetUserByUserKey()
         {
-            
+
             SqlConnection connection = new SqlConnection(connectionString);
             var parameters = new DynamicParameters();
             parameters.Add("@UserKey", "DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC");
 
-          var  result = connection.Query<UserViewModel>(
-                "spSecUser2GetByUserKey",
-                parameters,
-                commandType: CommandType.StoredProcedure
-            );
+            var result = connection.Query<UserViewModel>(
+                  "spSecUser2GetByUserKey",
+                  parameters,
+                  commandType: CommandType.StoredProcedure
+              );
 
             //  return result.ToList();
             return Json(result, JsonRequestBehavior.AllowGet);
@@ -87,7 +89,7 @@ namespace tornadoStudio.Areas.Base.Controllers
         public ActionResult GetUserByQuery()
         {
             SqlConnection connection = new SqlConnection(connectionString);
-            
+
 
             //query
             // without using model
@@ -115,22 +117,48 @@ namespace tornadoStudio.Areas.Base.Controllers
 
         }
 
-        public ActionResult Save(UserViewModel model)
+        //public ActionResult Save(UserViewModel model)
+        //{
+        //    try
+        //    {
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //        return Json(new ActionResultJson<string>
+        //        {
+        //           // http_code = HttpStatusCode.InternalServerError,
+        //            message = ex.Message,
+        //            broken_rules = this.BrokenRules
+        //        });
+        //    }
+        //}
+
+        public ActionResult DapperSPMethod()
         {
+            var spParams = new DynamicParameters();
+            
             try
             {
+                spParams.Add("@UserKey", "DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC");
 
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                   var data = DapperQuery.GetListBySP<UserViewModel>(DapperQuery.StoredProcedures.spSecUser2GetByUserKey, spParams);
+                    return Json(data, JsonRequestBehavior.AllowGet);
+
+
+                }
+                //return Content(Newtonsoft.Json.JsonConvert.SerializeObject(Attendance), "application/json");
             }
             catch (Exception ex)
             {
-
-                log.Error(ex);
-                return Json(new ActionResultJson<string>
-                {
-                    http_code = HttpStatusCode.InternalServerError,
-                    message = ex.Message,
-                    broken_rules = this.BrokenRules
-                });
+                Console.WriteLine("error is :",ex);
             }
+            return Json(spParams, JsonRequestBehavior.AllowGet);
         }
+
+
+    }
 }

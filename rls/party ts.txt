@@ -1,0 +1,403 @@
+import { Component, OnInit, QueryList, ViewChildren, ElementRef } from '@angular/core';
+import { FormBuilder, FormGroup, FormControl, Validators, FormArray } from '@angular/forms';
+import { Router, ActivatedRoute, Params } from '@angular/router';
+import { CommonComponent } from './common.component';
+import { CommonService } from '../services/common.service';
+import { InventoryService } from '../services/inventory.service';// '../services/inventory.service';
+import { Dropdown } from '../models/dropdown';
+import { Warehouse } from '../inventory/models/warehouse';  // '../../ models/warehouse';
+import { catchError } from 'rxjs/operators';
+import { LoginInfo } from '../models/loginInfo';
+import { forkJoin, Observable, of } from 'rxjs';
+import { Party, ManufacturerPartyAssociation } from 'src/app/models/party';
+import createNumberMask from 'text-mask-addons/dist/createNumberMask';
+import swal from 'sweetalert2';
+import * as moment from 'moment'
+import { Shop } from './models/Shop';
+import Swal from 'sweetalert2';
+import { Menu } from '../models/menu';
+
+@Component({
+    selector: 'app-party',
+    templateUrl: './party.component.html',
+})
+export class PartyComponent extends CommonComponent implements OnInit {
+    public mask = ['(', /[1-9]/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/];
+    numberMask = createNumberMask({
+        allowDecimal: true,
+        decimalLimit: 2,
+        prefix: '',
+        suffix: '' // This will put the dollar sign at the end, with a space.
+    });
+    //private Id: string;
+    public Id: string;
+    public party: Party = new Party();
+    private companies: Dropdown[];
+    public partymanagers: Dropdown[];
+    //private Manufacturers:ManufacturerPartyAssociation[];
+    formGroup: FormGroup;
+    Manufacturers: FormArray;
+    PartyShops: FormArray;
+
+    public loginInfo: LoginInfo = new LoginInfo();
+    public menuId: number = 10018;
+    public menu: Menu = new Menu();
+    public autoNumber: string;
+    public partyID: number;
+
+
+
+    public UpdatedByName: string;
+    public UserName: string;
+    public UpdatedOn: Date;
+    public loading: boolean = false;
+    public isPartySupplier: boolean = false;
+    //private PartyImageRelativePath: string;
+
+    private IsCommonPartyAllShops: boolean;
+    private IsCustomer: boolean;
+    // for uploading img
+    selectedFile: File;
+
+    public generalSettings = {
+        IsFbrIntegrationEnabled: false,
+        FbrPosID: "",
+        IsFbrIntegrationLive: false
+    }
+    public inventorySettings = {
+        IsEditAllowed: true,
+    }
+    private WarehouseID: number;
+    private warehouses: Dropdown[];
+
+
+    constructor(private route: ActivatedRoute, private router: Router, private fb: FormBuilder, private commonService: CommonService, private el: ElementRef) {
+        super();
+
+        if(this.route.snapshot.routeConfig.path === 'common/supplier' || this.route.snapshot.routeConfig.path === 'common/supplier/:id'){
+            this.isPartySupplier = true;
+            this.menuId = 10125;
+        }else{
+            this.isPartySupplier = false;
+        }
+
+        this.Id = this.route.snapshot.params["id"] || 0;
+
+        this.formGroup = this.fb.group({
+            PartyID: [0],
+            PartyKey: [''],
+            PartyCode: [''],
+            PartyName: [''],
+            Phone: [''],
+            Email: [''],
+            ManagerID: [null],
+            IsSupplier: this.isPartySupplier ? 1 : 0,
+            //IsCustomer: [false],
+            IsCustomer: this.isPartySupplier ? 0 : 1,
+            IsActive: [true],
+            IsInternal: [false],
+            OpeningDebitAmount: [0],
+            OpeningCreditAmount: [0],
+            CreditLimit: [0],
+            Address: [''],
+            City: [''],
+            State: [''],
+            Country: [''],
+            ZipCode: [''],
+            PartyImageRelativePath: [''],
+            UpdatedByName: [''],
+            DeliveryAddress: [''],
+            PartyTypeID: this.isPartySupplier ? 2 : 1,
+            // Manufacturers:[''],
+            // PartyShops:[''],
+            //IsCommonPartyAllShops: [''],
+
+            items: [null, Validators.required],
+            items_value: ['no', Validators.required],
+
+
+        });
+
+        this.Manufacturers = this.fb.array([]);
+        this.PartyShops = this.fb.array([]);
+
+
+    }
+
+    ngOnInit() {
+        var self = this;
+        this.commonService.showSpinner('Loading...');
+        this.loading = true;
+
+        this.IsCommonPartyAllShops = true;
+        this.formGroup.addControl('Manufacturers', this.Manufacturers);
+        this.formGroup.addControl('PartyShops', this.PartyShops);
+
+        forkJoin([
+            //self.commonService.newPartyNumber().pipe(catchError(error => of(error))), //data[0]    
+            self.commonService.getPartyManager().pipe(catchError(error => of(error))), //data[0]    
+            self.commonService.getManufacturers(this.Id).pipe(catchError(error => of(error))), //data[1] 
+            self.commonService.getPartyShops(this.Id).pipe(catchError(error => of(error))), //data[2]    
+            self.commonService.getLoginInfo().pipe(catchError(error => of(error))),//data[3] 
+            this.commonService.getAppSettingBool('General_IsCommonPartyAllShops').pipe(catchError(error => of(error))),//data[4] 
+            self.commonService.getPartyNewNumber(self.formGroup.value.PartyTypeID).pipe(catchError(error => of(error))),//data[5] 
+            self.commonService.getMenu().pipe(catchError(error => of(error))),//data[6] 
+
+        ])
+            .subscribe(data => {
+               // self.autoNumber = data[0];
+               // self.formGroup.patchValue({ 'PartyCode': data[0].data.PartyCode });
+                self.partymanagers = data[0];
+
+                let Manufacturers = data[1];
+                if (Manufacturers) {
+                    Manufacturers.forEach((Manufacturer) => {
+                        self.addManufacturer(Manufacturer);
+                    });
+                }
+
+                let PartyShops = data[2];
+                if (PartyShops) {
+                    PartyShops.forEach((PartyShop) => {
+                        self.addPartyShop(PartyShop);
+                    })
+                }
+
+                self.loginInfo = data[3];
+                this.IsCommonPartyAllShops = data[4];
+                this.autoNumber = data[5];
+                const menus = data[6];
+                self.menu = self.commonService.findMenu(self.menuId, menus);
+                self.loadData();
+                this.loading = false;
+
+            });
+    }
+    onCreditChange(event: Event) {
+        this.formGroup.patchValue({
+            OpeningCreditAmount: (event.target as HTMLInputElement).value
+        });
+
+    }
+
+    loadData() {
+        var self = this;
+
+        self.IsCommonPartyAllShops = true;
+
+        if (self.Id) {
+            self.commonService.getParty(self.Id).subscribe(data => {
+                self.party = data;
+
+                self.formGroup.patchValue({
+                    'PartyID': self.party.PartyID,
+                    'PartyKey': self.party.PartyKey,
+                    'PartyCode': self.party.PartyCode,
+                    'PartyName': self.party.PartyName,
+                    'Phone': self.party.Phone,
+                    'Email': self.party.Email,
+                    'ManagerID': self.party.ManagerID,
+                    'IsSupplier': self.isPartySupplier ? 1 : 0,
+                   // 'IsCustomer': self.party.IsCustomer,
+                   'IsCustomer': self.isPartySupplier ? 0 : 1,
+                    'IsActive': self.party.IsActive,
+                    'IsInternal': self.party.IsInternal,
+                    'OpeningDebitAmount': self.party.OpeningDebitAmount,
+                    'OpeningCreditAmount': self.party.OpeningCreditAmount,
+                    'CreditLimit': self.party.CreditLimit,
+                    'Address': self.party.Address,
+                    'DeliveryAddress': self.party.DeliveryAddress,
+                    'City': self.party.City,
+                    'State': self.party.State,
+                    'Country': self.party.Country,
+                    'ZipCode': self.party.ZipCode,
+                  //  'UpdatedByName': self.party.UpdatedByName,
+                  //  'UserName': self.party.UserName,
+                    'PartyImageRelativePath': self.party.PartyImageRelativePath,
+                });
+
+                //this.UpdatedByName = self.party.UpdatedByName;
+                //this.UpdatedByName = self.party.UpdatedByName;
+               // this.UpdatedByName = self.party.UserName;
+             //   this.UpdatedOn = self.party.UpdatedOn;// moment(self.Company.StampDateTime).format("DD-MMM-YYYY hh:mm A");
+
+             if(!self.party.PartyImageRelativePath){
+                self.party.PartyImageRelativePath = '/Files/Images/NoImageAvailable.png';
+             }
+
+                // if (self.party.PartyImageRelativePath) {
+                //     this.PartyImageRelativePath = self.party.PartyImageRelativePath;
+                // }
+                // else {
+                //     this.PartyImageRelativePath = '/Files/Images/NoImageAvailable.png';
+                // }
+
+                this.IsCustomer = self.party.IsCustomer;
+                self.commonService.hideSpinner();
+               
+            });
+        } else {
+            self.party = new Party();
+            self.formGroup.patchValue({
+                IsActive: true,
+                //IsCustomer: false,
+                IsCustomer: self.isPartySupplier ? 0 : 1,
+                //IsSupplier: false,
+                IsSupplier: self.isPartySupplier ? 1 : 0,
+                IsInternal: false,
+            });
+
+            self.party.UserName = self.loginInfo.ImpersonateUser.UserName;
+         //self.party.UserName = this.loginInfo.ImpersonateUser.UserName;
+            self.party.UpdatedOn = new Date();
+            self.party.PartyImageRelativePath = '/Files/Images/NoImageAvailable.png';
+            //   self.commonService.newPartyNumber().pipe(catchError(error => of(error)))
+            //latest
+            // self.commonService.getPartyNewNumber(self.formGroup.value.PartyTypeID).pipe(catchError(error => of(error))).subscribe(data => {
+            //     self.autoNumber = data;
+            //     self.formGroup.patchValue({PartyCode: self.autoNumber});
+            // });
+            //latest
+            
+           // this.UpdatedByName = self.loginInfo.ImpersonateUser.UserName;
+            //this.UpdatedOn = new Date();
+            self.commonService.hideSpinner();
+           
+        }
+    }
+    addManufacturer(data) {
+        var manufacturer = this.Manufacturers.push(
+            this.fb.group({
+                ManufacturerPartyAssociationID: [data.ManufacturerPartyAssociationID, { onlySelf: true }],
+                ManufacturerID: [data.ManufacturerID, { onlySelf: true }],
+                ManufacturerCode: [data.ManufacturerCode, { onlySelf: true }],
+                ManufacturerName: [data.ManufacturerName, { onlySelf: true }],
+                CompanyID: [data.CompanyID, { onlySelf: true }],
+                PartyID: [data.PartyID, { onlySelf: true }],
+                IsAssigned: [data.IsAssigned, { onlySelf: true }]
+            })
+        );
+    }
+
+    addPartyShop(data) {
+        var PartyShop = this.PartyShops.push(
+            this.fb.group({
+                CommonPartyShopAssociationID: [data.CommonPartyShopAssociationID, { onlySelf: true }],
+                ShopCode: [data.ShopCode, { onlySelf: true }],
+                ShopName: [data.ShopName, { onlySelf: true }],
+                ShopID: [data.ShopID, { onlySelf: true }],
+                PartyID: [data.PartyID, { onlySelf: true }],
+                IsAssigned: [data.IsAssigned, { onlySelf: true }],
+            })
+        );
+    }
+
+    onFileSelected(event: any) {
+    if (event && event.target.files && event.target.files.length > 0) {
+        this.selectedFile = event.target.files[0];
+
+        if (this.selectedFile) {
+            const file = this.selectedFile;
+            const formData: FormData = new FormData();
+            formData.append('File', this.selectedFile, this.selectedFile.name);
+            formData.append('CompanyID', this.loginInfo.ImpersonateCompany.CompanyID.toString());
+            formData.append('SectionName', 'party');
+
+            this.commonService.uploadFile(formData).subscribe((res) => {
+                event.target.value = null;
+                let message = res.message;
+
+                if (!res.data) {
+                    this.party.PartyImageRelativePath = '/Files/Images/NoImageAvailable.png';
+                } else {
+                    this.party.PartyImageRelativePath = res.data;
+                    this.formGroup.patchValue({
+                        PartyImageRelativePath: this.party.PartyImageRelativePath,
+                    });
+
+                    // Update the image source in the HTML
+                    const imageElement = document.querySelector('.item-image') as HTMLImageElement;
+                    imageElement.src = this.party.PartyImageRelativePath;
+                }
+
+                if (res.http_code !== 200) {
+                    res.broken_rules.forEach((x) => {
+                        message += '<br>' + x;
+                    });
+                }
+
+                Swal({
+                    showConfirmButton: false,
+                    html: message,
+                    type: res.http_code === 200 ? 'success' : 'error',
+                    toast: true,
+                    timer: 3000,
+                    position: 'top-end',
+                }).then((result) => {
+                    // Handle the result if needed
+                });
+            });
+        }
+    }
+}
+
+
+    // parseNumber(val) {
+    //     if (val == '' || val == null)
+    //         val = 0;
+    //     if (typeof val == 'string') {
+    //         val = +(val.replace(/,/g, '') || 0);
+    //     }
+    //     else if (typeof val == 'number') {
+    //         val = +(val);
+    //     }
+    //     return val;
+    // }
+
+    onSubmit() {
+
+       // this.commonService.showSpinner(null);
+       this.commonService.showBusySpinner();
+
+       this.formGroup.value.OpeningCreditAmount = this.commonService.parseNumber(this.formGroup.value.OpeningCreditAmount)
+       this.formGroup.value.OpeningDebitAmount = this.commonService.parseNumber(this.formGroup.value.OpeningDebitAmount)
+       this.formGroup.value.CreditLimit = this.commonService.parseNumber(this.formGroup.value.CreditLimit)
+
+        this.commonService.saveParty(this.formGroup.value).subscribe(res => {
+            try {
+              //  this.commonService.hideSpinner();
+              this.commonService.hideBusySpinner();
+                let message = res.message;
+                if (res.http_code != 200) {
+                    res.broken_rules.forEach(x => {
+                        message += '<br>' + x;
+                    });
+                }
+
+                swal({
+                    title: 'Save Message',
+                    html: message,
+                    type: (res.http_code != 200 ? 'error' : 'success')
+                }).then(result => {
+                    if (res.http_code == 200) {
+                        if(this.isPartySupplier){
+                            this.router.navigate(['/common/supplier/list']);
+                        }
+                        else{
+                        this.router.navigate(['/common/customer/list']);
+                        }
+                    }
+                });
+            } catch (e) {
+                console.log(e);
+            }
+        });
+
+    }
+
+
+    compareFn(c1: any, c2: any): boolean {
+        return c1 && c2 ? c1 == c2 : false;
+    }
+
+}

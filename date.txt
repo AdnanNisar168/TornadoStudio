@@ -1,0 +1,6 @@
+select EXTRACT(YEAR FROM getdate())
+
+SELECT DATEPART(year,-1, CURRENT_TIMESTAMP);
+
+
+select DATEADD(year,-1,GETDATE())
