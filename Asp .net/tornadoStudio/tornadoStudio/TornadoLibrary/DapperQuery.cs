@@ -501,6 +501,10 @@ namespace tornadoStudio.TornadoLibrary
         }
         //dapper stored
 
+        // dapper select
+
+        // dapper select
+
         public enum QueryTypes
         {
             Select,
