@@ -1,0 +1,42 @@
+//ts
+this.hrService.getLeaveTypes(),
+self.leaveTypes = data[1];
+public leaveTypes: LeaveType[];
+
+<td>
+                                        <ng-select [items]="leaveTypes"
+                                        bindLabel="LeaveTypeName"
+                                        bindValue="LeaveTypeID"
+                                        [formControl]="row.get('LeaveTypeID')"
+                                        [virtualScroll]="true"
+                                        [loading]="loading"
+                                        placeholder="Select leave type" >
+                                        </ng-select>
+                                        <!-- (change)="onVoucherTypeChange($event)" -->
+                                    </td>
+
+
+//services
+private LeaveTypes: LeaveType[];
+getLeaveTypes(): Observable<LeaveType[]> {
+        if (this.LeaveTypes == null) {
+            var url = '/HR/Attendance/GetLeaveTypes';  //url for api
+
+            return this.http.get<LeaveType[]>(url)
+                .pipe(
+                tap(data => {
+                    this.LeaveTypes = data;
+                }));
+        } else {
+            return of(this.LeaveTypes);
+        }
+    }
+//model
+export class LeaveType {
+    
+    LeaveTypeID:number;
+    LeaveTypeCode:string;
+    LeaveTypeName:string;
+    
+}
+   
