@@ -3,13 +3,14 @@ import { Observable, tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { Login } from './models/login';
 import { ResponseMessage } from './models/responseMessage';
+import { UserList } from './models/user';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InventoryService {
   private apiUrl = 'http://localhost:56731/api'; // Replace with your ASP.NET MVC API URL
-  private apiUrl2 = 'http://localhost:57685/api'; // qt asp.net
+  private aspURL = 'http://localhost:57685/api'; // qt asp.net
   baseServerUrl = "http://localhost:4200/api/"
   constructor(private http: HttpClient) { }
    public getData(): Observable<any> {
@@ -20,13 +21,21 @@ export class InventoryService {
 
   saveLogin(data: Login): Observable<ResponseMessage> {
         //var url = `${this.apiUrl}/Home/Login`;
-        var url = `${this.apiUrl2}/Base/User/Index`;
+        var url = `${this.aspURL}/Base/User/Index`;
 
         return this.http.post<ResponseMessage>(url, data)
             .pipe(
             tap(res => console.log('saved'))
             );
     }
+      getRoles(data: UserList): Observable<UserList> {
+      //var url = '/QuickSecurity/Role/CreateNG/' + data; 
+      var url = `${this.aspURL}/Base/User/DapperSPMethod`+ data; 
+      return this.http.get<UserList>(url)
+          .pipe(
+              tap(res => console.log('fetched User'))
+          );
+  }
 // saveLogin(data: Login){
 //     return  this.http.post(this.baseServerUrl + "Login" , null)
 // }

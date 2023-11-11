@@ -159,6 +159,12 @@ namespace tornadoStudio.Areas.Base.Controllers
             return Json(spParams, JsonRequestBehavior.AllowGet);
         }
 
+        [HttpPost]
+        public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string SearchCode, string SearchName)
+        {
+
+        }
+
 
     }
 }

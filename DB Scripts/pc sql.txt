@@ -1,0 +1,4 @@
+server type : DataBase Engine
+
+name DESKTOP-A69E6H8\SQLEXPRESS
+Authenticatin WindowsAuthentication

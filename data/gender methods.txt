@@ -1,0 +1,17 @@
+getGender(data): Observable<Gender> {
+        var url = '/Inventory/Gender/Index/' + data; 
+        return this.http.get<Gender>(url)
+            .pipe(
+                tap(res => console.log('fetched Gender'))
+            );
+    }
+    
+
+getGenders(data): Observable<GenderList> {
+        var url = '/Inventory/Gender/List';
+
+        return this.http.post<GenderList>(url, data)
+            .pipe(
+                tap(res => console.log('fetched Gender'))
+            );
+    }
