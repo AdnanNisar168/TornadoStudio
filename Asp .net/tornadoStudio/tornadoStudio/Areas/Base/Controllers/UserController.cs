@@ -12,15 +12,17 @@ using tornadoStudio.Areas.Base.Models.ViewModels;
 //dapper
 using Dapper;
 //cors
-using System.Web.Http;
+//using System.Web.Http;
 using System.Web.Http.Cors;
 using System.Data;
 using tornadoStudio.TornadoLibrary;
+using System.Net;
 //cors
 
 namespace tornadoStudio.Areas.Base.Controllers
 {
-    [EnableCors(origins: "http://localhost:4200", headers: "*", methods: "*")]
+    //[EnableCors(origins: "http://localhost:4200", headers: "*", methods: "*")]
+    [EnableCors("*", "*", "*")]
     public class UserController : Controller
     {
         public List<string> BrokenRules = new List<string>();
@@ -159,10 +161,42 @@ namespace tornadoStudio.Areas.Base.Controllers
             return Json(spParams, JsonRequestBehavior.AllowGet);
         }
 
-        [HttpPost]
-        public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string SearchCode, string SearchName)
+        //[EnableCors(origins: "http://localhost:4200", headers: "*", methods: "*")]
+        //[HttpPost]
+        [EnableCors("*", "*", "*")]
+        [HttpGet]
+        //public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string SearchCode, string SearchName)
+        public ActionResult List(string UserKey)
         {
+            var totalRecords = 0;
+            var model = new List<UserViewModel>();
+            try
+            {
+                var spParams = new DynamicParameters();
+                //spParams.Add("@CompanyID", CurrentCompanyID);
+                spParams.Add("@UserKey", UserKey);
+                //spParams.Add("@SearchName", SearchName);
+                //spParams.Add("@sortColumn", sortColumn);
+                //spParams.Add("@sortOrder", sortOrder);
+                //spParams.Add("@pageNumber", pageNumber);
+                //spParams.Add("@recordsPerPage", pageLength);
+                //spParams.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
+
+                 model = DapperQuery.GetListBySP<UserViewModel>(DapperQuery.StoredProcedures.spSecUser2GetByUserKey, spParams);
+            }
+            catch (Exception ex)
+            {
+                //log.Error(ex);
+                return Json(new ActionResultJson<string>
+                {
+                    http_code = HttpStatusCode.InternalServerError,
+                    message = ex.Message,
+                    broken_rules = this.BrokenRules
+                });
+            }
+            //return Content(Newtonsoft.Json.JsonConvert.SerializeObject(model), "application/json");
+            return Json(model, JsonRequestBehavior.AllowGet);
         }
 
 

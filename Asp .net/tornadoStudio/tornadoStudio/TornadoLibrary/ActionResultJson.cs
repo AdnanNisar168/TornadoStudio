@@ -9,12 +9,13 @@ using System.Data.SqlClient;
 using System.Reflection;
 using System.Web.Mvc;
 using Newtonsoft.Json;
+using System.Net;
 
 namespace tornadoStudio.TornadoLibrary
 {
     public class ActionResultJson<T>
     {
-        //public HttpStatusCode http_code = HttpStatusCode.OK;
+        public HttpStatusCode http_code = HttpStatusCode.OK;
         public int menuId = 0;
         public string message = string.Empty;
         public List<string> broken_rules = new List<string>();

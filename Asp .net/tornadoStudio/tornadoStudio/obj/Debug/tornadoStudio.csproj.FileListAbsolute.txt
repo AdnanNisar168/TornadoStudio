@@ -69,7 +69,6 @@ E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Web.Razor.xml
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Web.WebPages.xml
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Web.WebPages.Deployment.xml
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Web.WebPages.Razor.xml
-E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\Newtonsoft.Json.xml
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\Antlr3.Runtime.pdb
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Net.Http.Formatting.xml
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Web.Http.xml
@@ -97,4 +96,4 @@ E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Numerics.Vector
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Runtime.CompilerServices.Unsafe.xml
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Threading.Tasks.Extensions.xml
 E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\System.Web.Http.Cors.xml
-E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\obj\Debug\tornadoStudio.csprojAssemblyReference.cache
+E:\TornadoStudio\Asp .net\tornadoStudio\tornadoStudio\bin\Newtonsoft.Json.xml

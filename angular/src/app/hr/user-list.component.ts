@@ -46,18 +46,30 @@ export class UserListComponent  implements OnInit {
 
   loadData() {
     let self = this;
-    let data = {
-        ...this.formGroup.value,
-        PageNumber: this.currentPage, PageLength: this.pageSize, SortColumn: self.sortColumn, SortOrder: self.sortOrder
-    };
+    // let data = {
+    //     ...this.formGroup.value,
+    //     PageNumber: this.currentPage, PageLength: this.pageSize, SortColumn: self.sortColumn, SortOrder: self.sortOrder
+    // };
+    
 
     //this.commonService.showSpinner("");
 
-    this.inventoryService.getRoles(data).subscribe(data => {
+    // this.inventoryService.getRoles(data).subscribe(data => {
+    //     this.listData = data;
+
+    //   //  self.commonService.hideSpinner();
+    // });
+    let userKey = 'DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC';
+    let data = {
+      userKey
+    };
+    this.inventoryService.getList(userKey).subscribe(data => {
         this.listData = data;
 
       //  self.commonService.hideSpinner();
     });
+
+    
 
     
 }

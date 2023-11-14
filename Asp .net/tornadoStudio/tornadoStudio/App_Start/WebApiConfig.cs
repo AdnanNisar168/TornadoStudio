@@ -27,7 +27,8 @@ namespace tornadoStudio
             config.EnableCors();
 
             // Configure CORS to allow requests from specific origins
-            var cors = new EnableCorsAttribute("http://localhost:4200", "*", "*");
+            //var cors = new EnableCorsAttribute("http://localhost:4200", "*", "*");
+            var cors = new EnableCorsAttribute("*", "*", "*");
             config.EnableCors(cors);
 
             // Other Web API configuration settings

@@ -3,6 +3,7 @@ export class User {
     StudentName: string="";
     UserName: string;
     Password: string;
+    userKey: string;
 }
 export class UserList {
     data: User[];
