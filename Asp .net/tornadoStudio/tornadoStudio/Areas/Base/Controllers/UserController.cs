@@ -166,7 +166,7 @@ namespace tornadoStudio.Areas.Base.Controllers
         [EnableCors("*", "*", "*")]
         [HttpGet]
         //public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string SearchCode, string SearchName)
-        public ActionResult List(string UserKey)
+        public ActionResult List(Guid? UserKey)
         {
             var totalRecords = 0;
             var model = new List<UserViewModel>();

@@ -41,11 +41,13 @@ export class InventoryService {
 
   getList(data: string): Observable<UserList> {
     //var url = '/QuickSecurity/Role/CreateNG/' + data; 
-    var url = `${this.aspURL}/Base/User/List?UserKey=`+ data; 
+    //var url = `/Base/User/List?UserKey=`+ data; 
+    //var url ='http://localhost:57685/user/List?UserKey=DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC'
+    var url ='/user/List?UserKey=DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC'
     return this.http.get<UserList>(url)
         .pipe(
             tap(res => console.log('fetched User'))
-        );
+  );
 }
 
 sndUserKey(){
