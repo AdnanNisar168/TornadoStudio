@@ -131,3 +131,62 @@ select newid()
 ALTER TABLE SecUser
 	ALTER COLUMN CompanyKey UNIQUEIDENTIFIER NOT NULL
 go
+
+CREATE TABLE BaseMenu
+(	
+	MenuID INT NOT NULL ,
+	MenuName varchar(200) NOT NULL ,
+	DisplayOrder SMALLINT NOT NULL ,
+	ParentMenuID INT NOT NULL ,
+	StampUserID INT NOT NULL ,
+	StampDateTime DATETIME NOT NULL ,
+	RecordStatusID INT NULL ,
+	PageUrl varchar(500) NOT NULL ,
+	Icon varchar(100) NOT NULL ,
+	BetaUrl varchar(1000) NOT NULL ,
+
+	CONSTRAINT PK_BaseMenu PRIMARY KEY (MenuID) ,
+);
+GO
+
+CREATE TABLE BaseSetting
+(	
+	CompanyID smallint NOT NULL ,
+	SettingDescription varchar(200) NOT NULL ,
+	SettingID varchar(100) NOT NULL ,
+	SettingValue varchar(8000) NOT NULL ,
+	SettingValueDataType varchar(10) NOT NULL ,
+	SettingValueMaximumValue varchar(50) NULL ,
+	SettingValueMinimumValue varchar(50) NULL ,
+	UserID INT NOT NULL ,
+	StampUserID INT NOT NULL ,
+	StampDateTime DATETIME NOT NULL ,
+	UploadDateTime DATETIME NULL ,
+	RecordStatusID INT NULL ,
+	SettingAutoID INT NOT NULL IDENTITY(1,1),
+	ModuleID INT NULL ,
+	PageUrl varchar(500) NOT NULL ,
+	Icon varchar(100) NOT NULL ,
+	BetaUrl varchar(1000) NOT NULL ,
+
+	CONSTRAINT PK_BaseSetting PRIMARY KEY (SettingAutoID) ,
+);
+GO
+CREATE TABLE SecRole
+(	
+	RoleKey  UNIQUEIDENTIFIER Not NULL,
+	CompanyID smallint NOT NULL ,
+	RoleName varchar(250) NOT NULL ,
+	InactiveFrom DATETIME NOT NULL ,
+	InactiveTo DATETIME NOT NULL ,
+	RecordStatusID INT NOT NULL ,
+	StampUserID INT NOT NULL ,
+	StampDateTime DATETIME NOT NULL ,
+
+
+	CONSTRAINT PK_SecRole PRIMARY KEY (RoleKey) ,
+);
+GO
+
+
+select * from BaseSetting
