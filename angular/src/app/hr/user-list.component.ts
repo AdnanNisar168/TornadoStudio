@@ -16,10 +16,9 @@ export class UserListComponent  implements OnInit {
     public pageSize: number = 10;
     public sortColumn: string = 'GenderCode';
     public sortOrder: string = 'desc'
+    
     public mask = ['(', /[1-9]/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/];
-
-  // public mask = ['(', /[1-9]/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/];
-  // numberMask = createNumberMask({
+  //   numberMask = createNumberMask({
   //     allowDecimal: true,
   //     decimalLimit: 2,
   //     prefix: '',
@@ -112,9 +111,9 @@ onSearchClick() {
 
 
 
-function createNumberMask(arg0: {
-  allowDecimal: boolean; decimalLimit: number; prefix: string; suffix: string; // This will put the dollar sign at the end, with a space.
-}) {
-  throw new Error('Function not implemented.');
-}
+// function createNumberMask(arg0: {
+//   allowDecimal: boolean; decimalLimit: number; prefix: string; suffix: string; // This will put the dollar sign at the end, with a space.
+// }) {
+//   throw new Error('Function not implemented.');
+// }
 

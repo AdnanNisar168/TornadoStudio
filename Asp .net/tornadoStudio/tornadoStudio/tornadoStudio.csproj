@@ -161,13 +161,16 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Areas\Base\Controllers\LogInController.cs" />
     <Compile Include="Areas\Base\Controllers\UserController.cs" />
+    <Compile Include="Areas\Base\Models\ViewModels\LogInViewModel.cs" />
     <Compile Include="Areas\Base\Models\ViewModels\UserViewModel.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TornadoLibrary\DataTablesNet.cs" />
     <Compile Include="TornadoLibrary\ActionResultJson.cs" />
     <Compile Include="TornadoLibrary\DapperQuery.cs" />
   </ItemGroup>

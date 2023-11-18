@@ -22,7 +22,7 @@ using System.Net;
 namespace tornadoStudio.Areas.Base.Controllers
 {
     //[EnableCors(origins: "http://localhost:4200", headers: "*", methods: "*")]
-    [EnableCors("*", "*", "*")]
+    //[EnableCors("*", "*", "*")]
     public class UserController : Controller
     {
         public List<string> BrokenRules = new List<string>();
@@ -163,13 +163,14 @@ namespace tornadoStudio.Areas.Base.Controllers
 
         //[EnableCors(origins: "http://localhost:4200", headers: "*", methods: "*")]
         //[HttpPost]
-        [EnableCors("*", "*", "*")]
+        //[EnableCors("*", "*", "*")]
         [HttpGet]
         //public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string SearchCode, string SearchName)
         public ActionResult List(Guid? UserKey)
         {
             var totalRecords = 0;
             var model = new List<UserViewModel>();
+            var datatablesNetList = new DataTablesNetList<UserViewModel>();
             try
             {
                 var spParams = new DynamicParameters();
@@ -184,6 +185,7 @@ namespace tornadoStudio.Areas.Base.Controllers
 
 
                  model = DapperQuery.GetListBySP<UserViewModel>(DapperQuery.StoredProcedures.spSecUser2GetByUserKey, spParams);
+                datatablesNetList.data = model;
             }
             catch (Exception ex)
             {
@@ -196,7 +198,8 @@ namespace tornadoStudio.Areas.Base.Controllers
                 });
             }
             //return Content(Newtonsoft.Json.JsonConvert.SerializeObject(model), "application/json");
-            return Json(model, JsonRequestBehavior.AllowGet);
+            //return Json(model, JsonRequestBehavior.AllowGet);
+            return Json(datatablesNetList, JsonRequestBehavior.AllowGet);
         }
 
 

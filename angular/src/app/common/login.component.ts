@@ -1,8 +1,14 @@
 import { Component, Inject, LOCALE_ID, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormControl, Validators, FormArray } from '@angular/forms';
-import { Login } from './model/login';
+
+
+
+
+import { Login } from '../models/login';
 import { Router } from '@angular/router';
 import { InventoryService } from '../inventory.service';
+import { AppComponent } from '../app.component';
+import { CommonService } from '../common.service';
 
 @Component({
   selector: 'app-login',
@@ -12,7 +18,11 @@ import { InventoryService } from '../inventory.service';
 export class LoginComponent  implements OnInit {
   brandName: string = "Tornado Studio";
   public listData: Login = new Login();
-  loginForm: FormGroup;
+  formGroup: FormGroup;
+   isNewLogin: boolean = false;
+   isLocalStorageloggedin: boolean = true;
+   isloggedin: string = 'true';
+
 
   // public mask = ['(', /[1-9]/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/];
   // numberMask = createNumberMask({
@@ -23,9 +33,9 @@ export class LoginComponent  implements OnInit {
   // });
 
 
-  constructor(private fb: FormBuilder, private router: Router, @Inject(LOCALE_ID) private locale: string,private inventory:InventoryService) {
+  constructor(private fb: FormBuilder,private commonService:CommonService, private router: Router, @Inject(LOCALE_ID) private locale: string,private inventory:InventoryService) {
       //super();
-      this.loginForm = this.fb.group({
+      this.formGroup = this.fb.group({
 
           username: [''],
           password: [''],
@@ -36,7 +46,10 @@ export class LoginComponent  implements OnInit {
 
   
     ngOnInit(): void {
-      
+      var storedBoolean = localStorage.getItem('myBoolean');
+      this.isLocalStorageloggedin = this.commonService.parseBoolean(storedBoolean);
+      this.isLocalStorageloggedin = false;
+      this.isNewLogin = false;
        
     }
     // formGroup is group of input element in html tag
@@ -61,7 +74,53 @@ export class LoginComponent  implements OnInit {
 
     // });
     onSubmit(){
-      this.inventory.saveLogin(this.loginForm.value).subscribe(res => {
+      this.inventory.getLogin(this.formGroup.value).subscribe(res => {
+      //local storage
+        //  let type =  typeof res
+      //  this.listData = res
+      //  let m = res.Password
+      //   if(this.listData.Password)
+      //   {
+      //     localStorage.setItem('myBoolean', this.isloggedin);
+      //     var storedBoolean = localStorage.getItem('myBoolean');
+      //    this.isLocalStorageloggedin = this.commonService.parseBoolean(storedBoolean);
+
+      //   }
+      //local storage
+      let message = res.message;
+            
+            if (res.http_code != 200) {
+                res.broken_rules.forEach(x => {
+                    message += '<br>' + x;
+                });
+            }else{
+              alert(message)
+              if (res.http_code == 200) {
+                        this.router.navigate(['/dashboard']);
+                       //this.isNewLogin = true;
+                       localStorage.setItem('myBoolean', 'true');
+                       var storedBoolean = localStorage.getItem('myBoolean');
+                       
+                        console.log('myBoolean',storedBoolean)
+                    }
+            }
+          //   Swal({
+          //     // title: 'Save Message',
+          //     html: message,
+          //     type: (res.http_code == 200 ? 'success' : 'error'),
+          // }).then(result => {
+          //     if (res.http_code == 200) {
+          //         this.router.navigate(['/dashboard']);
+          //     }
+          // });
+
+          // swal({
+          //   title: "Good job!",
+          //   text: "You clicked the button!",
+          //   icon: "success",
+          //   button: "Aww yiss!",
+          // });
+
       });
     }
   generateToken(payload: any, secretKey: string): string {

@@ -1,9 +1,10 @@
 export class User {
-    StudentId: number=0;
-    StudentName: string="";
-    UserName: string;
+    
+    CompanyID: number;
+    CompanyName: string;
     Password: string;
-    userKey: string;
+    UserKey: string;
+    UserName: string;
 }
 export class UserList {
     data: User[];

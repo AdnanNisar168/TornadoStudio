@@ -21,18 +21,27 @@ export class InventoryService {
   }
 
   saveLogin(data: Login): Observable<ResponseMessage> {
-        //var url = `${this.apiUrl}/Home/Login`;
-        //var url = `${this.aspURL}/Base/User/Index`;
-        var url = this.aspURL +"User"
+        //var url = this.aspURL +"User"
+        var url ='http://localhost:57685/LogIn/GetLogInByQuery';
 
         return this.http.post<ResponseMessage>(url, data)
             .pipe(
-            tap(res => console.log('saved'))
+            tap(res => console.log('get LogInUser'))
             );
     }
+    getLogin(data: Login): Observable<ResponseMessage> {
+      //var url = this.aspURL +"User"
+      var url ='http://localhost:57685/LogIn/GetLogInByQuery';
+
+      return this.http.post<ResponseMessage>(url, data)
+          .pipe(
+          tap(res => console.log('get LogInUser'))
+          );
+  }
       getRoles(data: UserList): Observable<UserList> {
       //var url = '/QuickSecurity/Role/CreateNG/' + data; 
-      var url = `${this.aspURL}/Base/User/DapperSPMethod`+ data; 
+      //var url = `${this.aspURL}/Base/User/DapperSPMethod`+ data; 
+      var url ='http://localhost:57685/LogIn/GetLogInByQuery'+data;
       return this.http.get<UserList>(url)
           .pipe(
               tap(res => console.log('fetched User'))
@@ -41,9 +50,9 @@ export class InventoryService {
 
   getList(data: string): Observable<UserList> {
     //var url = '/QuickSecurity/Role/CreateNG/' + data; 
-    //var url = `/Base/User/List?UserKey=`+ data; 
-    //var url ='http://localhost:57685/user/List?UserKey=DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC'
-    var url ='/user/List?UserKey=DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC'
+    let key = 'DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC'
+    var url ='http://localhost:57685/user/List?UserKey='+key;
+    //var url ='/user/List?UserKey=DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC'
     return this.http.get<UserList>(url)
         .pipe(
             tap(res => console.log('fetched User'))

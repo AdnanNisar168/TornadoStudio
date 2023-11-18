@@ -11,21 +11,21 @@
 
       <hr />
 
-      <!-- <div class="main-box-body">
+      <div class="main-box-body">
 
           <div class="search-criteria" *ngIf="true">
               <form class="search-form form-horizontal" [formGroup]="formGroup">
-                  <div class="form-group">
+                  <!-- <div class="form-group">
                       <div class="col-sm-2">
-                          <input class="form-control" name="searchCode" formControlName="searchCode" placeholder=" Code" (keyup.enter)="onSearchClick()" />
+                          <input class="form-control" formControlName="searchCode" placeholder=" Code" (keyup.enter)="onSearchClick()" />
                       </div>
                      
                       <div class="col-sm-3">
-                          <input class="form-control" name="searchName" formControlName="searchName" placeholder="Name" (keyup.enter)="onSearchClick()" />
+                          <input class="form-control" formControlName="searchName" placeholder="Name" (keyup.enter)="onSearchClick()" />
                       </div>
 
                       <a class="btn btn-primary" (click)="onSearchClick()"><i class="fa fa-search"></i> Search</a>
-                  </div>
+                  </div> -->
                   
               </form>
           </div>
@@ -35,7 +35,7 @@
           
           <div class="form-group" *ngIf="true">
               
-               <label>
+               <!-- <label>
                   Show 
                   <select (change)="onPageSizeChanged($event)" [(ngModel)]="pageSize" class="input-sm">
                       <option value="10">10</option>
@@ -44,17 +44,22 @@
                       <option value="100">100</option>
                   </select>
                   entries
-              </label> 
+              </label>  -->
               
              
               <table class="table table-bordered table-striped table-hover list-table table-condensed">
                    <thead>
                       <tr>
-                          <th (click)="onSortColumn('GenderCode')" class="lg-code sortable" [ngClass]="{'sort-desc': sortColumn == 'GenderCode' && sortOrder=='desc', 'sort-asc': sortColumn == 'GenderCode' && sortOrder=='asc'}">Code</th>
+                        <!-- sortable action-->
+                          <!-- <th class="" >Code</th> -->
                           
-                          <th (click)="onSortColumn('GenderName')" class="discount sortable" [ngClass]="{'sort-desc': sortColumn == 'GenderName' && sortOrder=='desc', 'sort-asc': sortColumn == 'GenderName' && sortOrder=='asc'}">Name</th> 
+                          <th class="">Sr#</th> 
+                          <th class="">Company Name</th> 
+                          <th class="">User Name</th> 
+                          <th class="">Password</th> 
+                          <th class="">User Key</th> 
                            
-                          <th class="action"></th> 
+                          <!-- <th class=""></th>  -->
                  
                       </tr>
                      
@@ -62,18 +67,21 @@
                     
                      
                   <tbody>
-                      <tr *ngIf="listData.recordsTotal <=0">
+                      <!-- <tr *ngIf="listData.recordsTotal <=0">
                           <td  colspan="3" class="dataTables_empty no-records" >No data to show</td>
-                      </tr>
+                      </tr> -->
 
                       <tr *ngFor="let row of listData.data; let i = index">
-                          <td style="min-width: 43px;"><a [routerLink]="['/inventory/gender/',row.GenderID]" class="btn btn-primary">{{ row.GenderCode }}</a></td>
+                          <td style="min-width: 43px;"><a [routerLink]="['/inventory/gender/',row.UserKey]" class="btn btn-primary">{{ i + 1}}</a></td>
 
-                          <td style="text-align: left;">{{ row.GenderName }}</td>
+                          <td style="text-align: left;">{{ row.CompanyName }}</td>
+                          <td style="text-align: left;">{{ row.UserName }}</td>
+                          <td style="text-align: left;">{{ row.Password }}</td>
+                          <td style="text-align: left;">{{ row.UserKey }}</td>
                           
-                           <td>
+                           <!-- <td>
                             <a (click)="onDelete(row)" class="btn btn-danger"><i class='fa fa-times'></i> Delete </a>
-                          </td> 
+                          </td>  -->
                          
                       </tr>
                   </tbody> 
@@ -81,15 +89,13 @@
                   <thead>
                       
                               <tr>
-                                  <th (click)="onSortColumn('GenderCode')" class="lg-code sortable" [ngClass]="{'sort-desc': sortColumn == 'GenderCode' && sortOrder=='desc', 'sort-asc': sortColumn == 'GenderCode' && sortOrder=='asc'}">Code</th>
                                   
-                                  <th (click)="onSortColumn('GenderName')" class="discount sortable" [ngClass]="{'sort-desc': sortColumn == 'GenderName' && sortOrder=='desc', 'sort-asc': sortColumn == 'GenderName' && sortOrder=='asc'}">Name</th> 
-                                   
-                                    <th (click)="onSortColumn('GenderCode')" class="lg-code sortable">Code</th>
-                                  
-                                    <th (click)="onSortColumn('GenderName')" class="discount sortable">Name</th> 
-                                     
-                                  <th class="action"></th> 
+                                <th class="">Sr#</th> 
+                                <th class="">Company Name</th> 
+                                <th class="">User Name</th> 
+                                <th class="">Password</th> 
+                                <th class="">User Key</th> 
+                                  <!-- <th class="action"></th>  -->
                          
                               </tr> 
                       
@@ -97,7 +103,7 @@
                   </thead>
               </table>
               
-              <div class="col-sm-3">
+              <!-- <div class="col-sm-3">
                   <label>
                       Show 
                       <select (change)="onPageSizeChanged($event)" [(ngModel)]="pageSize" class="input-sm">
@@ -108,14 +114,14 @@
                       </select>
                       entries
                   </label>
-              </div>
-              <div class="col-sm-9" style="float: right">
+              </div> -->
+              <!-- <div class="col-sm-9" style="float: right">
                   <pagination [boundaryLinks]="true" [rotate]="false" [(ngModel)]="currentPage" [maxSize]="6" [itemsPerPage]="pageSize" [totalItems]="listData.recordsTotal" (pageChanged)="pageChanged($event)"></pagination>
-              </div>
+              </div> -->
               
           </div>
 
-      </div> -->
+      </div> 
 
   </div>
 
