@@ -1,0 +1,150 @@
+<div class="main-box">
+
+    <div class="form-horizontal">
+
+        <div class="main-box-header">
+            <div class="col-sm-12">
+                <!-- <a href="/Party/Create" class="btn btn-primary"><i class="fa fa-plus"></i> Party</a> -->
+                <!-- <a routerLink="/common/party" class="btn btn-primary"><i class="fa fa-plus"></i> Party</a> -->
+                <a routerLink="/common/customer" class="btn btn-primary" *ngIf="!isPartySupplier && menu && menu.IsNewAllowed"><i class="fa fa-plus"></i> Customer</a>
+                <a routerLink="/common/supplier" class="btn btn-primary" *ngIf="isPartySupplier && menu && menu.IsNewAllowed"><i class="fa fa-plus"></i> Supplier</a>
+                <a href="/inventory/Sale/CreateRetail" class="btn btn-default"><i class="fa fa-plus"></i> Sales Invoice</a>
+                <a href="/Inventory/GoodsReceiptNote/Create" class="btn btn-default"><i class="fa fa-plus"></i> Purchase</a>
+
+            </div>
+        
+        </div>
+
+        <hr/>
+
+        <div class="main-box-body">
+
+            <div class="search-criteria" *ngIf="true">
+                <form class="search-form form-horizontal" [formGroup]="formGroup">
+                    <div class="form-group" >
+                        <div class="col-sm-1">
+                            <input  class="form-control"  formControlName="PartyCode" placeholder="Code" (keyup.enter)="onSearchClick()" />
+                        </div>
+                        <div class="col-sm-3">
+                            <input   class="form-control"  formControlName="PartyName" placeholder="Name" (keyup.enter)="onSearchClick()" />
+                        </div>
+                        <div class="col-sm-2">
+                            <input   class="form-control"  formControlName="Phone" placeholder="Phone" (keyup.enter)="onSearchClick()" />
+                        </div>
+                        <div class="col-sm-2">
+                            <input  class="form-control"  formControlName="City" placeholder="City" (keyup.enter)="onSearchClick()" />
+                        </div>
+                        <div class="col-sm-2">
+                            <input  class="form-control"  formControlName="ManagerName" placeholder="Manager" (keyup.enter)="onSearchClick()"  />
+                        </div>
+                       
+
+                        <div class="col-sm-1">
+                            <select  formControlName="ActiveCustomers" class="form-control">
+                                <option value="" >All</option>
+                                <option value="true" selected>Active</option>
+                                <option value="false">Inactive</option>
+
+                            </select>
+
+                        </div>
+
+                      
+
+                        <a  class="btn btn-primary" (click)="onSearchClick()"><i class="fa fa-search"></i> Search</a>
+                    </div>
+                </form>
+            </div>
+
+            <hr />
+
+            <div class="form-group" *ngIf="true">
+                <label>
+                    <select (change)="onPageSizeChanged($event)" [(ngModel)]="pageSize" class="input-sm">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    per page
+                </label>
+
+                <table class="table table-bordered table-striped table-hover list-table table-condensed">
+                    <thead>
+                        <tr> 
+                           
+                            <th  (click)="onSortColumn('')" class="status sortable" [ngClass]="{'sort-desc': sortColumn == '' && sortOrder=='desc', 'sort-asc': sortColumn == '' && sortOrder=='asc'}">Picture</th>
+                            <th (click)="onSortColumn('PartyCode')" class="sortable lg-code" [ngClass]="{'sort-desc': sortColumn == 'PartyCode' && sortOrder=='desc', 'sort-asc': sortColumn == 'PartyCode' && sortOrder=='asc'}">Code</th>
+                            <th (click)="onSortColumn('PartyDescription')" class=" sortable" [ngClass]="{'sort-desc': sortColumn == 'PartyDescription' && sortOrder=='desc', 'sort-asc': sortColumn == 'PartyDescription' && sortOrder=='asc'}">Name</th>
+                            <th  (click)="onSortColumn('Phone')" class="phone-no sortable" [ngClass]="{'sort-desc': sortColumn == 'Phone' && sortOrder=='desc', 'sort-asc': sortColumn == 'Phone' && sortOrder=='asc'}">Phone</th>
+                            <th (click)="onSortColumn('City')" class="city sortable" [ngClass]="{'sort-desc': sortColumn == 'City' && sortOrder=='desc', 'sort-asc': sortColumn == 'City' && sortOrder=='asc'}">City</th>
+                            <th (click)="onSortColumn('ManagerName')" class="person-name sortable" style="width: 300px;" [ngClass]="{'sort-desc': sortColumn == 'ManagerName' && sortOrder=='desc', 'sort-asc': sortColumn == 'ManagerName' && sortOrder=='asc'}">Manager</th>
+                            <th class="status"> Supp.</th>
+                            <th class="status"> Cust.</th>
+                            <th class="action"></th>
+
+                           
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngIf="listData.recordsTotal <=0">
+                            <td  colspan="8" class="dataTables_empty no-records" >No data to show</td>
+                        </tr>
+                        <tr *ngFor="let row of listData.data; let i = index">
+                            <td  > 
+                                 <img src={{row.PartyImageRelativePath}} style= "height: 40px;" />                               
+                            </td>
+                            <!-- href="/Party/Create/{{row.PartyKey}}" -->
+                            <!-- <td  class="label label-primary"><a [routerLink]="['/common/party/',row.PartyKey]"  class="btn btn-primary">{{ row.PartyCode }}</a></td> -->
+                            <td  class="label label-primary"><a [routerLink]="isPartySupplier ? ['/common/supplier/', row.PartyKey] : ['/common/customer/', row.PartyKey]"  class="btn btn-primary">{{ row.PartyCode }}</a></td>
+                            
+                            <td >{{ row.PartyName }}</td>
+                            <td>{{ row.Phone }}</td>
+                            <td>{{ row.City }}</td>
+                            <td>{{ row.ManagerName }}</td>
+                           <td style="text-align: center;"><i *ngIf = "row.IsSupplier" class='fa fa-check  fa-lg'></i></td> 
+                           <td style="text-align: center;"><i *ngIf = "row.IsCustomer" class='fa fa-check  fa-lg' ></i></td>
+                            <td>
+                                <a (click)="onDelete(row)" class="btn btn-danger" *ngIf="menu && menu.IsDeleteAllowed"><i class='fa fa-times'></i> Delete</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <thead>
+                        <tr>   
+                            <th  (click)="onSortColumn('')" class="status sortable" [ngClass]="{'sort-desc': sortColumn == '' && sortOrder=='desc', 'sort-asc': sortColumn == '' && sortOrder=='asc'}">Picture</th>
+                            <th (click)="onSortColumn('PartyCode')" class="sortable lg-code" [ngClass]="{'sort-desc': sortColumn == 'PartyCode' && sortOrder=='desc', 'sort-asc': sortColumn == 'PartyCode' && sortOrder=='asc'}">Code</th>
+                            <th (click)="onSortColumn('PartyDescription')" class=" sortable" [ngClass]="{'sort-desc': sortColumn == 'PartyDescription' && sortOrder=='desc', 'sort-asc': sortColumn == 'PartyDescription' && sortOrder=='asc'}">Name</th>
+                            <th  (click)="onSortColumn('Phone')" class="phone-no sortable" [ngClass]="{'sort-desc': sortColumn == 'Phone' && sortOrder=='desc', 'sort-asc': sortColumn == 'Phone' && sortOrder=='asc'}">Phone</th>
+                            <th (click)="onSortColumn('City')" class="city sortable" [ngClass]="{'sort-desc': sortColumn == 'City' && sortOrder=='desc', 'sort-asc': sortColumn == 'City' && sortOrder=='asc'}">City</th>
+                            <th (click)="onSortColumn('ManagerName')" class="person-name sortable" [ngClass]="{'sort-desc': sortColumn == 'ManagerName' && sortOrder=='desc', 'sort-asc': sortColumn == 'ManagerName' && sortOrder=='asc'}">Manager</th>
+                            <th class="status"> Supp.</th>
+                            <th class="status"> Cust.</th>
+                            <th class="action"></th>
+
+                            
+                        </tr>
+                    </thead>
+                </table>
+
+                <div class="col-sm-3">
+                    <label>
+                        <select (change)="onPageSizeChanged($event)" [(ngModel)]="pageSize" class="input-sm">
+                            <option value="10" [attr.selected]="pageSize == 10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        per page
+                    </label>
+                </div>
+                <div class="col-sm-9" style="float: right">
+                    <pagination [boundaryLinks]="true" [rotate]="false" [(ngModel)]="currentPage" [maxSize]="6" [itemsPerPage]="pageSize" [totalItems]="listData.recordsTotal" (pageChanged)="pageChanged($event)"></pagination>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+

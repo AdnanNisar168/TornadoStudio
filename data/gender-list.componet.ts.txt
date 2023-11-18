@@ -1,0 +1,155 @@
+import { Component, OnInit, Inject, LOCALE_ID } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { of } from 'rxjs';
+import Swal from 'sweetalert2';
+import { catchError } from 'rxjs/operators';
+import { Router } from '@angular/router';
+import createNumberMask from 'text-mask-addons/dist/createNumberMask';
+
+import { InventoryService } from '../../services/inventory.service';
+import { CommonService } from '../../services/common.service';
+import { CommonComponent } from '../../common/common.component';
+import { PartyDropdown } from '../../models/party';
+import { ReportViewer } from '../../models/reportViewer';
+import { LoginInfo } from '../../models/loginInfo';
+import { HRService } from '../../services/hr.service';
+import { GenderList } from '../models/gender';
+
+@Component({
+  selector: 'app-gender-list',
+    templateUrl: './gender-list.component.html',
+  //styleUrls: ['./paymentlist.component.css']
+})
+export class GenderListComponent extends CommonComponent implements OnInit {
+    formGroup: FormGroup;
+    private context;
+    public menuId: number = 10069;
+    public listData: GenderList = new GenderList();
+    public currentPage: number = 1;
+    public pageSize: number = 10;
+    public sortColumn: string = 'GenderCode';
+    public sortOrder: string = 'desc'
+    public mask = ['(', /[1-9]/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/];
+    numberMask = createNumberMask({
+          allowDecimal: true,
+        decimalLimit: 2,
+        prefix: '',
+        suffix: '' // This will put the dollar sign at the end, with a space.
+    });
+    public customers: PartyDropdown[];
+    private loginInfo: LoginInfo;
+
+    constructor(private fb: FormBuilder, private router: Router, private inventoryService: InventoryService, private commonService: CommonService, private hrService: HRService, @Inject(LOCALE_ID)    locale: string) {
+        super();
+        this.formGroup = this.fb.group({
+            searchCode: [''],
+            searchName: [''],
+            GenderID: ['']  
+         
+        });
+
+        this.context = { componentParent: this };
+    }
+
+    ngOnInit() {
+        var self = this;
+        this.loadData();
+
+        self.commonService.getLoginInfo().pipe(catchError(error => of(error)))
+        .subscribe(data => {
+            self.loginInfo = data;
+        });
+
+    }
+    
+    loadData() {
+        let self = this;
+        let data = {
+            ...this.formGroup.value,
+            PageNumber: this.currentPage, PageLength: this.pageSize, SortColumn: self.sortColumn, SortOrder: self.sortOrder
+        };
+
+        this.commonService.showSpinner("");
+
+        this.inventoryService.getGenders(data).subscribe(data => {
+            this.listData = data;
+
+            self.commonService.hideSpinner();
+        });
+    }
+
+    onPageSizeChanged(event) {
+        this.loadData();
+    }
+
+    pageChanged(event) {
+        console.log('page changed', event);
+        this.currentPage = event.page;
+        this.loadData();
+    }
+
+    onPost(data) {
+        var self = this;
+
+    }
+
+//    Delete Method here
+
+
+onDelete(data) {
+    Swal({
+        title: 'Delete Confirmation',
+        text: "Are you sure, you want to delete record?",
+        showConfirmButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'No',
+    }).then(result => {
+        if (result.value) {
+            if (data && data.GenderID) {
+                this.inventoryService.deleteGenders(data.GenderID).subscribe(res => {
+                    this.loadData();
+                });
+            }
+        }
+    });
+}
+
+
+
+    onSortColumn(column) {
+        if (this.sortColumn != column) {
+            this.sortColumn = column;
+            this.sortOrder = 'asc';
+        } else if (this.sortOrder == 'asc') {
+            this.sortOrder = 'desc';
+        } else {
+            this.sortOrder = 'asc';
+        }
+        this.loadData();
+    }
+
+    onSearchClick() {
+        this.loadData();
+    }
+
+    onPrintClick(id) {
+        var reportViewer = new ReportViewer();
+        if (this.loginInfo.ImpersonateCompany.CompanyID == 60) {
+            reportViewer.ReportID = 139;
+        } else {
+            reportViewer.ReportID = 138;
+        }
+        reportViewer.DeliveryChallanID = id;
+        reportViewer.ExportFormat = 'pdf';
+
+        this.commonService.downloadReport(reportViewer)
+        .pipe(catchError(error => of(error)))
+        .subscribe(res => {
+        });
+    }
+}
+
+
+
+

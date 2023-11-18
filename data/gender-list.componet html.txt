@@ -1,0 +1,117 @@
+<div class="main-box">
+
+    <div class="form-horizontal">
+
+        <div class="main-box-header">
+            <div class="col-sm-12">
+                <a routerLink="/inventory/gender" class="btn btn-primary"><i class="fa fa-plus"></i> New </a>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="main-box-body">
+
+            <div class="search-criteria" *ngIf="true">
+                <form class="search-form form-horizontal" [formGroup]="formGroup">
+                    <div class="form-group">
+                        <div class="col-sm-2">
+                            <input class="form-control" name="searchCode" formControlName="searchCode" placeholder=" Code" (keyup.enter)="onSearchClick()" />
+                        </div>
+                       
+                        <div class="col-sm-3">
+                            <input class="form-control" name="searchName" formControlName="searchName" placeholder="Name" (keyup.enter)="onSearchClick()" />
+                        </div>
+
+                        <a class="btn btn-primary" (click)="onSearchClick()"><i class="fa fa-search"></i> Search</a>
+                    </div>
+                    
+                </form>
+            </div>
+
+            <hr />
+            
+            
+            <div class="form-group" *ngIf="true">
+                
+                 <label>
+                    Show 
+                    <select (change)="onPageSizeChanged($event)" [(ngModel)]="pageSize" class="input-sm">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    entries
+                </label> 
+                
+               
+                <table class="table table-bordered table-striped table-hover list-table table-condensed">
+                     <thead>
+                        <tr>
+                            <th (click)="onSortColumn('GenderCode')" class="lg-code sortable" [ngClass]="{'sort-desc': sortColumn == 'GenderCode' && sortOrder=='desc', 'sort-asc': sortColumn == 'GenderCode' && sortOrder=='asc'}">Code</th>
+                            
+                            <th (click)="onSortColumn('GenderName')" class="discount sortable" [ngClass]="{'sort-desc': sortColumn == 'GenderName' && sortOrder=='desc', 'sort-asc': sortColumn == 'GenderName' && sortOrder=='asc'}">Name</th> 
+                             
+                            <th class="action"></th> 
+                   
+                        </tr>
+                       
+                    </thead> 
+                      
+                       
+                    <tbody>
+                        <tr *ngIf="listData.recordsTotal <=0">
+                            <td  colspan="3" class="dataTables_empty no-records" >No data to show</td>
+                        </tr>
+
+                        <tr *ngFor="let row of listData.data; let i = index">
+                            <td style="min-width: 43px;"><a [routerLink]="['/inventory/gender/',row.GenderID]" class="btn btn-primary">{{ row.GenderCode }}</a></td>
+
+                            <td style="text-align: left;">{{ row.GenderName }}</td>
+                            
+                             <td>
+                              <a (click)="onDelete(row)" class="btn btn-danger"><i class='fa fa-times'></i> Delete </a>
+                            </td> 
+                           
+                        </tr>
+                    </tbody> 
+                    
+                    <thead>
+                        
+                                <tr>
+                                    <th (click)="onSortColumn('GenderCode')" class="lg-code sortable" [ngClass]="{'sort-desc': sortColumn == 'GenderCode' && sortOrder=='desc', 'sort-asc': sortColumn == 'GenderCode' && sortOrder=='asc'}">Code</th>
+                                    
+                                    <th (click)="onSortColumn('GenderName')" class="discount sortable" [ngClass]="{'sort-desc': sortColumn == 'GenderName' && sortOrder=='desc', 'sort-asc': sortColumn == 'GenderName' && sortOrder=='asc'}">Name</th> 
+                                     
+                                    <th class="action"></th> 
+                           
+                                </tr> 
+                        
+                       
+                    </thead>
+                </table>
+                
+                <div class="col-sm-3">
+                    <label>
+                        Show 
+                        <select (change)="onPageSizeChanged($event)" [(ngModel)]="pageSize" class="input-sm">
+                            <option value="10" [attr.selected]="pageSize == 10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        entries
+                    </label>
+                </div>
+                <div class="col-sm-9" style="float: right">
+                    <pagination [boundaryLinks]="true" [rotate]="false" [(ngModel)]="currentPage" [maxSize]="6" [itemsPerPage]="pageSize" [totalItems]="listData.recordsTotal" (pageChanged)="pageChanged($event)"></pagination>
+                </div>
+                
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

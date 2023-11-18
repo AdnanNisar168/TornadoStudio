@@ -1,0 +1,120 @@
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spSecurity_MenuRoleAssociationWithStatusGetbyCompanyIDRoleID')
+	DROP PROC spSecurity_MenuRoleAssociationWithStatusGetbyCompanyIDRoleID
+go
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spSecurity_MenuRoleAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID')
+	DROP PROC spSecurity_MenuRoleAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID
+go
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spSecMenuRoleAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID')
+	DROP PROC spSecMenuRoleAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID
+go
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spSecRoleMenuAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID')
+	DROP PROC spSecRoleMenuAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID
+go
+-- ===================================================================================
+-- Author:		Faisal Saleem
+-- Create date: 04-Apr-16
+-- Description:	This procedure will return all menus with status IsAssigned
+-- ===================================================================================
+-- ------------ Modification History -------------------------------------------------
+-- Author	Date		Details
+-- ------   ----        -------
+-- -----------------------------------------------------------------------------------
+CREATE PROCEDURE spSecRoleMenuAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID
+	(@CompanyID INT
+	--, @RoleAutoID INT
+	, @RoleKey Uniqueidentifier
+	, @ParentMenuID INT
+	, @UserAutoID INT
+	) WITH ENCRYPTION
+AS
+	DECLARE @IsSuperAdmin BIT
+
+	SELECT TOP 1 @IsSuperAdmin = ISNULL(IsSuperAdmin,0) FROM SecUser WHERE UserAutoID=@UserAutoID
+
+	;WITH menus AS 
+	(
+		SELECT
+			CONVERT(VARCHAR, RIGHT('00000' + CONVERT(VARCHAR, ROW_NUMBER() OVER (ORDER BY bm.DisplayOrder) ), 5)) 'OrderNo'
+			, 1 'LevelNo'
+			, bm.ParentMenuID, bm.MenuID, bm.MenuName, bm.RecordStatusID
+		FROM BaseMenu bm
+		WHERE ISNULL(bm.ParentMenuID, 0) = ISNULL(@ParentMenuID, 0)
+
+		UNION ALL
+
+		SELECT
+			CONVERT(VARCHAR, m.OrderNo + '-' + RIGHT('00000' + CONVERT(VARCHAR, ROW_NUMBER() OVER (ORDER BY bm.DisplayOrder) ), 5))
+			, m.LevelNo + 1 'LevelNo'
+			, bm.ParentMenuID, bm.MenuID, bm.MenuName, bm.RecordStatusID
+		FROM BaseMenu bm
+		INNER JOIN menus m ON bm.ParentMenuID = m.MenuID AND bm.MenuID <> bm.ParentMenuID
+		WHERE
+			@ParentMenuID IS NULL
+	)
+
+	SELECT
+		bm.OrderNo, bm.LevelNo
+		,smra.MenuRoleAssociationKey 
+		, bm.MenuID, bm.MenuName
+		--, CONVERT(BIT, CASE WHEN smra.RoleID IS NULL THEN 0 ELSE 1 END) 'IsAssigned'
+		, CONVERT(BIT, CASE WHEN smra.RoleKey IS NULL THEN 0 ELSE 1 END) 'IsAssigned'
+		, CONVERT(BIT, ISNULL(smra.IsViewAllowed, 0)) 'IsViewAllowed'
+		, CONVERT(BIT, ISNULL(smra.IsNewAllowed, 0)) 'IsNewAllowed'
+		, CONVERT(BIT, ISNULL(smra.IsCopyAllowed, 0)) 'IsCopyAllowed'
+		, CONVERT(BIT, ISNULL(smra.IsEditAllowed, 0)) 'IsEditAllowed'
+		, CONVERT(BIT, ISNULL(smra.IsDeleteAllowed, 0)) 'IsDeleteAllowed'
+		, CONVERT(BIT, ISNULL(smra.IsStatusChangeAllowed, 0)) 'IsStatusChangeAllowed'
+
+	FROM menus bm
+
+	--LEFT JOIN SecRoleMenuAssociation smra ON bm.MenuID = smra.MenuID AND smra.RoleAutoID = @RoleAutoID
+	LEFT JOIN SecRoleMenuAssociation smra ON bm.MenuID = smra.MenuID AND smra.RoleKey = @RoleKey
+		AND (smra.CompanyID = @CompanyID OR @IsSuperAdmin = 1)
+
+	WHERE 
+		(bm.ParentMenuID = @ParentMenuID OR @ParentMenuID IS NULL)
+		AND bm.RecordStatusID <> 4
+		AND (bm.MenuID IN (SELECT t1.MenuID
+			FROM SecRoleMenuAssociation t1
+			--inner join SecUserRoleAssociation t2 on t1.CompanyID=t2.CompanyID and t1.RoleID=t2.RoleID
+			inner join SecUserRoleAssociation t2 on t1.CompanyID=t2.CompanyID and t1.RoleKey=t2.RoleKey
+			inner join SecUser t3 on t2.CompanyID=t3.CompanyID and t2.UserID = t3.UserID
+			where t3.UserAutoID = @UserAutoID and ISNULL(t1.IsViewAllowed,1) = 1)
+			OR @IsSuperAdmin = 1)
+	ORDER BY bm.OrderNo
+go
+/*
+
+spSecRoleMenuAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID
+	@CompanyID=60, @RoleKey='2D1768C8-6020-42B2-9619-EE8CEFF71F11', @ParentMenuID=null, @UserAutoID=7
+
+spSecRoleMenuAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID
+	@CompanyID=1, @RoleKey=NULL, @ParentMenuID=null, @UserAutoID=7
+
+select * from SecRole where	companyid = 60
+-----------
+spSecRoleMenuAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID
+	@CompanyID=1, @RoleAutoID=null, @ParentMenuID=null, @UserAutoID=7
+
+
+spSecRoleMenuAssociationWithStatusGetbyCompanyIDRoleIDParentMenuID
+	@CompanyID=1, @RoleAutoID=82, @ParentMenuID=null, @UserAutoID=7
+
+select * from BaseCompany where CompanyName like '%demo%'
+
+FK_SecReportRoleAssociation_BaseReport
+
+select * from BaseMenu
+
+select * from SecRole Where RoleName like '%1122new%'
+select * from SecRole where RoleAutoID = 3416
+delete from SecRole Where RoleName like '%new del%'
+--delete from SecRole Where RoleName like '%new del%'
+select * from SecRoleMenuAssociation where RoleAutoID = 3415
+select * from SecRoleMenuAssociation where MenuRoleAssociationKey = '5aba810e-33db-4ac3-a7da-aadd732bc550'
+select * from SecRoleMenuAssociation where RoleAutoID = 3416 and menuid = 10101
+SecRoleMenuAssociation
+
+PK_Sec_Menu_Role_Association
+Base_Report
+*/

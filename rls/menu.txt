@@ -1,0 +1,111 @@
+To create a web application that retrieves data from a stored procedure and displays it using Angular within Visual Studio Code, you can follow these steps:
+
+1. **Set Up the Backend (ASP.NET Web API):**
+
+   - Create a new ASP.NET Web API project in Visual Studio.
+   - Define a model class to represent the data you will retrieve from the stored procedure.
+   - Implement a controller with an action method that calls the stored procedure and returns the data as JSON. Here's an example using Entity Framework and a SQL Server stored procedure:
+
+     ```csharp
+     [Route("api/menu")]
+     [ApiController]
+     public class MenuController : ControllerBase
+     {
+         private readonly YourDbContext _context;
+
+         public MenuController(YourDbContext context)
+         {
+             _context = context;
+         }
+
+         [HttpGet]
+         public async Task<IActionResult> GetMenuItems()
+         {
+             var menuItems = await _context.Database
+                 .SqlQuery<MenuItem>("YourStoredProcedureName")
+                 .ToListAsync();
+
+             return Ok(menuItems);
+         }
+     }
+     ```
+
+   - Configure your application's connection string to the SQL Server database in the `appsettings.json` or `appsettings.Development.json` file.
+
+2. **Set Up the Frontend (Angular):**
+
+   - Create a new Angular project in Visual Studio Code using Angular CLI.
+
+   ```
+   ng new your-menu-app
+   ```
+
+   - Create an Angular service to fetch data from the ASP.NET Web API. Use the Angular HttpClient module for this purpose.
+
+   ```typescript
+   // menu.service.ts
+   import { Injectable } from '@angular/core';
+   import { HttpClient } from '@angular/common/http';
+   import { Observable } from 'rxjs';
+
+   @Injectable({
+     providedIn: 'root',
+   })
+   export class MenuService {
+     private apiUrl = '/api/menu'; // Update with your API endpoint
+
+     constructor(private http: HttpClient) {}
+
+     getMenuItems(): Observable<MenuItem[]> {
+       return this.http.get<MenuItem[]>(this.apiUrl);
+     }
+   }
+   ```
+
+   - Create an Angular component to display the menu items. You can use Angular Material for styling.
+
+   ```typescript
+   // menu.component.ts
+   import { Component, OnInit } from '@angular/core';
+   import { MenuService } from './menu.service';
+
+   @Component({
+     selector: 'app-menu',
+     templateUrl: './menu.component.html',
+     styleUrls: ['./menu.component.css'],
+   })
+   export class MenuComponent implements OnInit {
+     menuItems: MenuItem[] = [];
+
+     constructor(private menuService: MenuService) {}
+
+     ngOnInit(): void {
+       this.menuService.getMenuItems().subscribe((data) => {
+         this.menuItems = data;
+       });
+     }
+   }
+   ```
+
+   - Create the HTML template for your menu component to display the menu items.
+
+3. **Display the Menu in Your Angular App:**
+
+   - Update the Angular app's routing configuration to display the menu component.
+   - Create navigation links in your Angular app for each section (e.g., "HR," "INVENTORY," "PRODUCTION," "ACCOUNTING").
+   - Use Angular's router to navigate to the appropriate component when a menu item is clicked.
+
+4. **Styling and Enhancements:**
+
+   - Style your menu using CSS or a CSS framework like Angular Material.
+   - Add additional features and functionalities as needed, such as user authentication or further interaction with the backend.
+
+5. **Testing:**
+
+   - Test your application to ensure that it fetches data from the stored procedure and displays it correctly in the menu component.
+
+6. **Deployment:**
+
+   - Deploy your ASP.NET Web API backend and Angular frontend to a web server or cloud hosting platform.
+
+Please note that this is a high-level overview, and you may need to adjust the details according to your specific project requirements. Additionally, ensure that you have the necessary dependencies and libraries installed in your Angular project, such as Angular Material and HttpClientModule, as required by your project.

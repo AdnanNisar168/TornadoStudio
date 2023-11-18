@@ -1,0 +1,54 @@
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spSecRoleDashboardAssociationWithStatus')
+	DROP PROC spSecRoleDashboardAssociationWithStatus
+go
+-- ===================================================================================
+-- Author:		Faisal Saleem
+-- Create date: 23-Sep-20
+-- Description:	This procedure will return all menus with status IsAssigned
+-- ===================================================================================
+-- ------------ Modification History -------------------------------------------------
+-- Author	Date		Details
+-- ------   ----        -------
+-- -----------------------------------------------------------------------------------
+CREATE PROCEDURE spSecRoleDashboardAssociationWithStatus
+	(--@RoleAutoID INT
+	@RoleKey Uniqueidentifier
+	, @UserAutoID INT
+
+	) WITH ENCRYPTION
+AS
+	SELECT 
+	
+		a.RoleDashboardAssociationKey
+		--, @RoleAutoID 'RoleAutoID'
+		, @RoleKey 'RoleKey'
+		, d.DashboardID
+		, d.DashboardName
+		, CONVERT(BIT, CASE WHEN a.RoleDashboardAssociationKey IS NULL THEN 0 ELSE 1 END) 'IsAllowed'
+	FROM 
+		CommonDashboard d
+	--LEFT OUTER JOIN SecRoleDashboardAssociation a  ON d.DashboardID = a.DashboardID AND a.RoleAutoID = @RoleAutoID
+	LEFT OUTER JOIN SecRoleDashboardAssociation a  ON d.DashboardID = a.DashboardID AND a.RoleKey= @RoleKey
+	--LEFT OUTER JOIN SecRole r ON a.RoleAutoID = r.RoleAutoID
+	LEFT OUTER JOIN SecRole r ON a.RoleKey = r.RoleKey
+	WHERE 
+		(d.DashboardID IN (SELECT t1.DashboardID
+			FROM SecRoleDashboardAssociation t1
+			--inner JOIN SecRole r ON a.RoleAutoID = r.RoleAutoID
+			--inner JOIN SecRole r ON a.RoleKey= r.RoleKey
+			--inner join SecUserRoleAssociation t2 on t1.CompanyID=t2.CompanyID and r.RoleID=t2.RoleID
+			inner join SecUserRoleAssociation t2 on t1.CompanyID=t2.CompanyID and t1.RoleKey=t2.RoleKey 
+			inner join SecUser t3 on t2.CompanyID=t3.CompanyID and t2.UserID = t3.UserID
+			where t3.UserAutoID = @UserAutoID)
+			OR (select top 1 isnull(IsSuperAdmin,0) from SecUser where UserAutoID=@UserAutoID) = 1)
+GO
+/*
+spSecRoleDashboardAssociationWithStatus @RoleKey = '2D1768C8-6020-42B2-9619-EE8CEFF71F11', @UserAutoID = 7
+
+spSecRoleDashboardAssociationWithStatus @RoleKey = null, @UserAutoID = 2536
+spSecRoleDashboardAssociationWithStatus @RoleKey = null, @UserAutoID = 7
+select * from SecRoleDashboardAssociation where RoleKey = '2d1768c8-6020-42b2-9619-ee8ceff71f11'
+select * from SecUser where UserAutoID = 2536
+*/
+
+

@@ -1,0 +1,998 @@
+SET NOCOUNT ON
+go
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spBaseMenuInsertOrUpdate')
+	DROP PROC spBaseMenuInsertOrUpdate
+go
+CREATE PROC spBaseMenuInsertOrUpdate
+	@MenuID INT
+	, @MenuDescription VARCHAR(500)
+	, @DisplayOrder INT
+	, @ParentMenuID INT
+	, @PageUrl VARCHAR(1000)
+	, @BetaUrl VARCHAR(1000)
+	, @Icon VARCHAR(100)
+	, @RecordStatusID INT
+	WITH ENCRYPTION
+AS
+BEGIN
+	IF NOT EXISTS (SELECT * FROM BaseMenu WHERE MenuID = @MenuID)
+	BEGIN
+		PRINT 'Inserting Menu ' + ISNULL(@MenuDescription, '')
+
+		INSERT INTO [BaseMenu]
+			([MenuID], [MenuName], [DisplayOrder], [ParentMenuID]
+			, PageUrl, BetaUrl, Icon, [StampUserID], [StampDateTime], [RecordStatusID])
+		VALUES
+			(@MenuID, @MenuDescription, @DisplayOrder, @ParentMenuID
+			, @PageUrl, @BetaUrl, @Icon, 1, GetUtcDate(), @RecordStatusID)
+	END
+	ELSE
+	BEGIN
+		PRINT 'Updating Menu ' + ISNULL(@MenuDescription, '')
+
+		UPDATE BaseMenu
+		SET 
+			MenuID = @MenuID
+			, MenuName = @MenuDescription
+			, DisplayOrder = @DisplayOrder
+			, ParentMenuID = @ParentMenuID
+			, PageUrl = @PageUrl
+			, BetaUrl = @BetaUrl
+			, Icon = @Icon
+			, StampUserID = 1
+			, StampDateTime = GetUtcDate()
+			, RecordStatusID = @RecordStatusID
+		WHERE MenuID = @MenuID
+	END
+END
+GO
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10001, @ParentMenuID = 0, @DisplayOrder = 1
+	, @Icon = 'fa-dashboard', @MenuDescription = 'Dashboard'
+	, @PageUrl = '/ng/Dashboard'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10002, @ParentMenuID = 0, @DisplayOrder = 2
+	, @Icon = 'fa-cubes', @MenuDescription = 'Inventory'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10003, @ParentMenuID = 0, @DisplayOrder = 3
+	, @Icon = 'fa-briefcase', @MenuDescription = 'Accounting'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10004, @ParentMenuID = 0, @DisplayOrder = 5
+	, @Icon = 'fa-list-alt', @MenuDescription = 'Reports'
+	--, @PageUrl = '/reportviewer'
+	, @PageUrl = '/ng/reportviewer'
+	, @BetaUrl = '/ng/reportviewer'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10005, @ParentMenuID = 0, @DisplayOrder = 7
+	, @Icon = 'fa-question', @MenuDescription = 'Help'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 11000, @ParentMenuID = 0, @DisplayOrder = 4
+	, @Icon = 'fa-industry', @MenuDescription = 'Production'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10006, @ParentMenuID = 10002, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Purchase'
+	, @PageUrl = '/Inventory/GoodsReceiptNote'	
+	, @BetaUrl = '/ng/inventory/goodsreceiptnote/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10007, @ParentMenuID = 10002, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Purchase Return'
+	, @PageUrl = '/Inventory/GrnReturn'
+	, @BetaUrl = '/ng/inventory/purchasereturn/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10008, @ParentMenuID = 10061, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Chart Of Account'
+	, @PageUrl = '/Accounting/ChartOfAccount'
+	, @BetaUrl = '/ng/accounting/chartofaccount/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10009, @ParentMenuID = 10003, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Voucher'
+	, @PageUrl = '/Accounting/Voucher/VoucherList'
+	, @BetaUrl = '/ng/accounting/voucher/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10010, @ParentMenuID = 0, @DisplayOrder = 7
+	, @Icon = 'fa-cog', @MenuDescription = 'Definition Settings'
+	, @PageUrl = '/Menu/Settings'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10011, @ParentMenuID = 0, @DisplayOrder = 6
+	, @Icon = 'fa-envelope', @MenuDescription = 'Messaging'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10012, @ParentMenuID = 10059, @DisplayOrder = 3
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Warehouse'
+	, @PageUrl = '/ng/inventory/warehouse/list'
+	--, @PageUrl = '/Inventory/Warehouse/Index'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10013, @ParentMenuID = 10005, @DisplayOrder = 1
+	, @Icon = 'fa-phone', @MenuDescription = 'Contact Us'
+	, @PageUrl = '/Help/Contact'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10014, @ParentMenuID = 10005, @DisplayOrder = 2
+	, @Icon = 'fa-info', @MenuDescription = 'FAQs'
+	, @PageUrl = '/Home/Faqs'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10015, @ParentMenuID = 10010, @DisplayOrder = 6
+	, @Icon = 'fa-shield', @MenuDescription = 'Security'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10016, @ParentMenuID = 10060, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Product'
+	, @PageUrl = '/Inventory/Item/FinishedGood'
+	, @BetaUrl = '/ng/inventory/product/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10017, @ParentMenuID = 10002, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Sales Return'
+	, @PageUrl = '/Inventory/SaleReturn'
+	, @BetaUrl = '/ng/inventory/salereturn/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10018, @ParentMenuID = 10059, @DisplayOrder = 7
+	, @Icon = 'fa-user-circle-o', @MenuDescription = 'Customer'
+	--, @PageUrl = '/Party'
+	, @PageUrl = '/ng/common/customer/list'
+	, @BetaUrl = '/ng/common/customer/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10019, @ParentMenuID = 10015, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Role'
+	--, @PageUrl = '/QuickSecurity/Role'
+	, @PageUrl = '/ng/security/role/list'
+	, @BetaUrl = '/ng/security/role/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10020, @ParentMenuID = 10059, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Company'
+	--, @PageUrl = '/Base/Company'
+	, @PageUrl = '/ng/common/company/list'
+	, @BetaUrl = '/ng/common/company/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10021, @ParentMenuID = 10002, @DisplayOrder = 5
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Transfer Stock'
+	, @PageUrl = '/Inventory/TransferStock'
+	, @BetaUrl = '/ng/inventory/transferstock/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10022, @ParentMenuID = 10002, @DisplayOrder = 3
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Sales Invoice'
+	, @PageUrl = '/Inventory/Sale/Retail'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10023, @ParentMenuID = 10055, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Receipt'
+	, @PageUrl = '/ng/finance/receipt/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10024, @ParentMenuID = 10055, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Payment'
+	, @PageUrl = '/ng/finance/payment/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10025, @ParentMenuID = 10003, @DisplayOrder = 5
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'GL Note'
+	, @PageUrl = '/Accounting/GLNote'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10026, @ParentMenuID = 10015, @DisplayOrder = 6
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Shop User'
+	, @PageUrl = '/QuickSecurity/ShopUser'
+	, @BetaUrl = '/ng/security/user/shopuser'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10027, @ParentMenuID = 10002, @DisplayOrder = 7
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Stock Adjustment'
+	, @PageUrl = '/Inventory/StockAdjustment'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10028, @ParentMenuID = 10060, @DisplayOrder = 3
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Item Variation'
+	, @PageUrl = '/Inventory/ItemVariation'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10029, @ParentMenuID = 10059, @DisplayOrder = 8
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Color'
+	, @PageUrl = '/Inventory/Color'
+	, @BetaUrl = '/ng/inventory/color/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10030, @ParentMenuID = 10062, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Head'
+	, @PageUrl = '/Finance/Head'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10031, @ParentMenuID = 10015, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'User'
+	, @PageUrl = '/ng/security/user/list'
+	, @BetaUrl = '/ng/security/user/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10032, @ParentMenuID = 10002, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Sales Order'
+	, @PageUrl = '/Inventory/SaleOrder'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10033, @ParentMenuID = 10061, @DisplayOrder = 2
+	, @Icon = 'fa-cog', @MenuDescription = 'Auto Voucher Setting'
+	, @PageUrl = '/Accounting/AutoVoucherSetting/Create'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10034, @ParentMenuID = 10003, @DisplayOrder = 3
+	, @Icon = 'fa-check-circle-o', @MenuDescription = 'Approve Voucher'
+	, @PageUrl = '/Accounting/Voucher/ApproveVoucherList'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 11001, @ParentMenuID = 11000, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Dashboard'
+	, @PageUrl = '/Production/Dashboard/Index'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 11002, @ParentMenuID = 10063, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Process'
+	, @PageUrl = '/Production/Process/Index'
+	, @BetaUrl = '/ng/production/process/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 11003, @ParentMenuID = 10063, @DisplayOrder = 3
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Workflow'
+	, @PageUrl = '/ng/production/workflow/list'
+	, @BetaUrl = '/ng/production/workflow/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 4
+	, @MenuID = 10035, @ParentMenuID = 10005, @DisplayOrder = 4
+	, @Icon = 'fa-dollar', @MenuDescription = 'Pricing'
+	, @PageUrl = '/Help/Pricing'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10036, @ParentMenuID = 10005, @DisplayOrder = 3
+	, @Icon = 'fa-newspaper-o', @MenuDescription = 'News'
+	, @PageUrl = '/Help/News'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 2
+	, @MenuID = 10037, @ParentMenuID = 10061, @DisplayOrder = 3
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Financial Year'
+	, @PageUrl = '/ng/accounting/financialyear/list'
+	--, @PageUrl = '/Accounting/FinancialYear'
+	, @BetaUrl = '/ng/accounting/financialyear/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 2
+	, @MenuID = 10038, @ParentMenuID = 10003, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Day Book'
+	, @PageUrl = '/Accounting/SimpleVoucher'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 2
+	, @MenuID = 10039, @ParentMenuID = 10059, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Attribute Category'
+	, @PageUrl = '/Inventory/ItemAttributeCategory'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 2
+	, @MenuID = 10040, @ParentMenuID = 10059, @DisplayOrder = 5
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Attribute'
+	, @PageUrl = '/Inventory/ItemAttribute'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 2
+	, @MenuID = 10041, @ParentMenuID = 10060, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Item Category'
+	, @PageUrl = '/Inventory/ItemCategory'
+	, @BetaUrl = '/ng/inventory/itemcategory/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 2
+	, @MenuID = 10042, @ParentMenuID = 10011, @DisplayOrder = 2
+	, @Icon = 'fa-comment-o', @MenuDescription = 'Sms'
+	, @PageUrl = '/Messaging/Sms/Index'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 2
+	, @MenuID = 10043, @ParentMenuID = 10060, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Size'
+	, @PageUrl = '/ng/inventory/size/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 2
+	, @MenuID = 10044, @ParentMenuID = 10002, @DisplayOrder = 6
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Receive Stock'
+	, @PageUrl = '/Inventory/ReceiveStock'
+	, @BetaUrl = '/ng/inventory/receivestock/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10045, @ParentMenuID = 10055, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Daily Expense'
+	, @PageUrl = '/Finance/Expense'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10046, @ParentMenuID = 10063, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Recipe'
+	--, @PageUrl = '/Production/Formula/Index'
+	, @PageUrl = '/ng/production/formula/list'
+	, @BetaUrl = '/ng/production/formula/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10047, @ParentMenuID = 11000, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Work Order'
+	, @PageUrl = '/Production/Workorder/Index'
+	--, @PageUrl = '/ng/production/workorder/list'
+	, @BetaUrl = '/ng/production/workorder/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10048, @ParentMenuID = 11000, @DisplayOrder = 5
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Transfer'
+	, @PageUrl = '/Production/ProcessProduction/Index'
+	, @BetaUrl = '/ng/production/processproduction/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10049, @ParentMenuID = 10002, @DisplayOrder = 6
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'SIN (General)'
+	, @PageUrl = '/inventory/storeissuenote/IndexGeneral'
+	, @BetaUrl = '/ng/inventory/singeneral/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 4
+	, @MenuID = 10050, @ParentMenuID = 10003, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'All Vouchers'
+	, @PageUrl = '/Accounting/Voucher/AllVoucherList'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10051, @ParentMenuID = 10015, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Log'
+	, @PageUrl = '/Base/Log/UserActionsList'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10052, @ParentMenuID = 10003, @DisplayOrder = 13
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Budget'
+	, @PageUrl = '/Accounting/Budget/Index'
+	, @BetaUrl = '/ng/accounting/budget/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10053, @ParentMenuID = 10061, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Cost Center'
+	--, @PageUrl = '/Accounting/CostCenter/Index'
+	, @PageUrl = '/ng/accounting/costcenter/list'
+	, @BetaUrl = '/ng/accounting/costcenter/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10054, @ParentMenuID = 10061, @DisplayOrder = 5
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Sub Cost Center'
+	, @PageUrl = '/Accounting/SubCostCenter/Index'
+	, @BetaUrl = '/ng/accounting/subcostcenter/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10055, @ParentMenuID = 0, @DisplayOrder = 4
+	, @Icon = 'fa-dollar', @MenuDescription = 'Finance'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10056, @ParentMenuID = 10002, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Purchase Order'
+	, @PageUrl = '/ng/inventory/purchaseorder/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10057, @ParentMenuID = 10002, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Inward Gate Pass'
+	, @PageUrl = '/Inventory/Igp/Index'
+	, @BetaUrl = '/ng/inventory/igp/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10058, @ParentMenuID = 10002, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Outward Gate Pass'
+	, @PageUrl = '/Inventory/Ogp/Index'
+	, @BetaUrl = '/ng/inventory/ogp/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10059, @ParentMenuID = 10010, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Common'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10060, @ParentMenuID = 10010, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Inventory'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10061, @ParentMenuID = 10010, @DisplayOrder = 3
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Accounting'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10062, @ParentMenuID = 10010, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Finance'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10063, @ParentMenuID = 10010, @DisplayOrder = 5
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Production'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10064, @ParentMenuID = 10059, @DisplayOrder = 6
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Brand'
+	, @PageUrl = '/ng/common/softwarebrand/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10065, @ParentMenuID = 10015, @DisplayOrder = 6
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Report Rights'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10066, @ParentMenuID = 10002, @DisplayOrder = 7
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Empty'
+	, @PageUrl = ''
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10067, @ParentMenuID = 10060, @DisplayOrder = 8
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Product Line'
+	--, @PageUrl = '/Inventory/ProductLine'
+	, @PageUrl = '/ng/inventory/productline/list'
+	, @BetaUrl = '/ng/inventory/productline/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10068, @ParentMenuID = 10060, @DisplayOrder = 9
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Product Group'
+	--, @PageUrl = '/Inventory/ProductGroup'
+	, @PageUrl = '/ng/inventory/productgroup/list'
+	, @BetaUrl = '/ng/inventory/productgroup/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10069, @ParentMenuID = 10060, @DisplayOrder = 10
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Gender'
+	--, @PageUrl = '/Inventory/Gender'
+	, @PageUrl = '/ng/inventory/gender/list'
+	, @BetaUrl = '/ng/inventory/gender/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10070, @ParentMenuID = 10060, @DisplayOrder = 11
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Brand'
+	, @PageUrl = '/ng/inventory/brand/list'
+	, @BetaUrl = '/ng/inventory/brand/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10071, @ParentMenuID = 10060, @DisplayOrder = 12
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Design'
+	, @PageUrl = '/Inventory/Design'
+	, @BetaUrl = '/ng/inventory/design/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10072, @ParentMenuID = 10060, @DisplayOrder = 13
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Style'
+	, @PageUrl = '/ng/inventory/style/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10073, @ParentMenuID = 10060, @DisplayOrder = 14
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Season'
+	, @PageUrl = '/ng/inventory/season/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10074, @ParentMenuID = 10060, @DisplayOrder = 15
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Batch'
+	, @PageUrl = '/Inventory/Batch'
+	, @BetaUrl = '/ng/inventory/batch/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10075, @ParentMenuID = 10060, @DisplayOrder = 16
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Lot'
+	, @PageUrl = '/Inventory/Lot'
+	, @BetaUrl = '/ng/inventory/lot/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10076, @ParentMenuID = 10060, @DisplayOrder = 17
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Store'
+	, @PageUrl = '/ng/inventory/store/list'
+	, @BetaUrl = '/ng/inventory/store/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10077, @ParentMenuID = 10002, @DisplayOrder = 7
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'SIN (Recipe)'
+	, @PageUrl = '/Inventory/StoreIssueNote/IndexRecipe'
+	, @BetaUrl = '/ng/inventory/sinrecipe/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10078, @ParentMenuID = 10002, @DisplayOrder = 7
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'SIN (Bill of Material)'
+	, @PageUrl = '/Inventory/StoreIssueNote/IndexBom'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10079, @ParentMenuID = 10002, @DisplayOrder = 7
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Sin Return (General)'
+	, @PageUrl = '/Inventory/SinReturn/IndexGeneral'
+	, @BetaUrl = '/ng/inventory/sinreturngeneral/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10080, @ParentMenuID = 10002, @DisplayOrder = 7
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'SIN Return (Recipe)'
+	, @PageUrl = '/Inventory/SinReturn/IndexRecipe'
+	, @BetaUrl = '/ng/inventory/sinreturnrecipe/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10081, @ParentMenuID = 10002, @DisplayOrder = 7
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'SIN Return (Bill of Material)'
+	, @PageUrl = '/Inventory/SinReturn/IndexBom'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10082, @ParentMenuID = 0, @DisplayOrder = 9
+	, @Icon = 'fa-download', @MenuDescription = 'Desktop'
+	, @PageUrl = '/scripts/desktop.zip'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10083, @ParentMenuID = 10055, @DisplayOrder = 3
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Adjustment'
+	, @PageUrl = '/ng/finance/adjustment/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10084, @ParentMenuID = 10060, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Raw Material'
+	, @PageUrl = '/Inventory/Item/RawMaterial'
+--	, @PageUrl = '/ng/inventory/rawmaterial/list'
+	, @BetaUrl = '/ng/inventory/rawmaterial/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10085, @ParentMenuID = 10060, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Tax'
+	, @PageUrl = '/Inventory/Tax'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10086, @ParentMenuID = 10060, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Discount'
+	, @PageUrl = '/Inventory/Discount'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10087, @ParentMenuID = 10060, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Item Rate'
+	, @PageUrl = '/ng/inventory/itemrate'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10088, @ParentMenuID = 0, @DisplayOrder = 6
+	, @Icon = 'fa-shield', @MenuDescription = 'PMS'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10089, @ParentMenuID = 10088, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Ticket'
+	, @PageUrl = '/ng/pms/ticket/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10090, @ParentMenuID = 10060, @DisplayOrder = 5
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Import Products'
+	, @PageUrl = '/Inventory/Item/ImportItems'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10091, @ParentMenuID = 10060, @DisplayOrder = 6
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Manufacturer'
+	--, @PageUrl = '/Inventory/Manufacturer/Index'
+	, @PageUrl = '/ng/inventory/manufacturer/list'
+	, @BetaUrl = '/ng/inventory/manufacturer/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10092, @ParentMenuID = 10060, @DisplayOrder = 7
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Packing'
+	, @PageUrl = '/Inventory/Size/Packing'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10093, @ParentMenuID = 10002, @DisplayOrder = 8
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Receive Production'
+	, @PageUrl = '/ng/Inventory/ReceiveProduction/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10094, @ParentMenuID = 10060, @DisplayOrder = 0
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Item Levels'
+	, @PageUrl = '/ng/inventory/itemlevels'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10095, @ParentMenuID = 10010, @DisplayOrder = 5
+	, @Icon = 'fa-address-card-o', @MenuDescription = 'HR'
+	, @PageUrl = '#'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10096, @ParentMenuID = 10095, @DisplayOrder = 1
+	, @Icon = 'fa-user-circle-o', @MenuDescription = 'Salesman'
+	, @PageUrl = '/ng/hr/salesman/list'
+	, @BetaUrl = '/ng/hr/salesman/list'
+go
+spBaseMenuInsertOrUpdate 
+	@RecordStatusID = 1
+	, @MenuID = 10097, @ParentMenuID = 10062, @DisplayOrder = 1
+	, @Icon = 'fa-user-circle-o', @MenuDescription = 'empty'
+	, @PageUrl = ''
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10098, @ParentMenuID = 10015, @DisplayOrder = 1
+	, @Icon = 'fa-user-circle-o', @MenuDescription = 'Menu Role'
+	, @PageUrl = '/QuickSecurity/MenuRole'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10099, @ParentMenuID = 10002, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Sale (POS)'
+	, @PageUrl = '/Inventory/Sale/Pos'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10100, @ParentMenuID = 10059, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Offline Company'
+	, @PageUrl = '/Base/Company/IndexOffline'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10101, @ParentMenuID = 10002, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Order'
+	, @PageUrl = '/ng/restaurant/order'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10102, @ParentMenuID = 10002, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Delivery Challan'
+	, @PageUrl = '/ng/inventory/deliverychallan/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10103, @ParentMenuID = 10055, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Company Payment'
+	, @PageUrl = '/ng/common/companypayment'
+	, @BetaUrl = '/ng/common/companypayments'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10104, @ParentMenuID = 10059, @DisplayOrder = 5
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Company Profile'
+	, @PageUrl = '/ng/common/companyprofile/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10105, @ParentMenuID = 10059, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Shop'
+	, @PageUrl = '/ng/common/shop/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10106, @ParentMenuID = 10061, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Integration'
+	, @PageUrl = '/ng/accounting/integration'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10107, @ParentMenuID = 0, @DisplayOrder = 10
+	, @Icon = 'fa-university', @MenuDescription = 'QT Library'
+	, @PageUrl = '/ng/Library'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10108, @ParentMenuID = 1059, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Report Group'
+	, @PageUrl = '/ng/'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10109, @ParentMenuID = 10060, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Session'
+	, @PageUrl = '/ng/'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10110, @ParentMenuID = 11000, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Assembly'
+	, @PageUrl = '/ng/production/assembly/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@MenuID = 10111, @ParentMenuID = 10002, @DisplayOrder = 10, @RecordStatusID = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Temp Invoice'
+	, @PageUrl = '/ng/inventory/tempinvoice/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@MenuID = 10112, @ParentMenuID = 10002, @DisplayOrder = 10, @RecordStatusID = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Repairing Invoice'
+	, @PageUrl = '/ng/inventory/repairinginvoice/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@MenuID = 10113, @ParentMenuID = 10002, @DisplayOrder = 10, @RecordStatusID = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Import Items'
+	, @PageUrl = '/Inventory/Item/importitems'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10114, @ParentMenuID = 10002, @DisplayOrder = 3
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Wholesale'
+	, @PageUrl = '/Inventory/Sale/Wholesale'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10115, @ParentMenuID = 10015, @DisplayOrder = 3
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Active User List'
+	, @PageUrl = '/ng/security/user/activeuser'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10116, @ParentMenuID = 10015, @DisplayOrder = 3
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Login History'
+	, @PageUrl = '/ng/security/user/loginhistory'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10117, @ParentMenuID = 10095, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Department'
+	, @PageUrl = '/ng/hr/department/list'
+	, @BetaUrl = '/ng/hr/department/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10118, @ParentMenuID = 0, @DisplayOrder = 6
+	, @Icon = 'fa-hdd-o', @MenuDescription = 'QT Drive'
+	, @PageUrl = '/ng/common/qtdrive/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10119, @ParentMenuID = 10095, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Salary Head'
+	, @PageUrl = '/ng/hr/salaryhead/list'
+	, @BetaUrl = '/ng/hr/salaryhead/list'
+go 
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10120, @ParentMenuID = 10059, @DisplayOrder = 5
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Common Job'
+	, @PageUrl = '/ng/common/commonjob/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 2
+	, @MenuID = 10121, @ParentMenuID = 10011, @DisplayOrder = 2
+	, @Icon = 'fa-comment-bell', @MenuDescription = 'Alert'
+	, @PageUrl = '/ng/messages/alert/list'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 2
+	, @MenuID = 10122, @ParentMenuID = 10059, @DisplayOrder = 2
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Company Data'
+	, @PageUrl = '/ng/common/deletecompanydata'
+	, @BetaUrl = ''
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10123, @ParentMenuID = 10002, @DisplayOrder = 4
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'WholeSales Return'
+	, @PageUrl = ''
+	, @BetaUrl = '/ng/inventory/wholesalereturn/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10124, @ParentMenuID = 10002, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Delivery Challan WholeSale'
+	, @PageUrl = '/ng/inventory/deliverychallanwholesale/list'
+	, @BetaUrl = '/ng/inventory/deliverychallanwholesale/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10125, @ParentMenuID = 10059, @DisplayOrder = 7
+	, @Icon = 'fa-user-circle-o', @MenuDescription = 'Supplier'
+	, @PageUrl = '/ng/common/supplier/list'
+	, @BetaUrl = '/ng/common/supplier/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10126, @ParentMenuID = 10095, @DisplayOrder = 1
+	, @Icon = 'fa-user-circle-o', @MenuDescription = 'Order Booker'
+	, @PageUrl = ''
+	, @BetaUrl = '/ng/hr/orderbooker/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10127, @ParentMenuID = 10095, @DisplayOrder = 1
+	, @Icon = 'fa-user-circle-o', @MenuDescription = 'Party Manager'
+	, @PageUrl = ''
+	, @BetaUrl = '/ng/hr/partymanager/list'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10128, @ParentMenuID = 0, @DisplayOrder = 1
+	, @Icon = 'fa-cog', @MenuDescription = 'Company Setting'
+	, @PageUrl = ''
+	, @BetaUrl = '/ng/company/settings'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10129, @ParentMenuID = 10095, @DisplayOrder = 1
+	, @Icon = 'fa-circle-thin', @MenuDescription = 'Attendance'
+	, @PageUrl = '/ng/hr/attendance'
+	, @BetaUrl = '/ng/hr/attendance'
+go
+spBaseMenuInsertOrUpdate
+	@RecordStatusID = 1
+	, @MenuID = 10130, @ParentMenuID = 10095, @DisplayOrder = 1
+	, @Icon = 'fa-user-circle-o', @MenuDescription = 'Employee'
+	, @PageUrl = ''
+	, @BetaUrl = '/ng/hr/employee/list'
+go
+SET NOCOUNT OFF

@@ -7,12 +7,14 @@ import { DashBoardComponent } from './common/dash-board.component';
 import { LoginComponent } from './common/login.component';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
+import { UserListComponent } from './hr/user-list.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     DashBoardComponent,
     LoginComponent,
+    UserListComponent,
 
   ],
   imports: [

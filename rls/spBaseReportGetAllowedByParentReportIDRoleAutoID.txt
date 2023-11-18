@@ -1,0 +1,73 @@
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spBaseReportGetAllowedByParentReportIDRoleAutoID')
+	DROP PROC spBaseReportGetAllowedByParentReportIDRoleAutoID
+go
+-- ======================================================================
+-- Author:		Faisal Saleem
+-- Create date: 24-May-2020
+-- Description:	
+-- ======================================================================
+-- ------------ Modification History ------------------------------------
+-- Author	Date		Details
+-- ------   ----        -------
+-- ----------------------------------------------------------------------
+CREATE PROCEDURE spBaseReportGetAllowedByParentReportIDRoleAutoID
+	(@ParentReportID INT
+	--, @RoleAutoID INT
+	, @RoleKey Uniqueidentifier
+	, @CurrentUserAutoID int
+	) WITH ENCRYPTION
+AS
+	WITH reports AS
+	(
+		SELECT
+			CONVERT(VARCHAR, RIGHT('00000' + CONVERT(VARCHAR, ROW_NUMBER() OVER (ORDER BY r.DisplayOrder) ), 5)) 'OrderNo'
+			, 1 'LevelNo'
+			, r.ParentReportID, r.ReportID, r.ReportName, r.ReportDescription
+		FROM BaseReport r
+		WHERE ISNULL(r.ParentReportID, 0) = ISNULL(@ParentReportID, 0)
+
+		UNION ALL
+
+		SELECT
+			CONVERT(VARCHAR, m.OrderNo + '-' + RIGHT('00000' + CONVERT(VARCHAR, ROW_NUMBER() OVER (ORDER BY r.DisplayOrder) ), 5))
+			, m.LevelNo + 1 'LevelNo'
+			, r.ParentReportID, r.ReportID, r.ReportName, r.ReportDescription
+		FROM BaseReport r
+		INNER JOIN reports m ON r.ParentReportID = m.ReportID AND r.ReportID <> r.ParentReportID
+		WHERE
+			@ParentReportID IS NULL
+	)
+
+	SELECT
+		OrderNo, LevelNo, r.ReportID
+		--, rra.RoleReportAssociationID
+		,rra.RoleReportAssociationKey
+		, CASE WHEN r.ParentReportID IS NULL THEN '' ELSE right('000' + CONVERT(varchar, r.ReportID), 3) + ' - ' END + ReportName 'ReportName'
+		, ReportDescription
+		, IsViewAllowed
+		, IsDownloadAllowed
+		, IsExportAllowed
+
+	FROM
+		reports r
+	LEFT JOIN
+		--SecRoleReportAssociation rra on r.ReportID=rra.ReportID and rra.RoleAutoID = @RoleAutoID
+		SecRoleReportAssociation rra on r.ReportID=rra.ReportID and rra.RoleKey = @RoleKey
+	WHERE
+		--ISNULL(r.ParentReportID,0) = isnull(@ParentReportID,0)
+		(r.ParentReportID = @ParentReportID OR @ParentReportID IS NULL)
+		--AND ISNULL(r.IsVisible,0) = 1
+		AND (r.ReportID IN (SELECT t1.ReportID 
+			FROM SecRoleReportAssociation t1 
+			--inner join SecUserRoleAssociation t2 on t1.CompanyID=t2.CompanyID and t1.RoleID=t2.RoleID 
+			inner join SecUserRoleAssociation t2 on t1.CompanyID=t2.CompanyID and t1.RoleKey=t2.RoleKey 
+			inner join SecUser t3 on t2.CompanyID=t3.CompanyID and t2.UserID = t3.UserID
+			where t3.UserAutoID = @CurrentUserAutoID and (t1.IsViewAllowed = 1 or t1.IsDownloadAllowed=1 or t1.IsExportAllowed=1))
+			OR (select top 1 isnull(IsSuperAdmin,0) from SecUser where UserAutoID=@CurrentUserAutoID) = 1)
+	ORDER BY
+		r.OrderNo, r.ReportName
+GO
+/*
+spBaseReportGetAllowedByParentReportIDRoleAutoID
+	@ParentReportID=null, @RoleKey='565b8c1b-c83f-495d-9ed7-b738dfd867eb', @CurrentUserAutoID=7
+*/

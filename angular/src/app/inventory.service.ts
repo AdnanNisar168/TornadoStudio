@@ -1,15 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Login } from './models/login';
 import { ResponseMessage } from './models/responseMessage';
+import { UserList } from './models/user';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InventoryService {
   private apiUrl = 'http://localhost:56731/api'; // Replace with your ASP.NET MVC API URL
-  private apiUrl2 = 'http://localhost:57685/api'; // Replace with your ASP.NET MVC API URL
+  aspURL = "https://localhost:57685/api"; // qt asp.net
+  aspURL2 = "https://localhost:57685/api/"; // qt asp.net
   baseServerUrl = "http://localhost:4200/api/"
   constructor(private http: HttpClient) { }
    public getData(): Observable<any> {
@@ -19,14 +21,57 @@ export class InventoryService {
   }
 
   saveLogin(data: Login): Observable<ResponseMessage> {
-        //var url = `${this.apiUrl}/Home/Login`;
-        var url = `${this.apiUrl2}/Base/User/Index`;
+        //var url = this.aspURL +"User"
+        var url ='http://localhost:57685/LogIn/GetLogInByQuery';
 
         return this.http.post<ResponseMessage>(url, data)
             .pipe(
-            tap(res => console.log('saved'))
+            tap(res => console.log('get LogInUser'))
             );
     }
+    getLogin(data: Login): Observable<ResponseMessage> {
+      //var url = this.aspURL +"User"
+      var url ='http://localhost:57685/LogIn/GetLogInByQuery';
+
+      return this.http.post<ResponseMessage>(url, data)
+          .pipe(
+          tap(res => console.log('get LogInUser'))
+          );
+  }
+      getRoles(data: UserList): Observable<UserList> {
+      //var url = '/QuickSecurity/Role/CreateNG/' + data; 
+      //var url = `${this.aspURL}/Base/User/DapperSPMethod`+ data; 
+      var url ='http://localhost:57685/LogIn/GetLogInByQuery'+data;
+      return this.http.get<UserList>(url)
+          .pipe(
+              tap(res => console.log('fetched User'))
+          );
+  }
+
+  getList(data: string): Observable<UserList> {
+    //var url = '/QuickSecurity/Role/CreateNG/' + data; 
+    let key = 'DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC'
+    var url ='http://localhost:57685/user/List?UserKey='+key;
+    //var url ='/user/List?UserKey=DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC'
+    return this.http.get<UserList>(url)
+        .pipe(
+            tap(res => console.log('fetched User'))
+  );
+}
+
+sndUserKey(){
+  return this.http.post(this.aspURL2 + "/Base/User/List", null);
+}
+
+// getListng(data: UserList): Observable<UserList> {
+//   const url = `${this.aspURL}/Base/User/List`;
+//   const params = new HttpParams().set('param1', data.param1).set('param2', data.param2); // Replace param1 and param2 with actual parameter names
+  
+//   return this.http.get<UserList>(url, { params })
+//       .pipe(
+//           tap(res => console.log('fetched User'))
+//       );
+// }
 // saveLogin(data: Login){
 //     return  this.http.post(this.baseServerUrl + "Login" , null)
 // }

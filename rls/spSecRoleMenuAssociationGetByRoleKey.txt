@@ -1,0 +1,63 @@
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spSecRoleMenuAssociationGetByRoleAutoID')
+	DROP PROC spSecRoleMenuAssociationGetByRoleAutoID
+go
+IF EXISTS (SELECT * FROM sysObjects o WHERE o.[name] = 'spSecRoleMenuAssociationGetByRoleKey')
+	DROP PROC spSecRoleMenuAssociationGetByRoleKey
+go
+-- ==========================================================================================
+-- Author:		Adnan Nisar
+-- Create date: 13-Sep-2023
+-- Description:	This stored procedure returns SecRoleMenuAssociation by RoleKey
+-- ==========================================================================================
+-- ------------ Modification History --------------------------------------------------------
+-- Author	Date		Details
+-- ------   ----        -------
+-- ------------------------------------------------------------------------------------------
+
+CREATE PROCEDURE spSecRoleMenuAssociationGetByRoleKey
+	(@CompanyID SMALLINT
+	, @RoleKey Uniqueidentifier
+	, @IsSuperAdmin bit
+	) WITH ENCRYPTION
+AS
+BEGIN
+
+	SELECT 
+		r.RoleKey
+		,r.RoleName
+		,r.StampUserID 'UpdatedBy'
+		,r.StampDateTime 'UpdatedOn'
+		,u.UserName 'UpdatedByName'
+		,r.CompanyID
+		,b.CompanyName
+		
+	FROM  SecRole r
+	LEFT JOIN SecUser u on  r.StampUserID = u.StampUserID
+	INNER JOIN BaseCompany b on r.CompanyID = b.CompanyID
+
+	WHERE 
+		r.RoleKey = @RoleKey or RoleKey is null
+		and (r.CompanyID = @CompanyID or @IsSuperAdmin=1)
+
+
+END
+go
+/*
+EXEC spSecRoleMenuAssociationGetByRoleKey @RoleKey='2D1768C8-6020-42B2-9619-EE8CEFF71F11', @CompanyID=12,@issuperadmin=1
+
+EXEC spSecRoleMenuAssociationGetByRoleKey @RoleKey='00000000-0000-0000-0000-000000000000', @CompanyID=1,@issuperadmin=1
+EXEC spSecRoleMenuAssociationGetByRoleKey @RoleKey=null, @CompanyID=1,@issuperadmin=1
+EXEC spSecRoleMenuAssociationGetByRoleKey @RoleKey=null, @CompanyID=1,@issuperadmin=1
+select * from secrole where CompanyID = 60
+select * from SecRoleMenuAssociation
+*/
+
+
+
+
+/*
+
+secRole
+SecRoleMenuAssociation
+BaseMenu
+*/

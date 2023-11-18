@@ -1,5 +1,0 @@
-.Inv_GrnReturn_IsItemDescriptionEnabled.ToString(), true);
-    var isItemDiscountAllowed = AppSetting.GetSetting(Common.LoginData.ImpersonateCompany.CompanyID, Common.LoginData.ImpersonateUser.UserID, SystemSettings.Inv_GrnReturn_IsItemDiscountEnabled.ToString(), true);
-    var isDiscountAllowed = AppSetting.GetSetting(Common.LoginData.ImpersonateCompany.CompanyID, Common.LoginData.ImpersonateUser.UserID, SystemSettings.Inv_GrnReturn_IsDiscountEnabled.ToString(), true);
-    var isSalesTaxAllowed = AppSetting.GetSetting(Common.LoginData.ImpersonateCompany.CompanyID, Common.LoginData.ImpersonateUser.UserID, SystemSettings.Inv_GrnReturn_IsSalesTaxEnabled.ToString(), true);
-    var isAutoNumberEnabled = AppSetting.GetSetting(SystemSettings.Inv_GrnReturn_IsAutoNumberEnabled.ToString(), true);
