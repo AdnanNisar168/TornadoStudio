@@ -31,51 +31,78 @@ namespace tornadoStudio.Areas.Base.Controllers
         {
             SqlConnection connection = new SqlConnection(connectionString);
 
-
-            //query
-            // without using model
-            var sql = "SELECT * FROM SecUser2 where UserName = @UserName and Password = @Password";
-            var quryParams = new DynamicParameters();
-            quryParams.Add("@UserName", model.UserName);
-            quryParams.Add("@Password", model.Password);
-            var Users = connection.QueryFirstOrDefault<LogInViewModel>(sql, quryParams);
-
-            //working
-            //return Json(Users, JsonRequestBehavior.AllowGet);
-            //new
-            if (Users != null)
+            if (IsValid(model))
             {
-                if (Users.Password != string.Empty)
-                {
-                    var result = new ActionResultJson<string>();
-                    result.http_code = System.Net.HttpStatusCode.OK;
-                    result.message = "Logged in successfully";
-                    return Json(result, JsonRequestBehavior.AllowGet);
-                }
-                else
-                {
-                    var result = new ActionResultJson<string>();
-                    result.http_code = System.Net.HttpStatusCode.NotFound;
-                    result.message = "User Not Found";
-                    return Json(result, JsonRequestBehavior.AllowGet);
-                }
-                
-            }
-            else
-            {
+                ////query
+                //// without using model
+                //var sql = "SELECT * FROM SecUser2 where UserName = @UserName and Password = @Password";
+                //var quryParams = new DynamicParameters();
+                //quryParams.Add("@UserName", model.UserName);
+                //quryParams.Add("@Password", model.Password);
+                //var Users = connection.QueryFirstOrDefault<LogInViewModel>(sql, quryParams);
+
+                ////working
+                ////return Json(Users, JsonRequestBehavior.AllowGet);
+                ////new
+                //if (Users != null)
+                //{
+                //    if (Users.Password != string.Empty)
+                //    {
+                //        var result = new ActionResultJson<string>();
+                //        result.http_code = System.Net.HttpStatusCode.OK;
+                //        result.message = "Logged in successfully";
+                //        return Json(result, JsonRequestBehavior.AllowGet);
+                //    }
+                //    else
+                //    {
+                //        var result = new ActionResultJson<string>();
+                //        result.http_code = System.Net.HttpStatusCode.NotFound;
+                //        result.message = "User Not Found";
+                //        return Json(result, JsonRequestBehavior.AllowGet);
+                //    }
+
+                //}
+                //else
+                //{
+                //    var result = new ActionResultJson<string>();
+                //    result.http_code = System.Net.HttpStatusCode.NotFound;
+                //    result.message = "User Not Found";
+                //    return Json(result, JsonRequestBehavior.AllowGet);
+                //}
                 var result = new ActionResultJson<string>();
                 result.http_code = System.Net.HttpStatusCode.NotFound;
                 result.message = "User Not Found";
                 return Json(result, JsonRequestBehavior.AllowGet);
+                //return Json(new { Message = "Login" }, JsonRequestBehavior.AllowGet);
             }
-
-            //return Json(new { Message = "Login" }, JsonRequestBehavior.AllowGet);
 
         }
 
-        //private ActionResult OK(object p)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        private bool IsValid(LogInViewModel request)
+        {
+            try
+            {
+
+                if (string.IsNullOrEmpty(request.UserName))
+                {
+                    this.BrokenRules.Add("UserName cannot be empty");
+                }
+
+                if (string.IsNullOrEmpty(request.Password))
+                    this.BrokenRules.Add("Password cannot be empty");
+
+                return this.BrokenRules.Count == 0;
+                //will return true if no rules broken
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex);
+                return false;
+            }
+            //private ActionResult OK(object p)
+            //{
+            //    throw new NotImplementedException();
+            //}
+        }
     }
 }

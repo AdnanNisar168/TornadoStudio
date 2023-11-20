@@ -90,6 +90,7 @@ export class LoginComponent  implements OnInit {
       let message = res.message;
             
             if (res.http_code != 200) {
+              alert(message)
                 res.broken_rules.forEach(x => {
                     message += '<br>' + x;
                 });
