@@ -3,7 +3,7 @@ import { Observable, tap } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Login } from './models/login';
 import { ResponseMessage } from './models/responseMessage';
-import { UserList } from './models/user';
+import { User, UserList } from './models/user';
 
 @Injectable({
   providedIn: 'root'
@@ -58,7 +58,31 @@ export class InventoryService {
             tap(res => console.log('fetched User'))
   );
 }
+getUser(data: string): Observable<User> {
+  //var url = '/Inventory/Gender/Index/' + data; 
+  var url ='http://localhost:57685/user/Index'+ data;
+  return this.http.get<User>(url)
+      .pipe(
+          tap(res => console.log('fetched Gender'))
+      );
+}
+saveUser(data: User): Observable<ResponseMessage> {
+  //var url = '/Inventory/Gender/Save';
+  var url ='http://localhost:57685/user/Save';
 
+  return this.http.post<ResponseMessage>(url, data)
+      .pipe(
+          tap(res => console.log('User saved'))
+      );
+}
+deleteUser(id: string): Observable<ResponseMessage> {
+  var url = 'http://localhost:57685/user/Delete?id=' + id;
+
+  return this.http.post<ResponseMessage>(url, id)
+      .pipe(
+          tap(res => console.log('deleted Gender'))
+      );
+}
 sndUserKey(){
   return this.http.post(this.aspURL2 + "/Base/User/List", null);
 }

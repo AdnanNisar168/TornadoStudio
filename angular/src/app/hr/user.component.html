@@ -1,0 +1,74 @@
+<div class="main-box">
+
+    <div class="form-horizontal">
+<!-- EnterKey -->
+        <form id="form" class="data-entry-form" (ngSubmit)="onSubmit()" [formGroup]="formGroup" >
+
+            <div class="main-box-header">
+                <div class="col-sm-10">
+                    <!--*ngIf="IsEditAllowed || IsCreateAllowed"-->
+
+                    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save</button>
+                    <a routerLink="/user" class="btn btn-default"><i class="fa fa-plus"></i> New</a>
+                    <a routerLink="/user/list" class="btn btn-default"><i class="fa fa-list"></i> List</a>
+                </div>
+                <!-- <label class="col-sm-2 label label-default" data-toggle="tooltip" data-original-title="Last Update Information" style="padding-top: 6px;">
+                    <span>{{gender.UpdatedByName}}</span>&nbsp;<span>{{gender.UpdatedOn | date : 'dd-MMM-yy hh:mm a'}}</span>
+                </label> -->
+            </div>
+
+            <hr />
+            <!--*ngIf="IsEditAllowed && SeasonID > 0"-->
+            <fieldset class="main-box-body">
+
+                <div class="form-group">
+                    <div class="col-sm-2">
+                        <div class="input-group">
+                            <div class="input-group-addon">
+                                <div class="input-group-text">Company ID</div>
+                            </div>
+                            <input class="form-control" type="text" formControlName="CompanyID" />
+
+                        </div>
+                    </div>
+
+                  
+
+                    <div class="col-sm-6">
+                        <div class="input-group">
+                            <div class="input-group-addon">
+                                <div class="input-group-text">User Name</div>
+                            </div>
+                            <input class="form-control" type="text" formControlName="UserName" />
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="input-group">
+                            <div class="input-group-addon">
+                                <div class="input-group-text">Passwrod</div>
+                            </div>
+                            <input class="form-control" type="text" formControlName="Passwrod" />
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="input-group">
+                            <div class="input-group-addon">
+                                <div class="input-group-text">User Key</div>
+                            </div>
+                            <input class="form-control" type="text" formControlName="UserKey" />
+                        </div>
+                    </div>
+
+                </div>
+
+                
+
+            </fieldset>
+
+        </form>
+
+    </div>
+
+    
+
+</div>

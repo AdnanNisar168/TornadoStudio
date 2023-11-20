@@ -5,6 +5,8 @@ export class User {
     Password: string;
     UserKey: string;
     UserName: string;
+    UpdatedOn: Date;
+    UpdatedByName: string;
 }
 export class UserList {
     data: User[];

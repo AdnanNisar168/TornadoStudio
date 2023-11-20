@@ -8,6 +8,7 @@ import { LoginComponent } from './common/login.component';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
 import { UserListComponent } from './hr/user-list.component';
+import { UserComponent } from './hr/user.component';
 
 @NgModule({
   declarations: [
@@ -15,6 +16,7 @@ import { UserListComponent } from './hr/user-list.component';
     DashBoardComponent,
     LoginComponent,
     UserListComponent,
+    UserComponent,
 
   ],
   imports: [

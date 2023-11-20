@@ -4,7 +4,7 @@
 
       <div class="main-box-header">
           <div class="col-sm-12">
-              <a routerLink="/inventory/gender" class="btn btn-primary"><i class="fa fa-plus"></i> New </a>
+              <a routerLink="/user" class="btn btn-primary"><i class="fa fa-plus"></i> New </a>
               <a class="btn btn-primary" (click)="onSearchClick()"><i class="fa fa-search"></i> Search</a>
           </div>
       </div>
@@ -58,6 +58,7 @@
                           <th class="">User Name</th> 
                           <th class="">Password</th> 
                           <th class="">User Key</th> 
+                          <th class=""></th> 
                            
                           <!-- <th class=""></th>  -->
                  
@@ -72,16 +73,16 @@
                       </tr> -->
 
                       <tr *ngFor="let row of listData.data; let i = index">
-                          <td style="min-width: 43px;"><a [routerLink]="['/inventory/gender/',row.UserKey]" class="btn btn-primary">{{ i + 1}}</a></td>
+                          <td style="min-width: 43px;"><a [routerLink]="['/user/',row.UserKey]" class="btn btn-primary">{{ i + 1}}</a></td>
 
                           <td style="text-align: left;">{{ row.CompanyName }}</td>
                           <td style="text-align: left;">{{ row.UserName }}</td>
                           <td style="text-align: left;">{{ row.Password }}</td>
                           <td style="text-align: left;">{{ row.UserKey }}</td>
                           
-                           <!-- <td>
+                           <td>
                             <a (click)="onDelete(row)" class="btn btn-danger"><i class='fa fa-times'></i> Delete </a>
-                          </td>  -->
+                          </td> 
                          
                       </tr>
                   </tbody> 
@@ -95,6 +96,7 @@
                                 <th class="">User Name</th> 
                                 <th class="">Password</th> 
                                 <th class="">User Key</th> 
+                                <th class=""></th> 
                                   <!-- <th class="action"></th>  -->
                          
                               </tr> 

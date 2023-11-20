@@ -150,6 +150,7 @@ namespace tornadoStudio.TornadoLibrary
             SecRoleStatusAssociation,
             SecRoleMenuAssociation,
             SecUser,
+            SecUser2,
             SecUserRoleAssociation,
             SecUserLoginHistory,
 

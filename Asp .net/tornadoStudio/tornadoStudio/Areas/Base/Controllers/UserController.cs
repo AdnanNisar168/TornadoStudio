@@ -175,7 +175,8 @@ namespace tornadoStudio.Areas.Base.Controllers
             {
                 var spParams = new DynamicParameters();
                 //spParams.Add("@CompanyID", CurrentCompanyID);
-                spParams.Add("@UserKey", UserKey);
+                //spParams.Add("@UserKey", UserKey);
+                spParams.Add("@CompanyID", 1);
                 //spParams.Add("@SearchName", SearchName);
                 //spParams.Add("@sortColumn", sortColumn);
                 //spParams.Add("@sortOrder", sortOrder);
@@ -184,7 +185,7 @@ namespace tornadoStudio.Areas.Base.Controllers
                 //spParams.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
 
-                 model = DapperQuery.GetListBySP<UserViewModel>(DapperQuery.StoredProcedures.spSecUser2GetByUserKey, spParams);
+                model = DapperQuery.GetListBySP<UserViewModel>(DapperQuery.StoredProcedures.spSecUser2GetByUserKey, spParams);
                 datatablesNetList.data = model;
             }
             catch (Exception ex)
@@ -202,6 +203,89 @@ namespace tornadoStudio.Areas.Base.Controllers
             return Json(datatablesNetList, JsonRequestBehavior.AllowGet);
         }
 
+        public JsonResult Delete(Guid id)
+        {
+            ActionResultJson<general_result> actionResultJson = new ActionResultJson<general_result>();
+            SqlConnection connection = new SqlConnection(connectionString);
+            try
+            {
+                //log.Info("Started");
+                var qry = string.Format("Delete from {0} where CompanyID = @CompanyID and UserKey=@UserKey"
+                        , DapperQuery.DBTables.SecUser2.ToString());
+                var parms = new DynamicParameters();
+                parms.Add("@CompanyID", 1);
+                //"BEE6295E-C796-4B77-B54E-A2BDA3544D93"
+                parms.Add("@UserKey", id);
+                //DapperQuery.Delete(DapperQuery.DBTables.InvGender, "GenderID", id);
+                connection.Execute(qry, parms);
+                actionResultJson.http_code = HttpStatusCode.OK;
+                actionResultJson.message = "Record deleted successfully";
 
+                //log.Debug("Completed");
+            }
+            catch (Exception ex)
+            {
+                //log.Error(ex);
+                actionResultJson.http_code = HttpStatusCode.InternalServerError;
+                actionResultJson.message = "There was some server error";
+            }
+
+            return Json(actionResultJson);
+        }
+
+            //public ActionResult Save(UserViewModel model)
+            //{
+            //    //log.Info("Started");
+
+            //    try
+            //    {
+            //        var actionResultJson = new ActionResultJson<general_result>((int)Menus.Gender);
+            //        actionResultJson.data = new general_result();
+            //        var genders = new List<GenderViewModel>();
+            //        var gender = new GenderViewModel();
+
+            //        if (IsValid(model))
+            //        {   //genders is a list
+            //            MapValues(model, ref gender);
+            //            genders.Add(gender);
+            //            genders = DapperQuery.SaveChanges(DapperQuery.DBTables.InvGender, genders);
+            //            CacheManager.Remove(CacheManager.CacheKey.InvGender, CurrentCompanyID);
+
+
+            //            actionResultJson.data.id = genders[0].GenderID;
+            //            actionResultJson.data.number = genders[0].GenderCode;
+            //            actionResultJson.http_code = HttpStatusCode.OK;
+            //            actionResultJson.message = "Gender is saved successfully";
+
+            //        }
+            //        else
+            //        {
+            //            actionResultJson.broken_rules = this.BrokenRules;
+            //            actionResultJson.http_code = HttpStatusCode.BadRequest;
+            //            actionResultJson.message = "Please correct following errors:";
+
+            //        }
+            //        log.Debug("Completed");
+
+            //        return Json(actionResultJson);
+
+            //    }
+            //    catch (Exception ex)
+            //    {
+
+            //        log.Error(ex);
+            //        return Json(new ActionResultJson<string>
+            //        {
+            //            http_code = HttpStatusCode.InternalServerError,
+            //            message = ex.Message,
+            //            broken_rules = this.BrokenRules
+            //        });
+            //    }
+            //}
+
+
+
+
+
+        }
     }
-}

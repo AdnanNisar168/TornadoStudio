@@ -2,7 +2,7 @@ import { Component, Inject, LOCALE_ID, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormControl, Validators, FormArray } from '@angular/forms';
 import { Router } from '@angular/router';
 import { InventoryService } from '../inventory.service';
-import { UserList } from '../models/user';
+import { User, UserList } from '../models/user';
 
 @Component({
   selector: 'app-User',
@@ -73,6 +73,13 @@ export class UserListComponent  implements OnInit {
     
 }
 
+onDelete(data: User) {
+  if (data && data.UserKey) {
+                  this.inventoryService.deleteUser(data.UserKey).subscribe(res => {
+                      this.loadData();
+                  });
+              }
+}
 // onDelete(data) {
 //   Swal({
 //       title: 'Delete Confirmation',
