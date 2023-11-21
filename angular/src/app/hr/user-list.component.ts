@@ -14,7 +14,7 @@ export class UserListComponent  implements OnInit {
     public listData: UserList = new UserList();
     public currentPage: number = 1;
     public pageSize: number = 10;
-    public sortColumn: string = 'GenderCode';
+    public sortColumn: string = 'UserName';
     public sortOrder: string = 'desc'
     
     public mask = ['(', /[1-9]/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/];
@@ -45,10 +45,10 @@ export class UserListComponent  implements OnInit {
 
   loadData() {
     let self = this;
-    // let data = {
-    //     ...this.formGroup.value,
-    //     PageNumber: this.currentPage, PageLength: this.pageSize, SortColumn: self.sortColumn, SortOrder: self.sortOrder
-    // };
+    let data = {
+        ...this.formGroup.value,
+        PageNumber: this.currentPage, PageLength: this.pageSize, SortColumn: self.sortColumn, SortOrder: self.sortOrder
+    };
     
 
     //this.commonService.showSpinner("");
@@ -58,11 +58,11 @@ export class UserListComponent  implements OnInit {
 
     //   //  self.commonService.hideSpinner();
     // });
-    let userKey = 'DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC';
-    let data = {
-      userKey
-    };
-    this.inventoryService.getList(userKey).subscribe(data => {
+    // let userKey = 'DBEB0C00-ACF8-4ADA-BED0-C03A96912BEC';
+    // let data = {
+    //   userKey
+    // };
+    this.inventoryService.getList(data).subscribe(data => {
         this.listData = data;
 
       //  self.commonService.hideSpinner();
@@ -75,10 +75,10 @@ export class UserListComponent  implements OnInit {
 
 onDelete(data: User) {
   if (data && data.UserKey) {
-                  this.inventoryService.deleteUser(data.UserKey).subscribe(res => {
-                      this.loadData();
-                  });
-              }
+      this.inventoryService.deleteUser(data.UserKey).subscribe(res => {
+          this.loadData();
+      });
+  }
 }
 // onDelete(data) {
 //   Swal({

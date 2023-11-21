@@ -163,10 +163,10 @@ namespace tornadoStudio.Areas.Base.Controllers
 
         //[EnableCors(origins: "http://localhost:4200", headers: "*", methods: "*")]
         //[HttpPost]
-        //[EnableCors("*", "*", "*")]
-        [HttpGet]
-        //public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string SearchCode, string SearchName)
-        public ActionResult List(Guid? UserKey)
+        [EnableCors("*", "*", "*")]
+        [HttpPost]
+        public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string username, string password)
+        //public ActionResult List(Guid? UserKey)
         {
             var totalRecords = 0;
             var model = new List<UserViewModel>();
@@ -175,18 +175,24 @@ namespace tornadoStudio.Areas.Base.Controllers
             {
                 var spParams = new DynamicParameters();
                 //spParams.Add("@CompanyID", CurrentCompanyID);
-                //spParams.Add("@UserKey", UserKey);
                 spParams.Add("@CompanyID", 1);
+                spParams.Add("@UserName", username);
+                spParams.Add("@PassWord", password);
                 //spParams.Add("@SearchName", SearchName);
                 //spParams.Add("@sortColumn", sortColumn);
                 //spParams.Add("@sortOrder", sortOrder);
                 //spParams.Add("@pageNumber", pageNumber);
                 //spParams.Add("@recordsPerPage", pageLength);
-                //spParams.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
+                spParams.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
 
-                model = DapperQuery.GetListBySP<UserViewModel>(DapperQuery.StoredProcedures.spSecUser2GetByUserKey, spParams);
+                model = DapperQuery.GetListBySP<UserViewModel>(DapperQuery.StoredProcedures.spSecUser2GetByCompanyIDSortingPaging, spParams);
+                totalRecords = spParams.Get<int?>("@totalRecords").GetValueOrDefault();
+
                 datatablesNetList.data = model;
+
+                datatablesNetList.recordsTotal = totalRecords;
+                datatablesNetList.recordsFiltered = totalRecords;
             }
             catch (Exception ex)
             {
@@ -233,59 +239,93 @@ namespace tornadoStudio.Areas.Base.Controllers
             return Json(actionResultJson);
         }
 
-            //public ActionResult Save(UserViewModel model)
-            //{
-            //    //log.Info("Started");
+        public ActionResult Index(Guid? id)
+        {
+            var model = new UserViewModel();
+            var spParams = new DynamicParameters();
 
-            //    try
-            //    {
-            //        var actionResultJson = new ActionResultJson<general_result>((int)Menus.Gender);
-            //        actionResultJson.data = new general_result();
-            //        var genders = new List<GenderViewModel>();
-            //        var gender = new GenderViewModel();
+            try
+            {
+                //log.Info("Started");
 
-            //        if (IsValid(model))
-            //        {   //genders is a list
-            //            MapValues(model, ref gender);
-            //            genders.Add(gender);
-            //            genders = DapperQuery.SaveChanges(DapperQuery.DBTables.InvGender, genders);
-            //            CacheManager.Remove(CacheManager.CacheKey.InvGender, CurrentCompanyID);
+                if (id.HasValue)
+                {
+                    spParams.Add("@CompanyID", 1);
+                    spParams.Add("@UserKey", id);
+                    model = DapperQuery.GetListBySP<UserViewModel>(DapperQuery.StoredProcedures.spSecUser2GetByUserKey2, spParams).FirstOrDefault();
 
+                }
+                else
+                {
+                    //model.UpdatedOn = DateTime.Now;
+                    //model.DepartmentCode = DapperQuery.NewNumber(DapperQuery.DBTables.HRDepartment, "DepartmentCode");//automatic code
+                }
+                //log.Info("Complete");
 
-            //            actionResultJson.data.id = genders[0].GenderID;
-            //            actionResultJson.data.number = genders[0].GenderCode;
-            //            actionResultJson.http_code = HttpStatusCode.OK;
-            //            actionResultJson.message = "Gender is saved successfully";
+                //return Content(Newtonsoft.Json.JsonConvert.SerializeObject(model), "application/json");
 
-            //        }
-            //        else
-            //        {
-            //            actionResultJson.broken_rules = this.BrokenRules;
-            //            actionResultJson.http_code = HttpStatusCode.BadRequest;
-            //            actionResultJson.message = "Please correct following errors:";
-
-            //        }
-            //        log.Debug("Completed");
-
-            //        return Json(actionResultJson);
-
-            //    }
-            //    catch (Exception ex)
-            //    {
-
-            //        log.Error(ex);
-            //        return Json(new ActionResultJson<string>
-            //        {
-            //            http_code = HttpStatusCode.InternalServerError,
-            //            message = ex.Message,
-            //            broken_rules = this.BrokenRules
-            //        });
-            //    }
-            //}
-
-
-
-
-
+                return Json(model);
+            }
+            catch (Exception ex)
+            {
+                //log.Error(ex);
+                return Json(ex);
+                //return Content(Newtonsoft.Json.JsonConvert.SerializeObject(model), "application/json");
+            }
         }
+        //public ActionResult Save(UserViewModel model)
+        //{
+        //    //log.Info("Started");
+
+        //    try
+        //    {
+        //        var actionResultJson = new ActionResultJson<general_result>((int)Menus.Gender);
+        //        actionResultJson.data = new general_result();
+        //        var genders = new List<GenderViewModel>();
+        //        var gender = new GenderViewModel();
+
+        //        if (IsValid(model))
+        //        {   //genders is a list
+        //            MapValues(model, ref gender);
+        //            genders.Add(gender);
+        //            genders = DapperQuery.SaveChanges(DapperQuery.DBTables.InvGender, genders);
+        //            CacheManager.Remove(CacheManager.CacheKey.InvGender, CurrentCompanyID);
+
+
+        //            actionResultJson.data.id = genders[0].GenderID;
+        //            actionResultJson.data.number = genders[0].GenderCode;
+        //            actionResultJson.http_code = HttpStatusCode.OK;
+        //            actionResultJson.message = "Gender is saved successfully";
+
+        //        }
+        //        else
+        //        {
+        //            actionResultJson.broken_rules = this.BrokenRules;
+        //            actionResultJson.http_code = HttpStatusCode.BadRequest;
+        //            actionResultJson.message = "Please correct following errors:";
+
+        //        }
+        //        log.Debug("Completed");
+
+        //        return Json(actionResultJson);
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //        log.Error(ex);
+        //        return Json(new ActionResultJson<string>
+        //        {
+        //            http_code = HttpStatusCode.InternalServerError,
+        //            message = ex.Message,
+        //            broken_rules = this.BrokenRules
+        //        });
+        //    }
+        //}
+
+
+
+
+
+    }
     }

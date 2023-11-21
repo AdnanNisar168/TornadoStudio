@@ -165,7 +165,6 @@ namespace tornadoStudio.TornadoLibrary
 
         public enum StoredProcedures
         {
-            spSecUser2GetByUserKey,
             spAccountingChartOfAccountGetIndentedByCompanyID,
             spAccountingGLNoteGetByCompanyIDGLNoteID,
             spAccountingAutoVoucherSettingGetAll,
@@ -231,6 +230,9 @@ namespace tornadoStudio.TornadoLibrary
             // HR
             spHrDepartmentGetByDeparmentID,
             spHREmployeeGetByCompanyIDSortingPaging,
+            spSecUser2GetByUserKey,
+            spSecUser2GetByCompanyIDSortingPaging,
+            spSecUser2GetByUserKey2,
 
             // Inventory
             spInvBatchGetByCompanyIDSortingPaging,
