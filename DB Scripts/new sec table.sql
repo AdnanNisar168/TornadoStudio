@@ -1,12 +1,12 @@
-CREATE TABLE SecUser2
+CREATE TABLE TestUser
 (
 	UserKey UNIQUEIDENTIFIER NOT NULL,
 	CompanyID smallint NOT NULL,
 	--UserCode VARCHAR(50) NOT NULL,
 	UserName VARCHAR(500) NOT NULL,
 	[Password] VARCHAR(500) NOT NULL,
-	Constraint PK_SecUser2 PRIMARY KEY (UserKey), 
-	Constraint FK_SecUser2_BaseCompany FOREIGN KEY (CompanyID) REFERENCES BaseCompany(CompanyID),
+	Constraint PK_TestUser PRIMARY KEY (UserKey), 
+	Constraint FK_TestUser_BaseCompany FOREIGN KEY (CompanyID) REFERENCES BaseCompany(CompanyID),
 );
 GO
 --drop TABLE SecUser2

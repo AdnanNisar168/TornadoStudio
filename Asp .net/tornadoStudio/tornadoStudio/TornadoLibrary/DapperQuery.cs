@@ -233,6 +233,8 @@ namespace tornadoStudio.TornadoLibrary
             spSecUser2GetByUserKey,
             spSecUser2GetByCompanyIDSortingPaging,
             spSecUser2GetByUserKey2,
+            spTestUserGetByCompanyIDSortingPaging,
+            spTestUserGetByUserKey,
 
             // Inventory
             spInvBatchGetByCompanyIDSortingPaging,

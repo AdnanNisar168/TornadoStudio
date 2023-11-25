@@ -9,6 +9,8 @@ import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
 import { UserListComponent } from './hr/user-list.component';
 import { UserComponent } from './hr/user.component';
+import { TestListComponent } from './hr/test-list.component';
+import { TestComponent } from './hr/test.component';
 
 @NgModule({
   declarations: [
@@ -17,6 +19,8 @@ import { UserComponent } from './hr/user.component';
     LoginComponent,
     UserListComponent,
     UserComponent,
+    TestListComponent,
+    TestComponent,
 
   ],
   imports: [

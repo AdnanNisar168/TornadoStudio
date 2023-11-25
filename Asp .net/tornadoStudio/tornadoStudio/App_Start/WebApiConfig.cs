@@ -24,9 +24,9 @@ namespace tornadoStudio
             );
 
             // Enable CORS globally for all controllers
-            //config.EnableCors();
+            config.EnableCors();
 
-            // Configure CORS to allow requests from specific origins
+            //Configure CORS to allow requests from specific origins
             //var cors = new EnableCorsAttribute("http://localhost:4200", "*", "*");
             //var cors = new EnableCorsAttribute("*", "*", "*");
             //config.EnableCors(cors);

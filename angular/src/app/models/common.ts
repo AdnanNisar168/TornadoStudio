@@ -1,4 +1,5 @@
-import { NgbDate } from "@ng-bootstrap/ng-bootstrap/datepicker/ngb-date";
+//import { NgbDate } from "@ng-bootstrap/ng-bootstrap/datepicker/ngb-date";
+
 
 export enum Dashboards {
     ShopSaleChart = 1,
@@ -199,45 +200,45 @@ export enum Menus {
 
     
 }
-export class Common {
+// export class Common {
 
-    static agNumberFormatter(params) {
-        var result = Math.floor(params.value)
-            .toString()
-            .replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+//     static agNumberFormatter(params) {
+//         var result = Math.floor(params.value)
+//             .toString()
+//             .replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
 
-        result = result === '0' ? '' : result;
-        result = params.value < 0 ? '(' + result.replace('-','') + ')' : result;
+//         result = result === '0' ? '' : result;
+//         result = params.value < 0 ? '(' + result.replace('-','') + ')' : result;
 
-        return result;
-    }
+//         return result;
+//     }
 
-    static agDecimalNumberFormatter(params) {
-        var result = (Math.round((params.value + Number.EPSILON) * 100) / 100)
-            .toString()
-            .replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+//     static agDecimalNumberFormatter(params) {
+//         var result = (Math.round((params.value + Number.EPSILON) * 100) / 100)
+//             .toString()
+//             .replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
 
-        result = result === '0' ? '' : result;
-        result = params.value < 0 ? '(' + result.replace('-', '') + ')' : result;
+//         result = result === '0' ? '' : result;
+//         result = params.value < 0 ? '(' + result.replace('-', '') + ')' : result;
 
-        return result;
-    }
+//         return result;
+//     }
 
-    static getDateStringFromNgDate(ngDate: NgbDate) {
-        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        var result: string;
+//     static getDateStringFromNgDate(ngDate: NgbDate) {
+//         var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+//         var result: string;
 
-        if (typeof ngDate == 'object' && ngDate != null) {
-            result = ngDate.day + '-' + months[ngDate.month - 1] + '-' + ngDate.year;
+//         if (typeof ngDate == 'object' && ngDate != null) {
+//             result = ngDate.day + '-' + months[ngDate.month - 1] + '-' + ngDate.year;
 
-        } else if (typeof ngDate == 'string') {
-            result = ngDate;
+//         } else if (typeof ngDate == 'string') {
+//             result = ngDate;
 
-        } else {
-            result = null;
+//         } else {
+//             result = null;
 
-        }
+//         }
 
-        return result;
-    }
-}
+//         return result;
+//     }
+// }

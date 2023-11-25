@@ -11,8 +11,7 @@ go
 -- ------   ----        -------
 -- ------------------------------------------------------------------------------------------
 CREATE PROCEDURE spSecUser2GetByUserKey
-	(--@UserKey varchar (50)
-	@CompanyID smallint
+	(@UserKey varchar (50)
 	)WITH ENCRYPTION
 AS
 BEGIN
@@ -31,8 +30,7 @@ BEGIN
 	
 
 	WHERE 
-		--u.UserKey = @UserKey 
-		u.CompanyID = @CompanyID
+		u.UserKey = @UserKey 
 
 END
 GO

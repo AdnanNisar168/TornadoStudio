@@ -62,11 +62,11 @@ export class UserListComponent  implements OnInit {
     // let data = {
     //   userKey
     // };
-    this.inventoryService.getList(data).subscribe(data => {
-        this.listData = data;
+    // this.inventoryService.getList(data).subscribe(data => {
+    //     this.listData = data;
 
-      //  self.commonService.hideSpinner();
-    });
+    //   //  self.commonService.hideSpinner();
+    // });
 
     
 

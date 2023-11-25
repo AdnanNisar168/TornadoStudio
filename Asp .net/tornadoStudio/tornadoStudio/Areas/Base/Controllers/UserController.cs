@@ -163,10 +163,10 @@ namespace tornadoStudio.Areas.Base.Controllers
 
         //[EnableCors(origins: "http://localhost:4200", headers: "*", methods: "*")]
         //[HttpPost]
-        [EnableCors("*", "*", "*")]
-        [HttpPost]
-        public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string username, string password)
-        //public ActionResult List(Guid? UserKey)
+        //[EnableCors("*", "*", "*")]
+        //[HttpPost]
+        //public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string username, string password)
+        public ActionResult List(Guid? UserKey)
         {
             var totalRecords = 0;
             var model = new List<UserViewModel>();
@@ -176,8 +176,9 @@ namespace tornadoStudio.Areas.Base.Controllers
                 var spParams = new DynamicParameters();
                 //spParams.Add("@CompanyID", CurrentCompanyID);
                 spParams.Add("@CompanyID", 1);
-                spParams.Add("@UserName", username);
-                spParams.Add("@PassWord", password);
+                spParams.Add("@UserKey", UserKey);
+                //spParams.Add("@UserName", username);
+                //spParams.Add("@PassWord", password);
                 //spParams.Add("@SearchName", SearchName);
                 //spParams.Add("@sortColumn", sortColumn);
                 //spParams.Add("@sortOrder", sortOrder);
@@ -186,7 +187,7 @@ namespace tornadoStudio.Areas.Base.Controllers
                 spParams.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
 
-                model = DapperQuery.GetListBySP<UserViewModel>(DapperQuery.StoredProcedures.spSecUser2GetByCompanyIDSortingPaging, spParams);
+                model = DapperQuery.GetListBySP<UserViewModel>(DapperQuery.StoredProcedures.spSecUser2GetByUserKey, spParams);
                 totalRecords = spParams.Get<int?>("@totalRecords").GetValueOrDefault();
 
                 datatablesNetList.data = model;
