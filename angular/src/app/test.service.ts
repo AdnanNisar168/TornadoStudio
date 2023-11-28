@@ -24,9 +24,9 @@ export class TestService {
 //         );
 // }
 getTestUser(data: TestList): Observable<TestList> {
-  var url ='http://localhost:57685/test/list'+ data;
+  var url ='http://localhost:57685/test/list/'+ data;
 
-  return this.http.post<TestList>(url,data)
+  return this.http.get<TestList>(url)
       .pipe(
           tap(res => console.log('fetched Test List'))
       );

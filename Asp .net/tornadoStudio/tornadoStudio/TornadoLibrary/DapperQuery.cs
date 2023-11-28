@@ -64,6 +64,7 @@ namespace tornadoStudio.TornadoLibrary
             HREmployee,
             HREmployeeShopAssociation,
             HrSalaryHead,
+            TestUser,
 
             //Inventory
             InvBatch,
@@ -505,6 +506,45 @@ namespace tornadoStudio.TornadoLibrary
             return result;
         }
         //dapper stored
+
+        //dapper save
+        //public static List<T> SaveChanges<T>(DBTables table, List<T> modelList)
+        //{
+
+        //}
+
+        public T Save<T>(T entity) where T : class
+        //public static List<T> SaveChanges<T>(DBTables table, List<T> modelList)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["MyDatabaseConnection"].ConnectionString;
+            //IDbConnection dbConnection = new SqlConnection(connectionString);
+            SqlConnection dbConnection = new SqlConnection(connectionString);
+            var type = typeof(T);
+            var properties = type.GetProperties();
+            var keyProperty = properties.FirstOrDefault(p => p.Name == "Id");
+            var keyVal = keyProperty?.GetValue(entity);
+
+            string sql;
+
+            // Assuming 'Id' is the key and is of type 'int'
+            if (keyVal == null || (int)keyVal == 0)
+            {
+                // Insert
+                var columnNames = string.Join(", ", properties.Select(p => p.Name));
+                var columnValues = string.Join(", ", properties.Select(p => "@" + p.Name));
+                sql = $"INSERT INTO {type.Name} ({columnNames}) VALUES ({columnValues})";
+            }
+            else
+            {
+                // Update
+                var setClause = string.Join(", ", properties.Where(p => p.Name != "Id").Select(p => $"{p.Name} = @{p.Name}"));
+                sql = $"UPDATE {type.Name} SET {setClause} WHERE Id = @Id";
+            }
+
+            dbConnection.Execute(sql, entity);
+            return entity;
+        }
+        //dapper save
 
         // dapper select
 

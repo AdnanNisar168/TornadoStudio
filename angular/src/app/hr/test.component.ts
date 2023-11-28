@@ -117,6 +117,7 @@ onSubmit() {
               message += '<br>' + x;
           });
       }
+      alert(message)
 
       // Swal({
       //     title: 'Save Message',
