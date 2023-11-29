@@ -4,11 +4,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Login } from './models/login';
 import { ResponseMessage } from './models/responseMessage';
 import { UserList } from './models/user';
+import { Spinner } from './models/spinner';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CommonService {
+
+    private spinner: Spinner = new Spinner();
   
   constructor(private http: HttpClient) { }
   
@@ -24,5 +27,21 @@ export class CommonService {
             result = val;
         }
         return result;
+    }
+
+    showSpinner(title: string) {
+        if (!title) {
+            this.spinner.title = "Please wait ...";
+        } else {
+            this.spinner.title = title;
+        }
+
+        this.spinner.isVisible = true;
+    }
+    hideSpinner() {
+        this.spinner.isVisible = false;
+    }
+    getSpinner(): Spinner {
+        return this.spinner;
     }
 }

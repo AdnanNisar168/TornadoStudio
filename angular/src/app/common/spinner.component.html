@@ -1,0 +1,15 @@
+<!-- <div class="save-spinner" *ngIf="spinner.isVisible">
+  <i class="spinner"></i>
+  <span>{{ this.spinner.title }}</span>
+</div> -->
+<!-- working -->
+<!-- <div class="spinner-grow" role="status">
+  <span class="visually-hidden">Loading...</span>
+</div> -->
+<!-- working -->
+<div class="overlay" *ngIf="spinner.isVisible">
+  <div class="spinner-grow" role="status">
+    <!-- <span class="visually-hidden">Loading...</span> -->
+  </div>
+  <span>{{ this.spinner.title }}</span>
+</div>

@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, FormControl, Validators, FormArray } from '@ang
 import { forkJoin } from 'rxjs';
 import { Observable, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
+import Swal from 'sweetalert2';
 
 
 import { InventoryService } from '../inventory.service';
@@ -11,6 +12,7 @@ import { TestService } from '../test.service';
 import { Menus } from '../models/common';
 import { Menu } from '../models/menu';
 import { Test } from '../models/test';
+import { CommonService } from '../common.service';
 
 @Component({
   selector: 'app-test',
@@ -46,7 +48,7 @@ export class TestComponent  implements OnInit {
 
 
   constructor(private route: ActivatedRoute, private fb: FormBuilder, private router: Router, @Inject(LOCALE_ID) private locale: string
-  ,private inventoryService:InventoryService,private testService: TestService, private el: ElementRef) {
+  ,private inventoryService:InventoryService,private commonService: CommonService, private testService: TestService, private el: ElementRef) {
       //super();
 
       this.userKey = this.route.snapshot.params["id"] || 0;
@@ -106,10 +108,10 @@ export class TestComponent  implements OnInit {
 }
 
 onSubmit() {
-  // this.commonService.showSpinner(null);
+   this.commonService.showSpinner('');
 
   this.testService.saveTestUser(this.formGroup.value).subscribe(res => {
-      // this.commonService.hideSpinner();
+       this.commonService.hideSpinner();
 
       let message = res.message;
       if (res.http_code != 200) {
@@ -117,7 +119,28 @@ onSubmit() {
               message += '<br>' + x;
           });
       }
-      alert(message)
+      // alert(message)
+      // Swal.fire(
+      //   'The Internet?',
+      //   'That thing is still around?',
+      //   'question'
+      // )
+      // 'Oops...'
+      Swal.fire({
+        icon: (res.http_code == 200 ? 'success' : 'error'),
+        title: (res.http_code == 200 ? 'Save Message' : 'Error Message'),
+        text: message,//'Something went wrong!',
+        // footer: '<a href="">Why do I have this issue?</a>'
+      })
+    //   Swal({
+    //     title: 'Save Message',
+    //     html: message,
+    //     type: (res.http_code == 200 ? 'success' : 'error'),
+    // }).then(result => {
+    //     if (res.http_code == 200) {
+    //         this.router.navigate(['/finance/receipt/list']);
+    //     }
+    // });
 
       // Swal({
       //     title: 'Save Message',

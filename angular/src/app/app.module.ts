@@ -11,6 +11,7 @@ import { UserListComponent } from './hr/user-list.component';
 import { UserComponent } from './hr/user.component';
 import { TestListComponent } from './hr/test-list.component';
 import { TestComponent } from './hr/test.component';
+import { SpinnerComponent } from './common/spinner.component';
 
 @NgModule({
   declarations: [
@@ -21,6 +22,7 @@ import { TestComponent } from './hr/test.component';
     UserComponent,
     TestListComponent,
     TestComponent,
+    SpinnerComponent
 
   ],
   imports: [
