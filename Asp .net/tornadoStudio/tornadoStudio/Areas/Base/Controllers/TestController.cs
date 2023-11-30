@@ -203,6 +203,42 @@ namespace tornadoStudio.Areas.Base.Controllers
         //[HttpPost]
         //public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string username, string password)
         //[HttpGet]
+        //public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string username, string password)
+        //{
+        //    var datatablesNetList = new DataTablesNetList<TestViewModel>();
+        //    var totalRecords = 0;
+
+        //    try
+        //    {
+        //        var spParams = new DynamicParameters();
+        //        spParams.Add("@CompanyID", 1);
+        //        spParams.Add("@Password", username);
+        //        spParams.Add("@UserName", password);
+        //        spParams.Add("@sortColumn", sortColumn);
+        //        spParams.Add("@sortOrder", sortOrder);
+        //        spParams.Add("@pageNumber", pageNumber);
+        //        spParams.Add("@recordsPerPage", pageLength);
+        //        spParams.Add("@totalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+        //        var model = DapperQuery.GetListBySP<TestViewModel>(DapperQuery.StoredProcedures.spTestUserGetByCompanyIDSortingPaging, spParams);
+        //        totalRecords = spParams.Get<int?>("@totalRecords").GetValueOrDefault();
+
+        //        datatablesNetList.data = model;
+
+        //        datatablesNetList.recordsTotal = totalRecords;
+        //        datatablesNetList.recordsFiltered = totalRecords;
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        //log.Error(ex);
+        //        Console.WriteLine("Error : ", ex);
+        //    }
+        //    //return Content(Newtonsoft.Json.JsonConvert.SerializeObject(datatablesNetList), "application/json");
+        //    return Json(datatablesNetList, JsonRequestBehavior.AllowGet);
+
+        //}
+        [HttpGet]
         public ActionResult List(string sortColumn, string sortOrder, int pageLength, int pageNumber, string username, string password)
         {
             var datatablesNetList = new DataTablesNetList<TestViewModel>();
@@ -212,8 +248,8 @@ namespace tornadoStudio.Areas.Base.Controllers
             {
                 var spParams = new DynamicParameters();
                 spParams.Add("@CompanyID", 1);
-                spParams.Add("@Password", username);
-                spParams.Add("@UserName", password);
+                spParams.Add("@Password", password);
+                spParams.Add("@UserName", username);
                 spParams.Add("@sortColumn", sortColumn);
                 spParams.Add("@sortOrder", sortOrder);
                 spParams.Add("@pageNumber", pageNumber);
@@ -235,9 +271,11 @@ namespace tornadoStudio.Areas.Base.Controllers
                 Console.WriteLine("Error : ", ex);
             }
             //return Content(Newtonsoft.Json.JsonConvert.SerializeObject(datatablesNetList), "application/json");
-            return Json(datatablesNetList, JsonRequestBehavior.AllowGet);
+            return Json(datatablesNetList, "application/json", JsonRequestBehavior.AllowGet);
 
+            // return Content(Newtonsoft.Json.JsonConvert.SerializeObject(null), "application/json");
         }
+        //
 
         public JsonResult Delete(Guid id)
         {

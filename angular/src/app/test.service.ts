@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Login } from './models/login';
 import { ResponseMessage } from './models/responseMessage';
 import { User, UserList } from './models/user';
@@ -10,7 +10,13 @@ import { Test, TestList } from './models/test';
   providedIn: 'root'
 })
 export class TestService {
-  
+  // const headers = new HttpHeaders({
+  //   'Content-Type': 'application/json',
+  // });
+  httpOptions = {
+    headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+  };
+
   constructor(private http: HttpClient) { }
   
 
@@ -45,6 +51,45 @@ saveTestUser(data: Test): Observable<ResponseMessage> {
       .pipe(
           tap(res => console.log('saved'))
       );
+}
+
+// saveRates(data): Observable<ResponseMessage> {
+//   var url = '/Inventory/Item/UpdateItemVariationRates';
+
+//   return this.http.post<ResponseMessage>(url, data, this.httpOptions)
+//       .pipe(
+//       tap(_ => console.log('saved')),
+//       catchError(this.handleError<any>('save rates'))
+//       );
+// }
+getListData(data: TestList): Observable<TestList> {
+  const url = 'http://localhost:57685/test/List'+ data; // Replace with your API URL
+
+  // Set request headers if needed
+  const headers = new HttpHeaders({
+    'Content-Type': 'application/json',
+  });
+
+  // Define the request body with the parameters
+  // const requestBody = {
+  //   SortColumn: 'yourSortColumn',
+  //   SortOrder: 'yourSortOrder',
+  //   PageNumber: 1, // Replace with your desired values
+  //   PageLength: 10, // Replace with your desired values
+  //   number: 'yourNumber',
+  //   party: 'yourParty',
+  //   remarks: 'yourRemarks',
+  //   headName: 'yourHeadName',
+  //   detailHeadName: 'yourDetailHeadName',
+  //   startDate: 'yourStartDate',
+  //   endDate: 'yourEndDate',
+  //   amountStart: 'yourAmountStart',
+  //   amountEnd: 'yourAmountEnd',
+  //   recordStatusID: 1, // Replace with your desired values
+  // };
+
+  // return this.http.post<TestList>(url, data, { headers });
+  return this.http.get<TestList>(url);
 }
   // Test :
 

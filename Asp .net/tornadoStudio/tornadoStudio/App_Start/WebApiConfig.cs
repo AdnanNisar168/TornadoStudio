@@ -33,6 +33,15 @@ namespace tornadoStudio
 
             // Other Web API configuration settings
             // ...
+
+            // Enable CORS globally
+            var cors = new EnableCorsAttribute("*", "*", "*"); // Adjust these values as needed
+            config.EnableCors(cors);
+
+            // Configure your Web API routes
+            //config.MapHttpAttributeRoutes();
+
+            // ...
         }
     }
 }

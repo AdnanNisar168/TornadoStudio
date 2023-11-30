@@ -63,11 +63,17 @@ export class TestListComponent  implements OnInit {
 
     // this.commonService.showSpinner("");
 
-      this.testService.getTestUser(data).subscribe(data => {
-            this.listData = data;
+      // this.testService.getTestUser(data).subscribe(data => {
+      //       this.listData = data;
 
+      //       // self.commonService.hideSpinner();
+      //   });
+      this.testService.getListData(data).subscribe(data => {
+            this.listData = data;
+            console.log('list data :' ,this.listData);
             // self.commonService.hideSpinner();
         });
+        
 
     
 }
