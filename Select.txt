@@ -1,0 +1,44 @@
+var parms = new DynamicParameters();
+                    parms.Add("@CompanyID", CurrentCompanyID);
+                    parms.Add("@GenderID", source.GenderID);
+                    //genderViewModel will save in db
+                    genderViewModel = DapperQuery.Select<GenderViewModel>(DapperQuery.DBTables.InvGender, parms).FirstOrDefault();//for first record or null
+public static IEnumerable<T> Select<T>(DBTables table, DynamicParameters columns)
+        {
+            var query = "";
+            try
+            {
+                query = GetQuery(table, QueryTypes.SelectOne);
+                IEnumerable<T> model;
+                //var queryParams = new DynamicParameters();
+                if (columns.ParameterNames.Count() > 0)
+                {
+                    //query += " where " + string.Join(" and ", columns.Select(s => s.Key + "=" + "@" + s.Key));
+                    query += " where ";
+                    foreach (var column in columns.ParameterNames)
+                    {
+                    if (column.ToLower() == "warehouseid")
+                        {
+                            query += "isnull(" + column + ",0)=isnull(@" + column + ",0) and ";
+                        }
+                        else
+                        {
+                            query += column + "=@" + column + " and ";
+                        }
+                    }
+                    query = query.Substring(0, query.Length - 4);
+                }
+                using (var cn = new SqlConnection(Common.ConnectionString))
+                {
+                    model = cn.Query<T>(query, columns);
+                }
+                return model;
+            }
+            catch (Exception ex)
+            {
+                var paramString = " Parameters=" + string.Join(", ", from pn in columns.ParameterNames select string.Format("@{0}={1}", pn, (columns as SqlMapper.IParameterLookup)[pn]));
+                var ex1 = new Exception(table.ToString() + paramString + (query ?? ""), ex);
+                log.Error(ex1);
+                throw;
+            }
+        }

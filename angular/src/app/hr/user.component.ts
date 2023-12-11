@@ -81,7 +81,8 @@ export class UserComponent implements OnInit {
     } else {
             self.user = new User();
             self.user.UpdatedOn = new Date();
-            //self.user.UpdatedByName = this.loginInfo.ImpersonateUser.UserName;
+            // self.user.UpdatedByName = this.loginInfo.ImpersonateUser.UserName;
+            self.user.UpdatedByName = 'Adnan Nsiar';
             // self.commonService.hideSpinner();
         }
     }
