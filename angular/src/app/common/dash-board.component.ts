@@ -14,7 +14,7 @@ export class DashBoardComponent {
   isNewLogin: boolean = false;
   isLocalStorageloggedin: boolean = false;
 
-  constructor(private fb: FormBuilder,private commonService:CommonService, private router: Router, @Inject(LOCALE_ID) private locale: string,private inventory:InventoryService) {
+  constructor(private inventoryService:InventoryService,private fb: FormBuilder,private commonService:CommonService, private router: Router, @Inject(LOCALE_ID) private locale: string,private inventory:InventoryService) {
     //super();
     this.formGroup = this.fb.group({
 
@@ -31,5 +31,17 @@ export class DashBoardComponent {
     this.isLocalStorageloggedin = false;
     this.isNewLogin = this.commonService.parseBoolean(storedBoolean);
      
+  }
+
+
+  onWhatsAppClick(){
+
+    this.inventoryService.getWhatsappApi().subscribe(res => {
+          //this.loadData();
+          if(res){
+            res
+          }
+      });
+  
   }
 }

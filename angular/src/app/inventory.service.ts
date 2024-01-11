@@ -96,6 +96,17 @@ sndUserKey(){
   return this.http.post(this.aspURL2 + "/Base/User/List", null);
 }
 
+  getWhatsappApi(): Observable<User> {
+    //var url = '/Inventory/Gender/Index/' + data; 
+
+    //var url ='http://localhost:57685/test/SendHttpPostRequest';
+    let id = '5ba6f4d4-eb09-4c15-8cf3-796f5298dcf1'
+    var url ='http://localhost:57685/test/Delete1?id='+ id;
+    return this.http.post<User>(url,id)
+        .pipe(
+            tap(res => console.log('fetched whatsapp'))
+        );
+  }
 // getListng(data: UserList): Observable<UserList> {
 //   const url = `${this.aspURL}/Base/User/List`;
 //   const params = new HttpParams().set('param1', data.param1).set('param2', data.param2); // Replace param1 and param2 with actual parameter names

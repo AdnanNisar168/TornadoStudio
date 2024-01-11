@@ -19,6 +19,10 @@ using tornadoStudio.TornadoLibrary;
 using System.Net;
 //cors
 
+//using System;
+//using System.Threading.Tasks;
+//using RestSharp;
+
 namespace tornadoStudio.Areas.Base.Controllers
 {
     //[EnableCors(origins: "http://localhost:4200", headers: "*", methods: "*")]
@@ -88,6 +92,26 @@ namespace tornadoStudio.Areas.Base.Controllers
             return Json(result, JsonRequestBehavior.AllowGet);
         }
 
+        //public static async Task Main()
+        //{
+
+        //    var url = "https://api.alvochat.com/instance1199/messages/chat";
+        //    var client = new RestClient(url);
+
+        //    var request = new RestRequest(url, Method.Post);
+        //    request.AddHeader("content-type", "application/x-www-form-urlencoded");
+        //    request.AddParameter("token", "YourToken");
+        //    request.AddParameter("to", "16315555555");
+        //    request.AddParameter("body", "WhatsApp API on alvochat.com works good");
+        //    request.AddParameter("priority", "");
+        //    request.AddParameter("preview_url", "");
+        //    request.AddParameter("message_id", "");
+
+
+        //    RestResponse response = await client.ExecuteAsync(request);
+        //    var output = response.Content;
+        //    Console.WriteLine(output);
+        //}
         public ActionResult GetUserByQuery()
         {
             SqlConnection connection = new SqlConnection(connectionString);
