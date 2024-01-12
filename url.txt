@@ -1,0 +1,30 @@
+--By this video--
+https://www.youtube.com/watch?v=qAzhxOpv5JY
+-------------------------------------------
+
+whats app integration url
+https://developers.facebook.com/apps/1874089683008369/add/?business_id=337918025752693
+
+
+---test phone number--
+--Inside WhatsApp option under the products option
+https://developers.facebook.com/apps/1874089683008369/whatsapp-business/wa-dev-quickstart/?business_id=337918025752693
+
+
+--Start Using Api--
+https://developers.facebook.com/apps/1874089683008369/whatsapp-business/wa-dev-console/?business_id=337918025752693
+
+
+
+------------------------------------------
+How to Get Whatsapp API for Free in less than 10 Minutes | Whatsapp Marketing Course | Umar Tazkeer
+https://www.youtube.com/watch?v=y1AS-3jgIug
+
+---
+Whatsapp Cloud API Vs Whatsapp Business API Explained (Hindi) | Umar Tazkeer
+https://www.youtube.com/watch?v=2reKstqAVjQ
+
+
+----
+meta for developer account for hammad account
+https://developers.facebook.com/apps/1083796695999128/whatsapp-business/wa-dev-console/?business_id=359073810212506
